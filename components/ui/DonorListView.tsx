@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Card from './Card';
 import Button from './Button';
-import { XMarkIcon, MagnifyingGlassIcon, PhoneIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, ChevronDownIcon, PlusIcon, FunnelIcon, SettingsIcon, ChartBarIcon, BrainIcon, ExclamationTriangleIcon, TrashIcon, EyeIcon, SparklesIcon } from '../../constants';
+import { XMarkIcon, MagnifyingGlassIcon, PhoneIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, ChevronDownIcon, PlusIcon, FunnelIcon, SettingsIcon, ChartBarIcon, BrainIcon, ExclamationTriangleIcon, TrashIcon, EyeIcon, SparklesIcon, ClockIcon, CheckCircleIcon } from '../../constants';
 import DonorProfileModal from './DonorProfileModal';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import { Donor as DonorProfile } from '../../types';
@@ -127,6 +127,14 @@ interface DonorListViewProps {
   segmentName: string;
   isOpen: boolean;
   onClose: () => void;
+  segmentData?: {
+    potentialRevenue: number;
+    inProgressRevenue: number;
+    realizedRevenue: number;
+    suggestedAction: string;
+    trend?: 'up' | 'down' | 'stable';
+    lastUpdated?: string;
+  };
 }
 
 // Generate 10 diverse donors per segment with varied AI suggested actions
@@ -266,7 +274,7 @@ const generateDonorData = (segmentId: string): Donor[] => {
   });
 };
 
-const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, isOpen, onClose }) => {
+const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, isOpen, onClose, segmentData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<keyof Donor>('totalLifetimeGiving');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -455,6 +463,66 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
             <XMarkIcon className="w-6 h-6 text-gray-500" />
           </button>
         </div>
+
+        {/* Progress Summary Section */}
+        {segmentData && (
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-green-50">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600 mb-1">
+                  ${segmentData.potentialRevenue.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                  <CurrencyDollarIcon className="w-4 h-4" />
+                  Potential Revenue
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600 mb-1">
+                  ${segmentData.inProgressRevenue.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                  <ClockIcon className="w-4 h-4" />
+                  In Progress
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600 mb-1 flex items-center justify-center gap-2">
+                  ${segmentData.realizedRevenue.toLocaleString()}
+                  {segmentData.trend && (
+                    <span className={`text-sm ${segmentData.trend === 'up' ? 'text-green-500' : segmentData.trend === 'down' ? 'text-red-500' : 'text-gray-500'}`}>
+                      {segmentData.trend === 'up' ? '↗️' : segmentData.trend === 'down' ? '↘️' : '➡️'}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                  <CheckCircleIcon className="w-4 h-4" />
+                  Realized Revenue
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600 mb-1">
+                  {Math.round((segmentData.realizedRevenue / segmentData.potentialRevenue) * 100)}%
+                </div>
+                <div className="text-sm text-gray-600">Conversion Rate</div>
+              </div>
+            </div>
+
+            {/* Suggested Action */}
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex items-start gap-3">
+                <SparklesIcon className="w-5 h-5 text-crimson-blue mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 mb-2">Recommended Action for This Segment</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">{segmentData.suggestedAction}</p>
+                  {segmentData.lastUpdated && (
+                    <p className="text-xs text-gray-500 mt-2">Last updated: {segmentData.lastUpdated}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="p-6 border-b border-gray-200">
           <div className="flex gap-4 items-center">

@@ -680,6 +680,17 @@ const SegmentsDashboard: React.FC = () => {
           segmentName={selectedSegment.name}
           isOpen={showDonorList}
           onClose={() => setShowDonorList(false)}
+          segmentData={(() => {
+            const segment = segments.find(s => s.id === selectedSegment.id);
+            return segment ? {
+              potentialRevenue: segment.potentialRevenue,
+              inProgressRevenue: segment.inProgressRevenue,
+              realizedRevenue: segment.realizedRevenue,
+              suggestedAction: segment.suggestedAction,
+              trend: segment.trend,
+              lastUpdated: segment.lastUpdated
+            } : undefined;
+          })()}
         />
       )}
 
