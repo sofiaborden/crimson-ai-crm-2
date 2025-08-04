@@ -38,7 +38,8 @@ import {
   BookmarkIcon,
   UserIcon,
   TrendingUpIcon,
-  UsersIcon
+  UsersIcon,
+  CheckCircleIcon
 } from '../../constants';
 
 interface Segment {
@@ -51,7 +52,7 @@ interface Segment {
   inProgressRevenue: number;
   realizedRevenue: number;
   suggestedAction: string;
-  emoji: string;
+  icon: React.ReactElement;
   lastUpdated?: string;
   trend?: 'up' | 'down' | 'stable';
 }
@@ -67,7 +68,7 @@ const segments: Segment[] = [
     inProgressRevenue: 18500, // 247 donors in DialR campaigns
     realizedRevenue: 4200, // 58 donors converted so far
     suggestedAction: 'Launch call/text reactivation campaign targeting $72 avg gift. Add to DialR for personalized outreach or push to MailChimp for win-back series.',
-    emoji: '🔄',
+    icon: <ArrowPathIcon className="w-5 h-5" />,
     lastUpdated: '2 hours ago',
     trend: 'up'
   },
@@ -81,7 +82,7 @@ const segments: Segment[] = [
     inProgressRevenue: 8900, // 89 donors in active campaigns
     realizedRevenue: 2100, // 12 donors upgraded
     suggestedAction: 'Send upgrade ask emails & calls targeting $250+ gifts (current avg: $180). Push to MailChimp for A/B testing different ask amounts.',
-    emoji: '📈',
+    icon: <TrendingUpIcon className="w-5 h-5" />,
     lastUpdated: '4 hours ago',
     trend: 'up'
   },
@@ -95,7 +96,7 @@ const segments: Segment[] = [
     inProgressRevenue: 1800, // 72 donors in monthly giving signup flow
     realizedRevenue: 650, // 26 donors converted to monthly
     suggestedAction: 'Invite to monthly giving program with $25/month ask (based on $27 avg gift). Create targeted segment for sustained giving conversion.',
-    emoji: '✈️',
+    icon: <HeartIcon className="w-5 h-5" />,
     lastUpdated: '1 day ago',
     trend: 'stable'
   },
@@ -109,7 +110,7 @@ const segments: Segment[] = [
     inProgressRevenue: 2200, // 62 donors in welcome sequence
     realizedRevenue: 1100, // 31 donors made 2nd gift
     suggestedAction: 'Send welcome series + 2nd gift ask within 7 days (optimal conversion window). Push to MailChimp for automated welcome sequence.',
-    emoji: '👋',
+    icon: <StarIcon className="w-5 h-5" />,
     lastUpdated: '6 hours ago',
     trend: 'up'
   },
@@ -123,7 +124,7 @@ const segments: Segment[] = [
     inProgressRevenue: 15200, // 38 donors with scheduled meetings
     realizedRevenue: 8900, // 18 donors made major gifts
     suggestedAction: 'Schedule major donor calls/events targeting $500+ gifts (capacity analysis shows $343 avg potential). Add to DialR for gift officer assignment.',
-    emoji: '🏆',
+    icon: <MapPinIcon className="w-5 h-5" />,
     lastUpdated: '3 hours ago',
     trend: 'up'
   },
@@ -137,7 +138,7 @@ const segments: Segment[] = [
     inProgressRevenue: 1200, // 37 donors in thank you sequence
     realizedRevenue: 800, // 24 donors made 2nd gift
     suggestedAction: 'Send thank you + 2nd ask appeal within 48 hours (highest conversion rate). Push to MailChimp for automated stewardship sequence.',
-    emoji: '🤝',
+    icon: <UserIcon className="w-5 h-5" />,
     lastUpdated: '5 hours ago',
     trend: 'up'
   },
@@ -151,7 +152,7 @@ const segments: Segment[] = [
     inProgressRevenue: 3400, // 4 donors assigned to gift officers
     realizedRevenue: 1700, // 2 donors made major gifts
     suggestedAction: 'Assign to gift officer for personalized outreach targeting $857 avg capacity. Create high-priority segment for immediate follow-up.',
-    emoji: '🤫',
+    icon: <TrophyIcon className="w-5 h-5" />,
     lastUpdated: '1 day ago',
     trend: 'up'
   },
@@ -165,7 +166,7 @@ const segments: Segment[] = [
     inProgressRevenue: 4200, // 218 donors in renewal campaigns
     realizedRevenue: 2800, // 145 donors renewed
     suggestedAction: 'Send renewal reminders + stewardship calls within next 30 days (predicted giving window). Add to DialR for systematic outreach.',
-    emoji: '🔮',
+    icon: <BookmarkIcon className="w-5 h-5" />,
     lastUpdated: '8 hours ago',
     trend: 'stable'
   },
@@ -179,7 +180,7 @@ const segments: Segment[] = [
     inProgressRevenue: 22500, // 45 donors in major gift cultivation
     realizedRevenue: 12300, // 21 donors upgraded
     suggestedAction: 'Upgrade ask strategy targeting $500+ gifts (current avg: $285). Create VIP segment for exclusive stewardship and major gift cultivation.',
-    emoji: '💎',
+    icon: <SparklesIcon className="w-5 h-5" />,
     lastUpdated: '2 hours ago',
     trend: 'up'
   },
@@ -193,7 +194,7 @@ const segments: Segment[] = [
     inProgressRevenue: 18700, // 225 donors in diagnostic campaigns
     realizedRevenue: 5200, // 62 donors re-engaged
     suggestedAction: 'Diagnostic campaign to identify barriers. A/B test messaging approaches and create re-engagement segment for targeted outreach.',
-    emoji: '🔍',
+    icon: <UserGroupIcon className="w-5 h-5" />,
     lastUpdated: '12 hours ago',
     trend: 'down'
   }
@@ -325,14 +326,18 @@ const SegmentsDashboard: React.FC = () => {
       <Card>
         <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg">
           <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-            📊 Segment Performance Overview
+            <ChartBarIcon className="w-5 h-5 text-crimson-blue" />
+            Segment Performance Overview
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-1">
                 ${segments.reduce((sum, s) => sum + s.potentialRevenue, 0).toLocaleString()}
               </div>
-              <div className="text-sm text-gray-600">💰 Total Potential</div>
+              <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                <CurrencyDollarIcon className="w-4 h-4" />
+                Total Potential
+              </div>
               <div className="text-xs text-gray-500 mt-1">
                 {segments.reduce((sum, s) => sum + s.count, 0).toLocaleString()} donors across all segments
               </div>
@@ -341,7 +346,10 @@ const SegmentsDashboard: React.FC = () => {
               <div className="text-3xl font-bold text-orange-600 mb-1">
                 ${segments.reduce((sum, s) => sum + s.inProgressRevenue, 0).toLocaleString()}
               </div>
-              <div className="text-sm text-gray-600">⏳ In Progress</div>
+              <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                <ClockIcon className="w-4 h-4" />
+                In Progress
+              </div>
               <div className="text-xs text-gray-500 mt-1">
                 Active campaigns & outreach
               </div>
@@ -350,7 +358,10 @@ const SegmentsDashboard: React.FC = () => {
               <div className="text-3xl font-bold text-green-600 mb-1">
                 ${segments.reduce((sum, s) => sum + s.realizedRevenue, 0).toLocaleString()}
               </div>
-              <div className="text-sm text-gray-600">✅ Realized</div>
+              <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
+                <CheckCircleIcon className="w-4 h-4" />
+                Realized
+              </div>
               <div className="text-xs text-gray-500 mt-1">
                 {Math.round((segments.reduce((sum, s) => sum + s.realizedRevenue, 0) / segments.reduce((sum, s) => sum + s.potentialRevenue, 0)) * 100)}% conversion rate
               </div>
@@ -393,17 +404,20 @@ const SegmentsDashboard: React.FC = () => {
                 </th>
                 <th className="text-center py-3 px-4 font-semibold text-text-primary">
                   <div className="flex items-center justify-center gap-1">
-                    💰 Potential
+                    <CurrencyDollarIcon className="w-4 h-4" />
+                    Potential
                   </div>
                 </th>
                 <th className="text-center py-3 px-4 font-semibold text-text-primary">
                   <div className="flex items-center justify-center gap-1">
-                    ⏳ In Progress
+                    <ClockIcon className="w-4 h-4" />
+                    In Progress
                   </div>
                 </th>
                 <th className="text-center py-3 px-4 font-semibold text-text-primary">
                   <div className="flex items-center justify-center gap-1">
-                    ✅ Realized
+                    <CheckCircleIcon className="w-4 h-4" />
+                    Realized
                   </div>
                 </th>
                 <th className="text-left py-3 px-4 font-semibold text-text-primary">Suggested Action</th>
@@ -415,7 +429,7 @@ const SegmentsDashboard: React.FC = () => {
                 <tr key={segment.id} className="border-b border-base-200 hover:bg-base-50">
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{segment.emoji}</div>
+                      <div className="text-crimson-blue">{segment.icon}</div>
                       <div>
                         <button
                           onClick={() => handleSegmentClick(segment.id, segment.funName)}
