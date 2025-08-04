@@ -404,9 +404,9 @@ const AudienceInsights: React.FC<AudienceInsightsProps> = ({ onSegmentClick }) =
   return (
     <div className="space-y-4">
       {/* Collapsible Segment Performance Section - Top Priority */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 shadow-sm">
+      <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-gray-200 shadow-sm">
         <div
-          className="p-4 cursor-pointer hover:bg-green-100/50 transition-colors rounded-lg"
+          className="p-4 cursor-pointer hover:bg-blue-100/30 transition-colors rounded-lg"
           onClick={() => setIsTrackerExpanded(!isTrackerExpanded)}
         >
           <div className="flex items-center justify-between mb-4">
@@ -421,10 +421,10 @@ const AudienceInsights: React.FC<AudienceInsightsProps> = ({ onSegmentClick }) =
         {isTrackerExpanded && (
           <div className="px-4 pb-4">
             {/* Original Attractive Revenue Tracker Bar */}
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm mb-4">
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-900">Revenue Opportunity Tracker</h3>
-                <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                <button className="bg-crimson-blue hover:bg-crimson-dark-blue text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                   <SparklesIcon className="w-4 h-4" />
                   Start Campaign
                 </button>
