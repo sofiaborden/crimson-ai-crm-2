@@ -19,7 +19,17 @@ import {
   HeartIcon,
   TrophyIcon,
   ComputerDesktopIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  EnvelopeIcon,
+  CurrencyDollarIcon,
+  UserIcon,
+  MapPinIcon,
+  StarIcon,
+  CheckCircleIcon,
+  ArrowTrendingUpIcon,
+  LightBulbIcon,
+  BrainIcon,
+  ChatBubbleLeftRightIcon
 } from '../../constants';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 
@@ -34,10 +44,148 @@ const StatCard: React.FC<{ label: string; value: string | number; }> = ({ label,
     </div>
 );
 
+// Enhanced donor data interface for enriched data
+interface EnrichedData {
+  age?: number;
+  gender?: string;
+  householdIncome?: string;
+  homeowner?: boolean;
+  education?: string;
+  maritalStatus?: string;
+  voterRegistration?: string;
+  party?: string;
+  ethnicity?: string;
+  politicalEngagement?: number;
+  givingCapacity?: string;
+  volunteerPropensity?: number;
+  eventAttendancePropensity?: number;
+  district?: string;
+  county?: string;
+  precinct?: string;
+  dataSource?: string;
+  lastUpdated?: string;
+}
+
+// Mock enriched data - in real app this would come from i360/L2/etc
+const getEnrichedData = (donorId: string): EnrichedData | null => {
+  // Simulate having enriched data for some donors
+  const hasEnrichedData = Math.random() > 0.3; // 70% chance of having data
+  if (!hasEnrichedData) return null;
+
+  return {
+    age: 45 + Math.floor(Math.random() * 30),
+    gender: Math.random() > 0.5 ? 'Female' : 'Male',
+    householdIncome: ['$50-75K', '$75-100K', '$100-150K', '$150-200K', '$200K+'][Math.floor(Math.random() * 5)],
+    homeowner: Math.random() > 0.3,
+    education: ['High School', 'Some College', 'Bachelor\'s', 'Master\'s', 'PhD'][Math.floor(Math.random() * 5)],
+    maritalStatus: ['Single', 'Married', 'Divorced', 'Widowed'][Math.floor(Math.random() * 4)],
+    voterRegistration: 'Active',
+    party: ['Democrat', 'Republican', 'Independent', 'Unaffiliated'][Math.floor(Math.random() * 4)],
+    politicalEngagement: Math.floor(Math.random() * 100),
+    givingCapacity: ['Low', 'Medium', 'High', 'Very High'][Math.floor(Math.random() * 4)],
+    volunteerPropensity: Math.floor(Math.random() * 100),
+    eventAttendancePropensity: Math.floor(Math.random() * 100),
+    district: `District ${Math.floor(Math.random() * 20) + 1}`,
+    county: 'Travis County',
+    precinct: `Precinct ${Math.floor(Math.random() * 100) + 1}`,
+    dataSource: 'i360 Data',
+    lastUpdated: '2024-01-15'
+  };
+};
+
 const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'intelligence' | 'actions' | 'insights'>('overview');
+  const [showDialRModal, setShowDialRModal] = useState(false);
+  const [showLookalikes, setShowLookalikes] = useState(false);
+  const enrichedData = getEnrichedData(donor.id);
 
   // Helper functions
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const getPerformanceStatus = () => {
+    const capacity = donor.totalLifetimeGiving;
+    const potential = (donor.predictedPotential / 100) * 2000; // Estimated potential
+
+    if (capacity > potential * 1.2) {
+      return { type: 'over', message: 'Over-Performer: Giving 30% above modeled capacity', color: 'bg-orange-100 text-orange-800 border-orange-200' };
+    } else if (capacity < potential * 0.6) {
+      return { type: 'under', message: 'Under-Performer: 40% below modeled capacity', color: 'bg-blue-100 text-blue-800 border-blue-200' };
+    }
+    return { type: 'normal', message: 'Performing within expected range', color: 'bg-green-100 text-green-800 border-green-200' };
+  };
+
+  const getSmartSuggestions = () => {
+    const suggestions = [];
+    const performance = getPerformanceStatus();
+    const daysSinceLastGift = Math.floor((Date.now() - new Date(donor.lastGiftDate).getTime()) / (1000 * 60 * 60 * 24));
+
+    // Fatigue/timing suggestions
+    if (daysSinceLastGift < 14) {
+      suggestions.push({
+        icon: <ClockIcon className="w-4 h-4 text-orange-600" />,
+        title: 'Recommend wait 7 days before next ask',
+        description: 'Recent gift activity suggests donor may need cool-down period',
+        action: 'Schedule follow-up',
+        priority: 'medium'
+      });
+    }
+
+    // Performance-based suggestions
+    if (performance.type === 'under') {
+      const suggestedAsk = Math.round(donor.averageGift * 1.15);
+      suggestions.push({
+        icon: <ArrowTrendingUpIcon className="w-4 h-4 text-green-600" />,
+        title: `Increase ask to ${formatCurrency(suggestedAsk)}`,
+        description: 'Based on capacity analysis and giving history',
+        action: 'Create upgrade campaign',
+        priority: 'high'
+      });
+    }
+
+    // Channel suggestions
+    if (donor.contactIntelligence?.preferredContactMethod === 'email') {
+      suggestions.push({
+        icon: <EnvelopeIcon className="w-4 h-4 text-blue-600" />,
+        title: 'Push to MailChimp for year-end appeal',
+        description: 'Email preference detected, high engagement via email campaigns',
+        action: 'Add to email list',
+        priority: 'medium'
+      });
+    }
+
+    return suggestions.slice(0, 3); // Max 3 suggestions
+  };
+
+  const getGeneratedAskAmount = () => {
+    const baseAsk = donor.averageGift * 1.1; // 10% increase as baseline
+    const performance = getPerformanceStatus();
+
+    if (performance.type === 'over') {
+      return {
+        amount: donor.averageGift, // Don't increase for over-performers
+        explanation: 'Current giving above modeled capacity; maintain current level to avoid donor fatigue'
+      };
+    } else if (performance.type === 'under') {
+      return {
+        amount: Math.round(baseAsk * 1.15), // 15% increase for under-performers
+        explanation: 'Below capacity; safe to upgrade by 15% based on wealth indicators'
+      };
+    }
+
+    return {
+      amount: Math.round(baseAsk),
+      explanation: 'Based on average gift, giving capacity, and recent engagement patterns'
+    };
+  };
+
+  // Helper functions from original profile
   const getUrgencyColor = (level: string) => {
     switch (level) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
@@ -59,6 +207,11 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
     return `${Math.ceil(diffDays / 30)} months ago`;
   };
 
+  // Contact action handlers
+  const handlePhoneClick = () => {
+    window.open(`tel:${donor.phone}`, '_self');
+  };
+
   const handleQuickCall = () => {
     window.open(`tel:${donor.phone}`, '_self');
   };
@@ -73,12 +226,96 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
     alert(`📅 Opening calendar to schedule meeting with ${donor.name}\n\nSuggested times based on AI analysis:\n${donor.contactIntelligence?.bestContactTimes?.join('\n') || 'Business hours'}\n\nPreferred method: ${donor.contactIntelligence?.preferredContactMethod || 'Phone'}`);
   };
 
+  const handleDialRClick = () => {
+    setShowDialRModal(true);
+  };
+
+  const handleEmailSuggestion = () => {
+    const suggestions = [
+      'Thank you for your recent support - here\'s the impact you\'ve made',
+      'Invitation to exclusive donor briefing on campaign progress',
+      'Personal update from the candidate on key policy wins'
+    ];
+    const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+    alert(`📧 Email Suggestion:\n\nSubject: ${randomSuggestion}\n\nThis suggestion is based on donor engagement patterns and current campaign priorities. Consider pushing to MailChimp for automated delivery.`);
+  };
+
+  const handleFindLookalikes = () => {
+    setShowLookalikes(true);
+  };
+
+  const generateAISnapshot = () => {
+    const performance = getPerformanceStatus();
+    const daysSinceLastGift = Math.floor((Date.now() - new Date(donor.lastGiftDate).getTime()) / (1000 * 60 * 60 * 24));
+
+    return `${donor.name} is a ${performance.type === 'over' ? 'highly engaged' : performance.type === 'under' ? 'high-potential' : 'consistent'} donor with ${donor.giftCount} lifetime gifts totaling ${formatCurrency(donor.totalLifetimeGiving)}. ${performance.type === 'over' ? 'Currently giving above capacity - focus on stewardship.' : performance.type === 'under' ? 'Significant untapped potential based on wealth indicators.' : 'Reliable supporter with steady giving pattern.'} Last gift was ${daysSinceLastGift} days ago. ${donor.contactIntelligence?.preferredContactMethod === 'email' ? 'Prefers email communication and responds well to policy updates.' : 'Phone outreach typically yields better engagement.'} ${donor.predictedPotential > 80 ? 'High likelihood of increased giving with proper cultivation.' : 'Maintain current engagement level with quarterly touchpoints.'}`;
+  };
+
+  // Generate detailed AI suggested actions for donor profile (from original)
+  const getDetailedSuggestedActions = (donor: Donor) => {
+    const hasPhoneEngagement = donor.engagementScore > 7 || donor.totalLifetimeGiving > 1000;
+    const isHighPotential = donor.predictedPotential >= 80;
+    const isLapsed = donor.status === 'lapsed';
+    const isNewDonor = donor.status === 'new';
+    const hasRecentGift = new Date(donor.lastGiftDate) > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const isHighValue = donor.totalLifetimeGiving > 2000;
+
+    const actions = [];
+
+    if (isLapsed && hasPhoneEngagement) {
+      actions.push({
+        icon: <PhoneIcon className="w-4 h-4 text-blue-600" />,
+        title: 'Recommended Immediate Call',
+        description: 'DialR indicates this donor typically engages via phone calls.',
+        reasoning: 'DialR data shows successful prior phone engagements. Lapsed status requires immediate personal outreach.',
+        priority: 'high'
+      });
+    }
+
+    if (isHighPotential || isHighValue) {
+      actions.push({
+        icon: <EnvelopeIcon className="w-4 h-4 text-purple-600" />,
+        title: 'Follow-up Email Campaign',
+        description: `Send personalized ${donor.totalLifetimeGiving > 1000 ? 'impact report' : 'education update'} to align with donor interests.`,
+        reasoning: `High ${isHighPotential ? 'potential score (' + donor.predictedPotential + '%)' : 'lifetime giving ($' + donor.totalLifetimeGiving.toLocaleString() + ')'} indicates opportunity for targeted communication.`,
+        priority: 'medium'
+      });
+    }
+
+    if (donor.giftCount >= 4 || hasRecentGift) {
+      actions.push({
+        icon: <CalendarIcon className="w-4 h-4 text-green-600" />,
+        title: 'Quarterly Check-in Schedule',
+        description: 'Schedule recurring quarterly outreach to maintain consistent giving relationship.',
+        reasoning: `${donor.giftCount >= 4 ? 'Multiple gifts (' + donor.giftCount + ')' : 'Recent gift activity'} indicates engaged donor requiring regular stewardship.`,
+        priority: 'low'
+      });
+    }
+
+    if (isNewDonor) {
+      actions.push({
+        icon: <SparklesIcon className="w-4 h-4 text-orange-600" />,
+        title: 'New Donor Welcome Series',
+        description: 'Implement 7-day welcome sequence with impact stories and second gift ask.',
+        reasoning: 'New donor status requires immediate cultivation within optimal 7-day conversion window.',
+        priority: 'high'
+      });
+    }
+
+    return actions;
+  };
+
+  const performance = getPerformanceStatus();
+  const smartSuggestions = getSmartSuggestions();
+  const askAmount = getGeneratedAskAmount();
+  const aiSnapshot = generateAISnapshot();
+
   return (
     <div className="space-y-6">
-      {/* Action-Oriented Header */}
+      {/* Enhanced Header with New Features */}
       <Card>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Profile Info */}
+          {/* Profile Info with Enhanced Badges */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
             <div className="relative">
               <img src={donor.photoUrl} alt={donor.name} className="w-24 h-24 rounded-full mb-3 ring-4 ring-crimson-blue/20" />
@@ -87,20 +324,36 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   <FireIcon className="w-3 h-3 text-white" />
                 </div>
               )}
+              {performance.type === 'over' && (
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                  <TrendingUpIcon className="w-3 h-3 text-white" />
+                </div>
+              )}
             </div>
             <h2 className="text-xl font-bold text-text-primary">{donor.name}</h2>
+            <button
+              onClick={handlePhoneClick}
+              className="text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline transition-colors text-sm"
+            >
+              {donor.phone}
+            </button>
             <p className="text-sm text-text-secondary">{donor.email}</p>
-            <p className="text-sm text-text-secondary">{donor.phone}</p>
             <div className="flex flex-wrap gap-1 mt-2">
               {donor.aiBadges.slice(0, 2).map(badge => (
                 <Badge key={badge} color="blue" className="text-xs">{badge}</Badge>
               ))}
+              <Badge color={performance.type === 'over' ? 'orange' : performance.type === 'under' ? 'blue' : 'green'} className="text-xs">
+                {performance.type === 'over' ? 'Over-Performer' : performance.type === 'under' ? 'High Potential' : 'Consistent'}
+              </Badge>
+              {donor.predictedPotential > 80 && (
+                <Badge color="purple" className="text-xs">Expansion Opportunity</Badge>
+              )}
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Enhanced Quick Actions with DialR */}
           <div className="lg:col-span-1">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Actions</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Contact Actions</h3>
             <div className="space-y-2">
               <Button
                 onClick={handleQuickCall}
@@ -111,12 +364,20 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 Call Now
               </Button>
               <Button
-                onClick={handleQuickEmail}
+                onClick={handleDialRClick}
                 className="w-full justify-start text-sm py-2"
                 variant="secondary"
               >
-                <MailIcon className="w-4 h-4 mr-2" />
-                Send Email
+                <UserGroupIcon className="w-4 h-4 mr-2" />
+                Send to DialR
+              </Button>
+              <Button
+                onClick={handleEmailSuggestion}
+                className="w-full justify-start text-sm py-2"
+                variant="secondary"
+              >
+                <EnvelopeIcon className="w-4 h-4 mr-2" />
+                Suggest Email
               </Button>
               <Button
                 onClick={handleScheduleMeeting}
@@ -129,69 +390,32 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
             </div>
           </div>
 
-          {/* Contact Intelligence */}
+          {/* AI-Generated Ask Amount */}
           <div className="lg:col-span-1">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Contact Intelligence</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <ClockIcon className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">Last Contact:</span>
-                <span className="font-medium">
-                  {donor.contactIntelligence ? formatLastContact(donor.contactIntelligence.lastContactDate) : 'Unknown'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <PhoneIcon className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">Prefers:</span>
-                <span className="font-medium capitalize">
-                  {donor.contactIntelligence?.preferredContactMethod || 'Phone'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ClockIcon className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">Best Time:</span>
-                <span className="font-medium text-xs">
-                  {donor.contactIntelligence?.bestContactTimes?.[0] || 'Business hours'}
-                </span>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">AI-Generated Ask</h3>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-2xl font-bold text-green-700">{formatCurrency(askAmount.amount)}</div>
+              <div className="text-xs text-green-600 mt-1" title={askAmount.explanation}>
+                {askAmount.explanation}
               </div>
             </div>
           </div>
 
-          {/* Urgency & Insights */}
+          {/* Smart Suggestions Preview */}
           <div className="lg:col-span-1">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">AI Insights</h3>
-            <div className="space-y-2">
-              {donor.urgencyIndicators && (
-                <div className={`px-3 py-2 rounded-lg border text-xs font-medium ${getUrgencyColor(donor.urgencyIndicators.urgencyLevel)}`}>
-                  <div className="flex items-center gap-1">
-                    <ExclamationTriangleIcon className="w-3 h-3" />
-                    {donor.urgencyIndicators.urgencyLevel.toUpperCase()} PRIORITY
-                  </div>
-                  <div className="mt-1 text-xs opacity-90">
-                    {donor.urgencyIndicators.urgencyReason}
-                  </div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Top Suggestion</h3>
+            {smartSuggestions.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  {smartSuggestions[0].icon}
+                  <span className="font-medium text-blue-900 text-sm">{smartSuggestions[0].title}</span>
                 </div>
-              )}
-
-              {donor.predictiveInsights?.nextBestAction && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
-                  <div className="flex items-center gap-1 text-blue-800 text-xs font-medium">
-                    <BoltIcon className="w-3 h-3" />
-                    NEXT BEST ACTION
-                  </div>
-                  <div className="text-xs text-blue-700 mt-1">
-                    {donor.predictiveInsights.nextBestAction.action}
-                  </div>
-                  <div className="text-xs text-blue-600 mt-1">
-                    {donor.predictiveInsights.nextBestAction.confidence}% confidence
-                  </div>
-                </div>
-              )}
-            </div>
+                <p className="text-xs text-blue-700">{smartSuggestions[0].description}</p>
+              </div>
+            )}
           </div>
         </div>
       </Card>
-
       {/* Enhanced Tabbed Navigation */}
       <Card>
         <div className="border-b border-gray-200 mb-6">
@@ -220,68 +444,95 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
 
         {/* Tab Content */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6">
               {/* Giving Overview */}
               <div>
                 <h3 className="text-lg font-semibold text-text-primary mb-4">Giving Overview</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="bg-gray-50 p-4 rounded-lg text-center">
                     <p className="text-sm text-text-secondary">Total Raised</p>
-                    <p className="text-2xl font-bold text-crimson-blue">${donor.givingOverview.totalRaised.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-crimson-blue">${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg text-center">
                     <p className="text-sm text-text-secondary">Consecutive Gifts</p>
-                    <p className="text-2xl font-bold text-green-600">{donor.givingOverview.consecutiveGifts}</p>
+                    <p className="text-2xl font-bold text-green-600">{donor.givingOverview?.consecutiveGifts || donor.giftCount}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg text-center">
                     <p className="text-sm text-text-secondary">Tier</p>
-                    <p className="text-lg font-semibold text-orange-600">{donor.givingOverview.tier}</p>
+                    <p className="text-lg font-semibold text-orange-600">{donor.givingOverview?.tier || (donor.totalLifetimeGiving > 1000 ? 'Gold' : 'Silver')}</p>
                   </div>
                 </div>
-                <div style={{ width: '100%', height: 250 }}>
-                  <ResponsiveContainer>
-                    <BarChart data={donor.givingOverview.topGifts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `$${value/1000}k`} />
-                      <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} cursor={{fill: 'rgba(47, 127, 195, 0.1)'}} />
-                      <Bar dataKey="value" fill="#2f7fc3" barSize={40} radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
 
-            <div className="lg:col-span-1 space-y-6">
-              {/* AI Snapshot */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <SparklesIcon className="w-5 h-5 text-crimson-blue" />
-                  <h3 className="text-lg font-semibold text-text-primary">AI Snapshot</h3>
+                {/* Performance Status */}
+                <div className={`mt-4 p-3 rounded-lg border ${performance.color}`}>
+                  <div className="flex items-center gap-2">
+                    <TrendingUpIcon className="w-4 h-4" />
+                    <span className="font-medium text-sm">{performance.message}</span>
+                  </div>
                 </div>
-                <p className="text-text-secondary text-sm leading-relaxed">{donor.aiSnapshot}</p>
               </div>
 
-              {/* Quick Actions */}
+              {/* Enriched Data Section */}
+              {enrichedData && (
+                <div>
+                  <h3 className="text-lg font-semibold text-text-primary mb-4">Enriched Data ({enrichedData.dataSource})</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-gray-500">Age:</span>
+                        <span className="ml-2 font-medium">{enrichedData.age}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Gender:</span>
+                        <span className="ml-2 font-medium">{enrichedData.gender}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Income:</span>
+                        <span className="ml-2 font-medium">{enrichedData.householdIncome}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Homeowner:</span>
+                        <span className="ml-2 font-medium">{enrichedData.homeowner ? 'Yes' : 'No'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Education:</span>
+                        <span className="ml-2 font-medium">{enrichedData.education}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Party:</span>
+                        <span className="ml-2 font-medium">{enrichedData.party}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Giving Capacity:</span>
+                        <span className="ml-2 font-medium">{enrichedData.givingCapacity}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Political Engagement:</span>
+                        <span className="ml-2 font-medium">{enrichedData.politicalEngagement}%</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 text-xs text-gray-500">
+                      Data last updated: {enrichedData.lastUpdated}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Lookalike Finder */}
               <div>
-                <h3 className="text-lg font-semibold text-text-primary mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 gap-3">
-                  <Button onClick={handleQuickEmail} className="justify-start">
-                    <MailIcon className="w-4 h-4 mr-2" /> Send Email
-                  </Button>
-                  <Button onClick={handleQuickCall} variant="secondary" className="justify-start">
-                    <PhoneIcon className="w-4 h-4 mr-2" /> Call Now
-                  </Button>
-                  <Button onClick={handleScheduleMeeting} variant="secondary" className="justify-start">
-                    <CalendarIcon className="w-4 h-4 mr-2" /> Schedule Meeting
-                  </Button>
-                  <Button variant="secondary" className="justify-start">
-                    <DocumentTextIcon className="w-4 h-4 mr-2" /> Add Note
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Lookalike Finder</h3>
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <UserGroupIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h4 className="font-medium text-gray-900 mb-2">Find Similar Donors</h4>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Use AI to find donors with similar demographics, giving patterns, and engagement behavior.
+                  </p>
+                  <Button onClick={handleFindLookalikes}>
+                    <EyeIcon className="w-4 h-4 mr-2" />
+                    Find Lookalikes
                   </Button>
                 </div>
               </div>
-            </div>
           </div>
         )}
 
@@ -477,69 +728,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 ))}
               </div>
             </div>
-
-            {/* Website Behavior */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <ComputerDesktopIcon className="w-5 h-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-text-primary">Website Behavior</h3>
-              </div>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-purple-700">Last Visit:</span>
-                    <span className="font-medium text-purple-800">{donor.actionMetrics.websiteBehavior.lastVisit}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-purple-700">Pages Viewed:</span>
-                    <span className="font-medium text-purple-800">{donor.actionMetrics.websiteBehavior.pagesViewed}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-purple-700">Time Spent:</span>
-                    <span className="font-medium text-purple-800">{donor.actionMetrics.websiteBehavior.timeSpent} minutes</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Social Media & Volunteer Activities */}
-            <div className="space-y-4">
-              {/* Social Media Engagement */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <HeartIcon className="w-5 h-5 text-pink-600" />
-                  <h3 className="text-lg font-semibold text-text-primary">Social Media</h3>
-                </div>
-                <div className="space-y-2">
-                  {donor.actionMetrics.socialMediaEngagement.map((social, index) => (
-                    <div key={index} className="bg-pink-50 border border-pink-200 rounded-lg p-3">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className="font-medium text-pink-900">{social.platform}</div>
-                          <div className="text-sm text-pink-700">{social.activity}</div>
-                        </div>
-                        <div className="text-xs text-pink-600">{social.lastEngagement}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Volunteer Activities */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <UserGroupIcon className="w-5 h-5 text-orange-600" />
-                  <h3 className="text-lg font-semibold text-text-primary">Volunteer Activities</h3>
-                </div>
-                <div className="space-y-1">
-                  {donor.actionMetrics.volunteerActivities.map((activity, index) => (
-                    <div key={index} className="bg-orange-50 border border-orange-200 rounded px-3 py-2">
-                      <span className="text-orange-800 text-sm">{activity}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -576,34 +764,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
               </div>
             </div>
 
-            {/* Donation Likelihood */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <TrendingUpIcon className="w-5 h-5 text-green-600" />
-                <h3 className="text-lg font-semibold text-text-primary">Donation Likelihood</h3>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { period: 'Next 30 Days', value: donor.predictiveInsights.donationLikelihood.next30Days, color: 'green' },
-                  { period: 'Next 60 Days', value: donor.predictiveInsights.donationLikelihood.next60Days, color: 'blue' },
-                  { period: 'Next 90 Days', value: donor.predictiveInsights.donationLikelihood.next90Days, color: 'purple' }
-                ].map((item, index) => (
-                  <div key={index} className={`bg-${item.color}-50 border border-${item.color}-200 rounded-lg p-3`}>
-                    <div className="flex justify-between items-center">
-                      <span className={`text-${item.color}-700 font-medium`}>{item.period}</span>
-                      <span className={`text-${item.color}-800 font-bold`}>{item.value}%</span>
-                    </div>
-                    <div className={`w-full bg-${item.color}-200 rounded-full h-2 mt-2`}>
-                      <div
-                        className={`bg-${item.color}-600 h-2 rounded-full`}
-                        style={{ width: `${item.value}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Churn Risk */}
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -633,35 +793,82 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 </div>
               </div>
             </div>
-
-            {/* Upsell Opportunities */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <TrophyIcon className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-lg font-semibold text-text-primary">Upsell Opportunities</h3>
-              </div>
-              <div className="space-y-3">
-                {donor.predictiveInsights.upsellOpportunities.map((opportunity, index) => (
-                  <div key={index} className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium text-indigo-900">{opportunity.type}</div>
-                        <div className="text-sm text-indigo-700">Timing: {opportunity.timing}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-indigo-800">${opportunity.amount.toLocaleString()}</div>
-                        <div className="text-xs text-indigo-600">{opportunity.confidence}% confidence</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </Card>
+
+      {/* DialR Modal */}
+      {showDialRModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Send to DialR</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Add {donor.name} to a DialR list for phone outreach.
+              </p>
+              <div className="space-y-3">
+                <Button className="w-full justify-start">
+                  <StarIcon className="w-4 h-4 mr-2" />
+                  My List
+                </Button>
+                <Button variant="secondary" className="w-full justify-start">
+                  <UserGroupIcon className="w-4 h-4 mr-2" />
+                  Major Donors List
+                </Button>
+                <Button variant="secondary" className="w-full justify-start">
+                  <PhoneIcon className="w-4 h-4 mr-2" />
+                  Follow-up Calls
+                </Button>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <Button variant="secondary" onClick={() => setShowDialRModal(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={() => setShowDialRModal(false)} className="flex-1">
+                  Add to List
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lookalikes Modal */}
+      {showLookalikes && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Similar Donors Found</h3>
+              <p className="text-sm text-gray-600 mt-1">5 donors with similar profiles to {donor.name}</p>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              <div className="space-y-3">
+                {['Sarah Mitchell', 'David Chen', 'Maria Rodriguez', 'James Wilson', 'Lisa Thompson'].map((name, index) => (
+                  <div key={name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <div className="font-medium text-gray-900">{name}</div>
+                      <div className="text-sm text-gray-600">
+                        {Math.floor(Math.random() * 20) + 80}% similarity • ${Math.floor(Math.random() * 1000) + 500} avg gift
+                      </div>
+                    </div>
+                    <Button size="sm" variant="secondary">View Profile</Button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3 mt-6">
+                <Button variant="secondary" onClick={() => setShowLookalikes(false)} className="flex-1">
+                  Close
+                </Button>
+                <Button className="flex-1">
+                  Create Segment from Lookalikes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 export default DonorProfile;
+

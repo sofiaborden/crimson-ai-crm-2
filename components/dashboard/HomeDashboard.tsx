@@ -5,11 +5,10 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { SparklesIcon, LightBulbIcon, CheckCircleIcon, ArrowTrendingUpIcon, UsersIcon, PuzzlePieceIcon, ArrowPathIcon, MapPinIcon, TrendingUpIcon, MagnifyingGlassIcon } from '../../constants';
 import RealTimeDonationTracker from './RealTimeDonationTracker';
-import AIDailyBriefing from './AIDailyBriefing';
-import QuickActionsBar from './QuickActionsBar';
-import HotLeadsSection from './HotLeadsSection';
+import SmartActionCenter from './SmartActionCenter';
 import SearchModal from '../search/SearchModal';
 import { useSearch } from '../../hooks/useSearch';
+
 
 interface HomeDashboardProps {
   setView: (view: View) => void;
@@ -134,22 +133,13 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId }) 
       {/* Compact Real-Time Donation Tracker */}
       <RealTimeDonationTracker />
 
-      {/* Enhanced Quick Actions Bar - Always Visible */}
-      <QuickActionsBar />
-
-      {/* Three-Column Layout for Better Space Usage */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Column 1: AI Daily Briefing */}
+      {/* Smart Action Center - Combines AI Briefing and Hot Leads */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="lg:col-span-1">
-          <AIDailyBriefing setView={setView} setProfileId={setProfileId} />
+          <SmartActionCenter setView={setView} setProfileId={setProfileId} />
         </div>
 
-        {/* Column 2: Hot Leads Section */}
-        <div className="lg:col-span-1">
-          <HotLeadsSection />
-        </div>
-
-        {/* Column 3: AI Curated Segments */}
+        {/* AI Curated Segments */}
         <div className="lg:col-span-1">
           <Card title="AI Curated Segments" className="hover:shadow-lg transition-shadow duration-300">
             <div className="space-y-3">

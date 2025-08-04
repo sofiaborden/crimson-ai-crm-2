@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import ActionButton from '../ui/ActionButton';
+import ActionsDropdown from '../ui/ActionsDropdown';
 import SmartAlerts from '../ui/SmartAlerts';
 import CallScriptGenerator from '../ui/CallScriptGenerator';
 import PredictiveScoring from '../ui/PredictiveScoring';
 import DonorListView from '../ui/DonorListView';
 import SmartListBuilder from '../ui/SmartListBuilder';
 import CampaignBuilder from '../ui/CampaignBuilder';
+import AudienceInsights from '../insights/AudienceInsights';
+import PerformanceTable from '../insights/PerformanceTable';
 import {
   ArrowPathIcon,
   LightBulbIcon,
@@ -23,7 +26,19 @@ import {
   ArrowDownTrayIcon,
   ListBulletIcon,
   DocumentTextIcon,
-  ClockIcon
+  ClockIcon,
+  FunnelIcon,
+  SettingsIcon,
+  XMarkIcon,
+  ChevronDownIcon,
+  UserGroupIcon,
+  TrophyIcon,
+  HeartIcon,
+  StarIcon,
+  BookmarkIcon,
+  UserIcon,
+  TrendingUpIcon,
+  UsersIcon
 } from '../../constants';
 
 interface Segment {
@@ -45,7 +60,7 @@ const segments: Segment[] = [
     description: 'Launch call/text reactivation campaign.',
     count: 1571,
     potentialRevenue: 113000,
-    suggestedAction: 'Launch call/text reactivation campaign.',
+    suggestedAction: 'Launch call/text reactivation campaign targeting $72 avg gift. Add to DialR for personalized outreach or push to MailChimp for win-back series.',
     icon: <ArrowPathIcon className="w-5 h-5" />
   },
   {
@@ -55,8 +70,8 @@ const segments: Segment[] = [
     description: 'Send upgrade ask emails & calls.',
     count: 578,
     potentialRevenue: 21300,
-    suggestedAction: 'Send upgrade ask emails & calls.',
-    icon: <LightBulbIcon className="w-5 h-5" />
+    suggestedAction: 'Send upgrade ask emails & calls targeting $250+ gifts (current avg: $180). Push to MailChimp for A/B testing different ask amounts.',
+    icon: <TrendingUpIcon className="w-5 h-5" />
   },
   {
     id: 'frequent-flyers',
@@ -65,8 +80,8 @@ const segments: Segment[] = [
     description: 'Invite to monthly giving program.',
     count: 346,
     potentialRevenue: 9200,
-    suggestedAction: 'Invite to monthly giving program.',
-    icon: <ArrowPathRoundedSquareIcon className="w-5 h-5" />
+    suggestedAction: 'Invite to monthly giving program with $25/month ask (based on $27 avg gift). Create targeted segment for sustained giving conversion.',
+    icon: <HeartIcon className="w-5 h-5" />
   },
   {
     id: 'new-faces',
@@ -75,8 +90,8 @@ const segments: Segment[] = [
     description: 'Send welcome series + 2nd gift ask.',
     count: 185,
     potentialRevenue: 6500,
-    suggestedAction: 'Send welcome series + 2nd gift ask.',
-    emoji: '✨'
+    suggestedAction: 'Send welcome series + 2nd gift ask within 7 days (optimal conversion window). Push to MailChimp for automated welcome sequence.',
+    icon: <StarIcon className="w-5 h-5" />
   },
   {
     id: 'neighborhood-mvps',
@@ -85,7 +100,7 @@ const segments: Segment[] = [
     description: 'Schedule major donor calls/events.',
     count: 303,
     potentialRevenue: 104000,
-    suggestedAction: 'Schedule major donor calls/events.',
+    suggestedAction: 'Schedule major donor calls/events targeting $500+ gifts (capacity analysis shows $343 avg potential). Add to DialR for gift officer assignment.',
     icon: <MapPinIcon className="w-5 h-5" />
   },
   {
@@ -95,8 +110,8 @@ const segments: Segment[] = [
     description: 'Send thank you + 2nd ask appeal.',
     count: 181,
     potentialRevenue: 5900,
-    suggestedAction: 'Send thank you + 2nd ask appeal.',
-    icon: <SparklesIcon className="w-5 h-5" />
+    suggestedAction: 'Send thank you + 2nd ask appeal within 48 hours (highest conversion rate). Push to MailChimp for automated stewardship sequence.',
+    icon: <UserIcon className="w-5 h-5" />
   },
   {
     id: 'quiet-giants',
@@ -105,8 +120,8 @@ const segments: Segment[] = [
     description: 'Assign to gift officer for personalized outreach.',
     count: 7,
     potentialRevenue: 6000,
-    suggestedAction: 'Assign to gift officer for personalized outreach.',
-    icon: <EyeIcon className="w-5 h-5" />
+    suggestedAction: 'Assign to gift officer for personalized outreach targeting $857 avg capacity. Create high-priority segment for immediate follow-up.',
+    icon: <TrophyIcon className="w-5 h-5" />
   },
   {
     id: 'next-gift-predictors',
@@ -115,8 +130,28 @@ const segments: Segment[] = [
     description: 'Send renewal reminders + stewardship call.',
     count: 767,
     potentialRevenue: 14800,
-    suggestedAction: 'Send renewal reminders + stewardship call.',
-    icon: <ChartBarIcon className="w-5 h-5" />
+    suggestedAction: 'Send renewal reminders + stewardship calls within next 30 days (predicted giving window). Add to DialR for systematic outreach.',
+    icon: <BookmarkIcon className="w-5 h-5" />
+  },
+  {
+    id: 'over-performers',
+    funName: 'Hidden Gems',
+    originalName: 'Over-Performers (Giving 40%+ above predicted capacity)',
+    description: 'Upgrade to major gift cultivation.',
+    count: 234,
+    potentialRevenue: 89000,
+    suggestedAction: 'Upgrade ask strategy targeting $500+ gifts (current avg: $285). Create VIP segment for exclusive stewardship and major gift cultivation.',
+    icon: <SparklesIcon className="w-5 h-5" />
+  },
+  {
+    id: 'under-performers',
+    funName: 'Missed Opportunities',
+    originalName: 'Under-Performers (Giving 60%+ below predicted capacity)',
+    description: 'Diagnostic campaign to identify barriers.',
+    count: 1876,
+    potentialRevenue: 156000,
+    suggestedAction: 'Diagnostic campaign to identify barriers. A/B test messaging approaches and create re-engagement segment for targeted outreach.',
+    icon: <UserGroupIcon className="w-5 h-5" />
   }
 ];
 
@@ -127,15 +162,69 @@ const SegmentsDashboard: React.FC = () => {
   const [showDonorList, setShowDonorList] = useState(false);
   const [showSmartListBuilder, setShowSmartListBuilder] = useState(false);
   const [showCampaignBuilder, setShowCampaignBuilder] = useState(false);
+
+  // Sorting state
+  const [sortField, setSortField] = useState<'name' | 'count' | 'revenue' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSegmentClick = (segmentId: string, segmentName: string) => {
+    setSelectedSegment({ id: segmentId, name: segmentName });
+    setShowDonorList(true);
+  };
+
+  const handleSort = (field: 'name' | 'count' | 'revenue') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  // Sort segments based on current sort field and direction
+  const sortedSegments = [...segments].sort((a, b) => {
+    if (!sortField) return 0;
+
+    let aValue, bValue;
+    switch (sortField) {
+      case 'name':
+        aValue = a.funName.toLowerCase();
+        bValue = b.funName.toLowerCase();
+        break;
+      case 'count':
+        aValue = a.count;
+        bValue = b.count;
+        break;
+      case 'revenue':
+        aValue = a.potentialRevenue;
+        bValue = b.potentialRevenue;
+        break;
+      default:
+        return 0;
+    }
+
+    if (sortDirection === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+    } else {
+      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+    }
+  });
+
   return (
     <div className="space-y-6">
       {/* Smart Alerts */}
       <SmartAlerts />
 
+      {/* Segment Performance - Top Priority */}
+      <div>
+        <AudienceInsights onSegmentClick={handleSegmentClick} />
+      </div>
+
       <div>
         <h2 className="text-2xl font-bold text-text-primary">AI Curated Segments</h2>
-        <p className="text-text-secondary">Smart donor segments powered by AI to maximize your fundraising impact.</p>
       </div>
+
+
 
       {/* Quick Actions Bar */}
       <Card className="bg-gradient-to-r from-crimson-blue to-crimson-red text-white">
@@ -193,22 +282,63 @@ const SegmentsDashboard: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-base-300">
-                <th className="text-left py-3 px-4 font-semibold text-text-primary">Segment</th>
+                <th
+                  className="text-left py-3 px-4 font-semibold text-text-primary cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center gap-1">
+                    Segment
+                    {sortField === 'name' && (
+                      <span className="text-crimson-blue">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
+                </th>
                 <th className="text-left py-3 px-4 font-semibold text-text-primary">Description</th>
-                <th className="text-center py-3 px-4 font-semibold text-text-primary">Donor Count</th>
-                <th className="text-center py-3 px-4 font-semibold text-text-primary">Potential Revenue</th>
+                <th
+                  className="text-center py-3 px-4 font-semibold text-text-primary cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleSort('count')}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    Donor Count
+                    {sortField === 'count' && (
+                      <span className="text-crimson-blue">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
+                </th>
+                <th
+                  className="text-center py-3 px-4 font-semibold text-text-primary cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleSort('revenue')}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    Potential Revenue
+                    {sortField === 'revenue' && (
+                      <span className="text-crimson-blue">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
+                </th>
                 <th className="text-left py-3 px-4 font-semibold text-text-primary">Suggested Action</th>
                 <th className="text-center py-3 px-4 font-semibold text-text-primary">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {segments.map((segment) => (
+              {sortedSegments.map((segment) => (
                 <tr key={segment.id} className="border-b border-base-200 hover:bg-base-50">
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
                       <div className="text-crimson-blue">{segment.icon}</div>
                       <div>
-                        <h4 className="font-semibold text-text-primary">{segment.funName}</h4>
+                        <button
+                          onClick={() => handleSegmentClick(segment.id, segment.funName)}
+                          className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left"
+                        >
+                          {segment.funName}
+                        </button>
                       </div>
                     </div>
                   </td>
@@ -223,7 +353,12 @@ const SegmentsDashboard: React.FC = () => {
                     </div>
                   </td>
                   <td className="py-4 px-4 text-center">
-                    <span className="font-bold text-lg text-text-primary">{segment.count.toLocaleString()}</span>
+                    <button
+                      onClick={() => handleSegmentClick(segment.id, segment.funName)}
+                      className="font-bold text-lg text-crimson-blue hover:text-crimson-dark-blue transition-colors"
+                    >
+                      {segment.count.toLocaleString()}
+                    </button>
                   </td>
                   <td className="py-4 px-4 text-center">
                     <div className="group relative">
@@ -238,89 +373,12 @@ const SegmentsDashboard: React.FC = () => {
                   <td className="py-4 px-4">
                     <p className="text-sm text-text-secondary">{segment.suggestedAction}</p>
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="grid grid-cols-3 gap-1 max-w-xs mx-auto">
-                      {/* Primary Actions Row */}
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="flex items-center justify-center gap-1 text-xs font-medium px-2 py-1"
-                        title="View donor list with contact info"
-                        onClick={() => {
-                          setSelectedSegment({ id: segment.id, name: segment.funName });
-                          setShowDonorList(true);
-                        }}
-                      >
-                        <ListBulletIcon className="w-3 h-3" />
-                        View List
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="flex items-center justify-center gap-1 text-xs font-medium px-2 py-1"
-                        title="Create exportable smart list"
-                        onClick={() => {
-                          setSelectedSegment({ id: segment.id, name: segment.funName });
-                          setShowSmartListBuilder(true);
-                        }}
-                      >
-                        <DocumentTextIcon className="w-3 h-3" />
-                        Smart List
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="flex items-center justify-center gap-1 text-xs font-medium px-2 py-1"
-                        title="Launch targeted campaign"
-                        onClick={() => {
-                          setSelectedSegment({ id: segment.id, name: segment.funName });
-                          setShowCampaignBuilder(true);
-                        }}
-                      >
-                        <EnvelopeIcon className="w-3 h-3" />
-                        Campaign
-                      </Button>
-
-                      {/* Secondary Actions Row */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center justify-center gap-1 text-xs font-medium px-2 py-1"
-                        title="Get AI-suggested ask amounts"
-                        onClick={() => {
-                          setSelectedSegment({ id: segment.id, name: segment.funName });
-                          setShowPredictiveScoring(true);
-                        }}
-                      >
-                        <CurrencyDollarIcon className="w-3 h-3" />
-                        Ask Amounts
-                      </Button>
-                      <ActionButton
-                        type="calendar"
-                        eventTitle={`Follow up with ${segment.funName}`}
-                        eventDate={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center justify-center gap-1 text-xs font-medium px-2 py-1"
-                        title="Schedule follow-up reminders"
-                      >
-                        <ClockIcon className="w-3 h-3" />
-                        Schedule
-                      </ActionButton>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center justify-center gap-1 text-xs font-medium px-2 py-1"
-                        title="Generate AI call script"
-                        onClick={() => {
-                          setSelectedSegment({ id: segment.id, name: segment.funName });
-                          setShowCallScript(true);
-                        }}
-                      >
-                        <DocumentTextIcon className="w-3 h-3" />
-                        Script
-                      </Button>
-                    </div>
+                  <td className="py-4 px-4 text-center">
+                    <ActionsDropdown
+                      segmentId={segment.id}
+                      segmentName={segment.funName}
+                      donorCount={segment.count}
+                    />
                   </td>
                 </tr>
               ))}
@@ -329,33 +387,9 @@ const SegmentsDashboard: React.FC = () => {
         </div>
       </Card>
 
-      {/* Revenue Opportunity Tracker */}
-      <Card title="Revenue Opportunity Tracker" className="bg-green-50 border-green-200">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <h4 className="text-2xl font-bold text-green-600">$280,700</h4>
-            <p className="text-sm text-green-700">Total Potential</p>
-          </div>
-          <div className="text-center">
-            <h4 className="text-2xl font-bold text-blue-600">$42,105</h4>
-            <p className="text-sm text-blue-700">In Progress (15%)</p>
-          </div>
-          <div className="text-center">
-            <h4 className="text-2xl font-bold text-orange-600">$238,595</h4>
-            <p className="text-sm text-orange-700">Untapped (85%)</p>
-          </div>
-          <div className="text-center">
-            <Button className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2">
-              <SparklesIcon className="w-4 h-4" />
-              Start Campaign
-            </Button>
-          </div>
-        </div>
-        <div className="mt-4 bg-gray-200 rounded-full h-3">
-          <div className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full" style={{width: '15%'}}></div>
-        </div>
-        <p className="text-xs text-gray-600 mt-2">Progress: 15% of potential revenue being actively pursued</p>
-      </Card>
+
+
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card title="Segment Performance" className="lg:col-span-2">
@@ -373,6 +407,20 @@ const SegmentsDashboard: React.FC = () => {
                 <p className="text-sm text-blue-600">Neighborhood MVPs - ~$104,000 potential</p>
               </div>
               <SparklesIcon className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div>
+                <h5 className="font-semibold text-orange-800">Biggest Missed Opportunity</h5>
+                <p className="text-sm text-orange-600">Under-Performers - $156,000 untapped potential</p>
+              </div>
+              <CurrencyDollarIcon className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="flex justify-between items-center p-3 bg-purple-50 border border-purple-200 rounded-lg">
+              <div>
+                <h5 className="font-semibold text-purple-800">Hidden Gems</h5>
+                <p className="text-sm text-purple-600">Over-Performers - 234 donors ready for major gift asks</p>
+              </div>
+              <SparklesIcon className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex justify-between items-center p-3 bg-purple-50 border border-purple-200 rounded-lg">
               <div>
@@ -526,6 +574,9 @@ const SegmentsDashboard: React.FC = () => {
           onClose={() => setShowCampaignBuilder(false)}
         />
       )}
+
+      {/* Performance Table at Bottom */}
+      <PerformanceTable onSegmentClick={handleSegmentClick} />
     </div>
   );
 };

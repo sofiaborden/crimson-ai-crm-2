@@ -12,7 +12,9 @@ interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({ children, className = '', title, titleClassName, onClick, headerActions }) => {
-  const cardClasses = `bg-base-100 rounded-xl shadow-md overflow-hidden transition-all duration-300 ${onClick ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer' : ''} ${className}`;
+  const hasOverflowVisible = className.includes('overflow-visible');
+  const overflowClass = hasOverflowVisible ? 'overflow-visible' : 'overflow-hidden';
+  const cardClasses = `bg-base-100 rounded-xl shadow-md ${overflowClass} transition-all duration-300 ${onClick ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer' : ''} ${className}`;
 
   return (
     <div className={cardClasses} onClick={onClick}>

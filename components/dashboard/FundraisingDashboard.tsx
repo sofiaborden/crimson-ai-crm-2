@@ -2,14 +2,22 @@ import React, { useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import SegmentsDashboard from './SegmentsDashboard';
-import ROITrackingDashboard from './ROITrackingDashboard';
+import ComprehensiveAnalytics from './ComprehensiveAnalytics';
 import PerformanceAnalytics from './PerformanceAnalytics';
 import DonorProfileModal from '../ui/DonorProfileModal';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import { Donor } from '../../types';
-import { ArrowTrendingUpIcon, UsersIcon, SparklesIcon } from '../../constants';
+import {
+  ArrowTrendingUpIcon,
+  UsersIcon,
+  SparklesIcon,
+  CurrencyDollarIcon,
+  ExclamationTriangleIcon,
+  ChartBarIcon,
+  ArrowDownTrayIcon
+} from '../../constants';
 
-type FundraisingView = 'overview' | 'segments' | 'campaigns' | 'analytics' | 'roi' | 'performance';
+type FundraisingView = 'overview' | 'segments' | 'campaigns' | 'analytics' | 'performance';
 
 const FundraisingDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<FundraisingView>('overview');
@@ -28,8 +36,8 @@ const FundraisingDashboard: React.FC = () => {
     switch (currentView) {
       case 'segments':
         return <SegmentsDashboard />;
-      case 'roi':
-        return <ROITrackingDashboard />;
+      case 'analytics':
+        return <ComprehensiveAnalytics onSegmentClick={handleDonorClick} />;
       case 'performance':
         return <PerformanceAnalytics />;
       case 'overview':
@@ -37,83 +45,115 @@ const FundraisingDashboard: React.FC = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-text-primary">Fundraising Dashboard</h2>
-              <p className="text-text-secondary">Manage campaigns, segments, and track fundraising performance.</p>
+              <h2 className="text-2xl font-bold text-text-primary">Fundraising Overview</h2>
+              <p className="text-text-secondary">Your at-a-glance dashboard for key metrics and next actions.</p>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="text-center">
-                <ArrowTrendingUpIcon className="w-8 h-8 text-crimson-blue mx-auto mb-2" />
-                <h3 className="text-2xl font-bold text-text-primary">$847,293</h3>
-                <p className="text-sm text-text-secondary">Total Raised This Year</p>
+
+            {/* Top 4 KPIs - Clickable */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              <Card className="text-center cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105" onClick={() => setCurrentView('analytics')}>
+                <CurrencyDollarIcon className="w-6 h-6 lg:w-8 lg:h-8 text-green-600 mx-auto mb-2" />
+                <h3 className="text-xl lg:text-2xl font-bold text-text-primary">$481,500</h3>
+                <p className="text-xs lg:text-sm text-text-secondary">Total Raised</p>
+                <div className="flex items-center justify-center mt-2 text-xs text-green-700">
+                  <ArrowTrendingUpIcon className="w-3 h-3 mr-1" />
+                  <span>View details</span>
+                </div>
               </Card>
-              <Card className="text-center">
-                <SparklesIcon className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <h3 className="text-2xl font-bold text-text-primary">~$280,700</h3>
-                <p className="text-sm text-text-secondary">AI Segment Potential</p>
+
+              <Card className="text-center cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105" onClick={() => setCurrentView('analytics')}>
+                <SparklesIcon className="w-6 h-6 lg:w-8 lg:h-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="text-xl lg:text-2xl font-bold text-text-primary">$713K</h3>
+                <p className="text-xs lg:text-sm text-text-secondary">ML Potential</p>
+                <div className="flex items-center justify-center mt-2 text-xs text-blue-700">
+                  <SparklesIcon className="w-3 h-3 mr-1" />
+                  <span>View predictions</span>
+                </div>
               </Card>
-              <Card className="text-center">
-                <UsersIcon className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                <h3 className="text-2xl font-bold text-text-primary">3,938</h3>
-                <p className="text-sm text-text-secondary">Donors in AI Segments</p>
+
+              <Card className="text-center cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105" onClick={() => setCurrentView('segments')}>
+                <UsersIcon className="w-6 h-6 lg:w-8 lg:h-8 text-purple-600 mx-auto mb-2" />
+                <h3 className="text-xl lg:text-2xl font-bold text-text-primary">7,667</h3>
+                <p className="text-xs lg:text-sm text-text-secondary">Donors</p>
+                <div className="flex items-center justify-center mt-2 text-xs text-purple-700">
+                  <UsersIcon className="w-3 h-3 mr-1" />
+                  <span>View segments</span>
+                </div>
               </Card>
-              <Card className="text-center">
-                <ArrowTrendingUpIcon className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-                <h3 className="text-2xl font-bold text-text-primary">8</h3>
-                <p className="text-sm text-text-secondary">Active AI Segments</p>
+
+              <Card className="text-center cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105" onClick={() => setCurrentView('segments')}>
+                <ArrowTrendingUpIcon className="w-6 h-6 lg:w-8 lg:h-8 text-orange-600 mx-auto mb-2" />
+                <h3 className="text-xl lg:text-2xl font-bold text-text-primary">4</h3>
+                <p className="text-xs lg:text-sm text-text-secondary">Active Segments</p>
+                <div className="flex items-center justify-center mt-2 text-xs text-orange-700">
+                  <ArrowTrendingUpIcon className="w-3 h-3 mr-1" />
+                  <span>Manage segments</span>
+                </div>
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card title="Quick Actions" className="lg:col-span-1">
+            {/* Smart Alert */}
+            <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <ExclamationTriangleIcon className="w-6 h-6 text-orange-600 mr-3" />
+                  <div>
+                    <h4 className="font-semibold text-orange-900">Smart Alert: Untapped Opportunity</h4>
+                    <p className="text-sm text-orange-700">92% untapped potential in Comeback Crew segment — $125K opportunity</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-orange-600 hover:bg-orange-700"
+                  onClick={() => setCurrentView('analytics')}
+                >
+                  View in Analytics
+                </Button>
+              </div>
+            </Card>
+
+            {/* Recent Activity */}
+            <Card title="Recent Activity">
                 <div className="space-y-3">
-                  <Button 
-                    className="w-full" 
-                    onClick={() => setCurrentView('segments')}
-                  >
-                    View AI Segments
-                  </Button>
-                  <Button variant="secondary" className="w-full">Create Campaign</Button>
-                  <Button variant="secondary" className="w-full">Import Donors</Button>
-                  <Button variant="secondary" className="w-full">Export Reports</Button>
-                </div>
-              </Card>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-medium text-sm">Major Gift: $5,000 from Joseph B.</h5>
+                      <p className="text-xs text-gray-500 truncate">2 hours ago • Neighborhood MVPs segment</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleDonorClick('Joseph Banks')}
+                    >
+                      View
+                    </Button>
+                  </div>
 
-              <Card title="Recent Activity" className="lg:col-span-2">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-base-50 rounded-lg">
-                    <div>
-                      <h5 className="font-semibold">Email Campaign: Q3 Appeal</h5>
-                      <p className="text-sm text-text-secondary">Sent to 2,847 donors • 18% open rate</p>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-medium text-sm">Comeback Crew: +47 new donors</h5>
+                      <p className="text-xs text-gray-500 truncate">Yesterday • AI segment updated</p>
                     </div>
-                    <Button size="sm" variant="secondary">View Details</Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setCurrentView('segments')}
+                    >
+                      View
+                    </Button>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-base-50 rounded-lg">
-                    <div>
-                      <h5 className="font-semibold">Segment: Comeback Crew</h5>
-                      <p className="text-sm text-text-secondary">Updated with 47 new donors</p>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-medium text-sm">Q4 Appeal: Email sent to 2,156 donors</h5>
+                      <p className="text-xs text-gray-500 truncate">2 days ago • 18% open rate</p>
                     </div>
-                    <Button size="sm" variant="secondary">View Segment</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-base-50 rounded-lg">
-                    <div>
-                      <h5 className="font-semibold">Major Gift: $5,000</h5>
-                      <p className="text-sm text-text-secondary">
-                        From{' '}
-                        <button
-                          onClick={() => handleDonorClick('Joseph Banks')}
-                          className="text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline transition-colors"
-                        >
-                          Joseph Banks
-                        </button>
-                        {' '}• Neighborhood MVPs segment
-                      </p>
-                    </div>
-                    <Button size="sm" variant="secondary">View Donor</Button>
+                    <Button size="sm" variant="secondary">
+                      View
+                    </Button>
                   </div>
                 </div>
               </Card>
-            </div>
           </div>
         );
       case 'campaigns':
@@ -125,8 +165,7 @@ const FundraisingDashboard: React.FC = () => {
             </div>
           </div>
         );
-      case 'analytics':
-        return <PerformanceAnalytics />;
+
     }
   };
 
@@ -161,12 +200,7 @@ const FundraisingDashboard: React.FC = () => {
           >
             Analytics
           </Button>
-          <Button
-            variant={currentView === 'roi' ? 'primary' : 'secondary'}
-            onClick={() => setCurrentView('roi')}
-          >
-            💰 ROI
-          </Button>
+
           <Button
             variant={currentView === 'performance' ? 'primary' : 'secondary'}
             onClick={() => setCurrentView('performance')}
