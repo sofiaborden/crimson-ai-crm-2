@@ -110,8 +110,9 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   };
 
   const getPerformanceStatus = () => {
-    const capacity = donor.totalLifetimeGiving;
-    const potential = (donor.predictedPotential / 100) * 2000; // Estimated potential
+    const capacity = donor.totalLifetimeGiving || 0;
+    const predictedPotential = donor.predictedPotential || 50; // Default to 50% if not set
+    const potential = (predictedPotential / 100) * 2000; // Estimated potential
 
     if (capacity > potential * 1.2) {
       return { type: 'over', message: 'Over-Performer: Giving 30% above modeled capacity', color: 'bg-orange-100 text-orange-800 border-orange-200' };
@@ -164,12 +165,14 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   };
 
   const getGeneratedAskAmount = () => {
-    const baseAsk = donor.averageGift * 1.1; // 10% increase as baseline
+    // Calculate average gift with fallback
+    const avgGift = donor.averageGift || (donor.totalLifetimeGiving && donor.giftCount ? donor.totalLifetimeGiving / donor.giftCount : 100);
+    const baseAsk = avgGift * 1.1; // 10% increase as baseline
     const performance = getPerformanceStatus();
 
     if (performance.type === 'over') {
       return {
-        amount: donor.averageGift, // Don't increase for over-performers
+        amount: Math.round(avgGift), // Don't increase for over-performers
         explanation: 'Current giving above modeled capacity; maintain current level to avoid donor fatigue'
       };
     } else if (performance.type === 'under') {
