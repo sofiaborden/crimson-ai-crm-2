@@ -135,7 +135,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId }) 
         <Button
           variant="primary"
           className="flex items-center gap-2"
-          onClick={() => setView('people')}
+          onClick={() => searchFromCard('people-search', { count: 245678 })}
         >
           <MagnifyingGlassIcon className="w-4 h-4" />
           People Search

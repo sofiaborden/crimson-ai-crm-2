@@ -26,15 +26,33 @@ const CreateSmartSegmentModal: React.FC<CreateSmartSegmentModalProps> = ({
     }
 
     setIsCreating(true);
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
+    // Create the segment data
+    const segmentData = {
+      name: segmentName,
+      description: description,
+      count: resultCount,
+      isOneTime: isOneTime,
+      searchCriteria: searchCriteria,
+      createdAt: new Date().toISOString()
+    };
+
+    // Store in localStorage to be picked up by SegmentsDashboard
+    const existingSegments = JSON.parse(localStorage.getItem('customSegments') || '[]');
+    existingSegments.unshift(segmentData);
+    localStorage.setItem('customSegments', JSON.stringify(existingSegments));
+
+    // Trigger a custom event to notify SegmentsDashboard
+    window.dispatchEvent(new CustomEvent('newSegmentCreated', { detail: segmentData }));
+
     alert(`✅ Smart Segment Created!\n\nName: ${segmentName}\nType: ${isOneTime ? 'One-time' : 'Dynamic'}\nRecords: ${resultCount.toLocaleString()}\n\nYour segment has been saved and is now available in the Smart Segments section.`);
-    
+
     setIsCreating(false);
     onClose();
-    
+
     // Reset form
     setSegmentName('');
     setDescription('');

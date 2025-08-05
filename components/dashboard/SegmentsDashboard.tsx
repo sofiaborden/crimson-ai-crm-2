@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import ActionButton from '../ui/ActionButton';
@@ -55,9 +55,10 @@ interface Segment {
   icon: React.ReactElement;
   lastUpdated?: string;
   trend?: 'up' | 'down' | 'stable';
+  isAI?: boolean; // Flag to indicate AI-generated vs manually created
 }
 
-const segments: Segment[] = [
+const initialSegments: Segment[] = [
   {
     id: 'comeback-crew',
     funName: 'Comeback Crew',
@@ -70,7 +71,8 @@ const segments: Segment[] = [
     suggestedAction: 'Launch call/text reactivation campaign targeting $72 avg gift. Add to DialR for personalized outreach or push to MailChimp for win-back series.',
     icon: <ArrowPathIcon className="w-5 h-5" />,
     lastUpdated: '2 hours ago',
-    trend: 'up'
+    trend: 'up',
+    isAI: true
   },
   {
     id: 'level-up-list',
@@ -84,7 +86,8 @@ const segments: Segment[] = [
     suggestedAction: 'Send upgrade ask emails & calls targeting $250+ gifts (current avg: $180). Push to MailChimp for A/B testing different ask amounts.',
     icon: <TrendingUpIcon className="w-5 h-5" />,
     lastUpdated: '4 hours ago',
-    trend: 'up'
+    trend: 'up',
+    isAI: true
   },
   {
     id: 'frequent-flyers',
@@ -98,7 +101,8 @@ const segments: Segment[] = [
     suggestedAction: 'Invite to monthly giving program with $25/month ask (based on $27 avg gift). Create targeted segment for sustained giving conversion.',
     icon: <HeartIcon className="w-5 h-5" />,
     lastUpdated: '1 day ago',
-    trend: 'stable'
+    trend: 'stable',
+    isAI: true
   },
   {
     id: 'new-faces',
@@ -112,7 +116,8 @@ const segments: Segment[] = [
     suggestedAction: 'Send welcome series + 2nd gift ask within 7 days (optimal conversion window). Push to MailChimp for automated welcome sequence.',
     icon: <StarIcon className="w-5 h-5" />,
     lastUpdated: '6 hours ago',
-    trend: 'up'
+    trend: 'up',
+    isAI: true
   },
   {
     id: 'neighborhood-mvps',
@@ -126,7 +131,8 @@ const segments: Segment[] = [
     suggestedAction: 'Schedule major donor calls/events targeting $500+ gifts (capacity analysis shows $343 avg potential). Add to DialR for gift officer assignment.',
     icon: <MapPinIcon className="w-5 h-5" />,
     lastUpdated: '3 hours ago',
-    trend: 'up'
+    trend: 'up',
+    isAI: true
   },
   {
     id: 'first-gift-friends',
@@ -140,7 +146,8 @@ const segments: Segment[] = [
     suggestedAction: 'Send thank you + 2nd ask appeal within 48 hours (highest conversion rate). Push to MailChimp for automated stewardship sequence.',
     icon: <UserIcon className="w-5 h-5" />,
     lastUpdated: '5 hours ago',
-    trend: 'up'
+    trend: 'up',
+    isAI: true
   },
   {
     id: 'quiet-giants',
@@ -154,7 +161,8 @@ const segments: Segment[] = [
     suggestedAction: 'Assign to gift officer for personalized outreach targeting $857 avg capacity. Create high-priority segment for immediate follow-up.',
     icon: <TrophyIcon className="w-5 h-5" />,
     lastUpdated: '1 day ago',
-    trend: 'up'
+    trend: 'up',
+    isAI: true
   },
   {
     id: 'next-gift-predictors',
@@ -168,7 +176,8 @@ const segments: Segment[] = [
     suggestedAction: 'Send renewal reminders + stewardship calls within next 30 days (predicted giving window). Add to DialR for systematic outreach.',
     icon: <BookmarkIcon className="w-5 h-5" />,
     lastUpdated: '8 hours ago',
-    trend: 'stable'
+    trend: 'stable',
+    isAI: true
   },
   {
     id: 'over-performers',
@@ -182,7 +191,8 @@ const segments: Segment[] = [
     suggestedAction: 'Upgrade ask strategy targeting $500+ gifts (current avg: $285). Create VIP segment for exclusive stewardship and major gift cultivation.',
     icon: <SparklesIcon className="w-5 h-5" />,
     lastUpdated: '2 hours ago',
-    trend: 'up'
+    trend: 'up',
+    isAI: true
   },
   {
     id: 'under-performers',
@@ -196,7 +206,8 @@ const segments: Segment[] = [
     suggestedAction: 'Diagnostic campaign to identify barriers. A/B test messaging approaches and create re-engagement segment for targeted outreach.',
     icon: <UserGroupIcon className="w-5 h-5" />,
     lastUpdated: '12 hours ago',
-    trend: 'down'
+    trend: 'down',
+    isAI: true
   }
 ];
 
@@ -204,6 +215,7 @@ const SegmentsDashboard: React.FC = () => {
   const [showCallScript, setShowCallScript] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState({ id: '', name: '' });
   const [showPredictiveScoring, setShowPredictiveScoring] = useState(false);
+  const [segments, setSegments] = useState<Segment[]>(initialSegments);
   const [showDonorList, setShowDonorList] = useState(false);
   const [showSmartListBuilder, setShowSmartListBuilder] = useState(false);
   const [showCampaignBuilder, setShowCampaignBuilder] = useState(false);
@@ -212,9 +224,69 @@ const SegmentsDashboard: React.FC = () => {
   const [sortField, setSortField] = useState<'name' | 'count' | 'revenue' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
+  // Load custom segments on mount and listen for new ones
+  useEffect(() => {
+    const loadCustomSegments = () => {
+      const customSegments = JSON.parse(localStorage.getItem('customSegments') || '[]');
+      const customSegmentObjects = customSegments.map((seg: any) => ({
+        id: `custom-${seg.createdAt}`,
+        funName: seg.name,
+        originalName: seg.name,
+        description: seg.description,
+        count: seg.count,
+        potentialRevenue: Math.round(seg.count * 75),
+        inProgressRevenue: 0,
+        realizedRevenue: 0,
+        suggestedAction: `Custom segment: ${seg.description || 'Manual segment created from search results'}`,
+        icon: <UserGroupIcon className="w-5 h-5" />,
+        lastUpdated: 'Just now',
+        trend: 'stable' as const,
+        isAI: false
+      }));
+
+      setSegments([...customSegmentObjects, ...initialSegments]);
+    };
+
+    const handleNewSegment = (event: CustomEvent) => {
+      loadCustomSegments(); // Reload all segments
+    };
+
+    loadCustomSegments();
+    window.addEventListener('newSegmentCreated', handleNewSegment as EventListener);
+
+    return () => {
+      window.removeEventListener('newSegmentCreated', handleNewSegment as EventListener);
+    };
+  }, []);
+
   const handleSegmentClick = (segmentId: string, segmentName: string) => {
     setSelectedSegment({ id: segmentId, name: segmentName });
     setShowDonorList(true);
+  };
+
+  const addNewSegment = (segmentData: {
+    name: string;
+    description: string;
+    count: number;
+    isOneTime: boolean;
+  }) => {
+    const newSegment: Segment = {
+      id: `custom-${Date.now()}`,
+      funName: segmentData.name,
+      originalName: segmentData.name,
+      description: segmentData.description,
+      count: segmentData.count,
+      potentialRevenue: Math.round(segmentData.count * 75), // Estimate $75 avg potential
+      inProgressRevenue: 0,
+      realizedRevenue: 0,
+      suggestedAction: `Custom segment: ${segmentData.description || 'Manual segment created from search results'}`,
+      icon: <UserGroupIcon className="w-5 h-5" />,
+      lastUpdated: 'Just now',
+      trend: 'stable' as const,
+      isAI: false
+    };
+
+    setSegments(prev => [newSegment, ...prev]);
   };
 
   const handleSort = (field: 'name' | 'count' | 'revenue') => {
@@ -433,9 +505,12 @@ const SegmentsDashboard: React.FC = () => {
                       <div>
                         <button
                           onClick={() => handleSegmentClick(segment.id, segment.funName)}
-                          className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left"
+                          className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left flex items-center gap-2"
                         >
                           {segment.funName}
+                          {segment.isAI && (
+                            <SparklesIcon className="w-4 h-4 text-purple-500" title="AI-Generated Segment" />
+                          )}
                         </button>
                       </div>
                     </div>
