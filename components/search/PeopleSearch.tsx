@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, MicrophoneIcon, SparklesIcon, FunnelIcon, BookmarkIcon, XMarkIcon, ChevronDownIcon, UserIcon, PhoneIcon, EnvelopeIcon, PlusIcon } from '../../constants';
+import PeopleSearchActionsDropdown from './PeopleSearchActionsDropdown';
+import CreateSmartSegmentModal from './CreateSmartSegmentModal';
 import SearchFilters from './SearchFilters';
 
 interface SearchFilter {
@@ -37,6 +39,7 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
   const [showFilters, setShowFilters] = useState(true);
   const [selectedResults, setSelectedResults] = useState<string[]>([]);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [showCreateSegmentModal, setShowCreateSegmentModal] = useState(false);
 
   // Mock data for demonstration
   const mockResults: SearchResult[] = [
@@ -353,12 +356,22 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
             <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
               Export
             </button>
-            <button className="px-4 py-2 bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors text-sm">
-              Bulk Actions
-            </button>
+            <PeopleSearchActionsDropdown
+              selectedCount={selectedResults.length}
+              totalCount={results.length}
+              onCreateSmartSegment={() => setShowCreateSegmentModal(true)}
+            />
           </div>
         </div>
       </div>
+
+      {/* Create Smart Segment Modal */}
+      <CreateSmartSegmentModal
+        isOpen={showCreateSegmentModal}
+        onClose={() => setShowCreateSegmentModal(false)}
+        searchCriteria={searchQuery || 'Current search results'}
+        resultCount={results.length}
+      />
     </div>
   );
 };

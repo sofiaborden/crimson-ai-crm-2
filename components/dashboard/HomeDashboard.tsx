@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { View } from '../../types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { SparklesIcon, LightBulbIcon, CheckCircleIcon, ArrowTrendingUpIcon, UsersIcon, PuzzlePieceIcon, ArrowPathIcon, MapPinIcon, TrendingUpIcon, MagnifyingGlassIcon } from '../../constants';
+import { SparklesIcon, LightBulbIcon, CheckCircleIcon, ArrowTrendingUpIcon, UsersIcon, PuzzlePieceIcon, ArrowPathIcon, MapPinIcon, TrendingUpIcon, MagnifyingGlassIcon, ArrowDownTrayIcon } from '../../constants';
 import RealTimeDonationTracker from './RealTimeDonationTracker';
 import SmartActionCenter from './SmartActionCenter';
 import SearchModal from '../search/SearchModal';
@@ -130,6 +130,29 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId }) 
         />
       </div>
 
+      {/* Quick Action Buttons */}
+      <div className="flex gap-4">
+        <Button
+          variant="primary"
+          className="flex items-center gap-2"
+          onClick={() => setView('people')}
+        >
+          <MagnifyingGlassIcon className="w-4 h-4" />
+          People Search
+        </Button>
+        <Button
+          variant="secondary"
+          className="flex items-center gap-2"
+          onClick={() => {
+            // TODO: Implement import functionality
+            alert('Import functionality coming soon!');
+          }}
+        >
+          <ArrowDownTrayIcon className="w-4 h-4" />
+          Import
+        </Button>
+      </div>
+
       {/* Compact Real-Time Donation Tracker */}
       <RealTimeDonationTracker />
 
@@ -141,7 +164,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId }) 
 
         {/* AI Curated Segments */}
         <div className="lg:col-span-1">
-          <Card title="AI Curated Segments" className="hover:shadow-lg transition-shadow duration-300">
+          <Card title="Smart Segments" className="hover:shadow-lg transition-shadow duration-300">
             <div className="space-y-3">
               <div
                 className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-md hover:border-blue-200 transition-all duration-300 cursor-pointer group"

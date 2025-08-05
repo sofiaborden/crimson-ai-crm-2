@@ -266,7 +266,7 @@ const SegmentsDashboard: React.FC = () => {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-text-primary">AI Curated Segments</h2>
+        <h2 className="text-2xl font-bold text-text-primary">Smart Segments</h2>
       </div>
 
 
