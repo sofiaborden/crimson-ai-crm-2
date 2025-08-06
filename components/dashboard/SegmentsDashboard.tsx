@@ -509,21 +509,20 @@ const SegmentsDashboard: React.FC = () => {
                 <tr key={segment.id} className="border-b border-base-200 hover:bg-base-50">
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="text-crimson-blue">{segment.icon}</div>
+                      <div className="text-crimson-blue w-5 h-5 flex items-center justify-center">
+                        {segment.isAI ? (
+                          <SparklesIcon className="w-5 h-5 text-purple-600" title="AI-Generated Segment" />
+                        ) : (
+                          <UserGroupIcon className="w-5 h-5 text-gray-600" title="Manual Segment" />
+                        )}
+                      </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleSegmentClick(segment.id, segment.funName)}
-                            className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left"
-                          >
-                            {segment.funName}
-                          </button>
-                          {segment.isAI && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border border-purple-200" title="AI-Generated Segment">
-                              AI
-                            </span>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => handleSegmentClick(segment.id, segment.funName)}
+                          className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left"
+                        >
+                          {segment.funName}
+                        </button>
                       </div>
                     </div>
                   </td>
