@@ -633,7 +633,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                         ></div>
                       </div>
                     </div>
-                  </div>
+                    </div>
                   <p className="text-sm text-purple-700 mt-2">{donor.givingIntelligence.peerComparison}</p>
                 </div>
 
