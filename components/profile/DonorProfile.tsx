@@ -540,7 +540,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
         )}
 
         {/* Intelligence Tab */}
-        {activeTab === 'intelligence' && donor.contactIntelligence && donor.givingIntelligence && (
+        {activeTab === 'intelligence' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Contact Intelligence */}
             <div>
@@ -549,52 +549,64 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 <h3 className="text-lg font-semibold text-text-primary">Contact Intelligence</h3>
               </div>
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Communication Preferences</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Preferred Method:</span>
-                      <span className="font-medium capitalize">{donor.contactIntelligence.preferredContactMethod}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Response Pattern:</span>
-                      <span className="font-medium">{donor.contactIntelligence.responsePattern}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Timezone:</span>
-                      <span className="font-medium">{donor.contactIntelligence.timezone}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="font-medium text-green-900 mb-2">Best Contact Times</h4>
-                  <div className="space-y-1">
-                    {donor.contactIntelligence.bestContactTimes.map((time, index) => (
-                      <div key={index} className="text-sm text-green-800 bg-green-100 px-2 py-1 rounded">
-                        {time}
+                {donor.contactIntelligence ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-medium text-blue-900 mb-2">Communication Preferences</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Preferred Method:</span>
+                        <span className="font-medium capitalize">{donor.contactIntelligence.preferredContactMethod}</span>
                       </div>
-                    ))}
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Response Pattern:</span>
+                        <span className="font-medium">{donor.contactIntelligence.responsePattern}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Timezone:</span>
+                        <span className="font-medium">{donor.contactIntelligence.timezone}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                    <PhoneIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600 text-sm">Contact intelligence data not available</p>
+                    <p className="text-gray-500 text-xs mt-1">Data will be populated as interactions are recorded</p>
+                  </div>
+                )}
 
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Last Contact</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Date:</span>
-                      <span className="font-medium">{formatLastContact(donor.contactIntelligence.lastContactDate)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Method:</span>
-                      <span className="font-medium capitalize">{donor.contactIntelligence.lastContactMethod}</span>
-                    </div>
-                    <div className="mt-2">
-                      <span className="text-gray-600">Outcome:</span>
-                      <p className="text-gray-800 mt-1">{donor.contactIntelligence.lastContactOutcome}</p>
+                {donor.contactIntelligence && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 className="font-medium text-green-900 mb-2">Best Contact Times</h4>
+                    <div className="space-y-1">
+                      {donor.contactIntelligence.bestContactTimes.map((time, index) => (
+                        <div key={index} className="text-sm text-green-800 bg-green-100 px-2 py-1 rounded">
+                          {time}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
+                )}
+
+                {donor.contactIntelligence && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 mb-2">Last Contact</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Date:</span>
+                        <span className="font-medium">{formatLastContact(donor.contactIntelligence.lastContactDate)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Method:</span>
+                        <span className="font-medium capitalize">{donor.contactIntelligence.lastContactMethod}</span>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-gray-600">Outcome:</span>
+                        <p className="text-gray-800 mt-1">{donor.contactIntelligence.lastContactOutcome}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -605,13 +617,14 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 <h3 className="text-lg font-semibold text-text-primary">Giving Intelligence</h3>
               </div>
               <div className="space-y-4">
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h4 className="font-medium text-purple-900 mb-2">Capacity Analysis</h4>
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-700">{donor.givingIntelligence.capacityScore}/100</div>
-                      <div className="text-xs text-purple-600">Capacity Score</div>
-                    </div>
+                {donor.givingIntelligence ? (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h4 className="font-medium text-purple-900 mb-2">Capacity Analysis</h4>
+                    <div className="flex items-center gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-700">{donor.givingIntelligence.capacityScore}/100</div>
+                        <div className="text-xs text-purple-600">Capacity Score</div>
+                      </div>
                     <div className="flex-1">
                       <div className="w-full bg-purple-200 rounded-full h-2">
                         <div
@@ -671,14 +684,23 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                     </div>
                   </div>
                 </div>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                    <TrendingUpIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600 text-sm">Giving intelligence data not available</p>
+                    <p className="text-gray-500 text-xs mt-1">Data will be populated as giving patterns are analyzed</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
         {/* Actions Tab */}
-        {activeTab === 'actions' && donor.actionMetrics && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {activeTab === 'actions' && (
+          <div className="space-y-6">
+            {donor.actionMetrics ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Email Engagement */}
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -731,11 +753,35 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 ))}
               </div>
             </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                <ChartBarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-gray-900 mb-2">Action Metrics Coming Soon</h4>
+                <p className="text-gray-600 text-sm mb-4">
+                  Detailed engagement metrics and action history will be available as data is collected.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="bg-white p-3 rounded border">
+                    <MailIcon className="w-5 h-5 text-blue-500 mx-auto mb-1" />
+                    <div className="font-medium">Email Tracking</div>
+                  </div>
+                  <div className="bg-white p-3 rounded border">
+                    <CalendarIcon className="w-5 h-5 text-green-500 mx-auto mb-1" />
+                    <div className="font-medium">Event History</div>
+                  </div>
+                  <div className="bg-white p-3 rounded border">
+                    <ComputerDesktopIcon className="w-5 h-5 text-purple-500 mx-auto mb-1" />
+                    <div className="font-medium">Web Activity</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Insights Tab */}
-        {activeTab === 'insights' && donor.predictiveInsights && (
+        {activeTab === 'insights' && (
           <div className="space-y-6">
             {/* AI Snapshot - Full Width */}
             <div>
@@ -751,7 +797,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   </div>
                   <div className="flex-1">
                     <p className="text-gray-800 leading-relaxed text-sm">
-                      {aiSnapshot}
+                      {donor.aiSnapshot || aiSnapshot}
                     </p>
                     <div className="flex items-center gap-4 mt-4 pt-4 border-t border-purple-200">
                       <div className="text-xs text-purple-700">
@@ -766,18 +812,19 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Next Best Action */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <BoltIcon className="w-5 h-5 text-yellow-600" />
-                <h3 className="text-lg font-semibold text-text-primary">Next Best Action</h3>
-              </div>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="space-y-3">
-                  <div>
-                    <div className="font-medium text-yellow-900">Recommended Action</div>
-                    <div className="text-yellow-800 mt-1">{donor.predictiveInsights.nextBestAction.action}</div>
+            {donor.predictiveInsights ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Next Best Action */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <BoltIcon className="w-5 h-5 text-yellow-600" />
+                  <h3 className="text-lg font-semibold text-text-primary">Next Best Action</h3>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <div className="font-medium text-yellow-900">Recommended Action</div>
+                      <div className="text-yellow-800 mt-1">{donor.predictiveInsights.nextBestAction.action}</div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -826,7 +873,16 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 </div>
               </div>
             </div>
-          </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                <LightBulbIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-gray-900 mb-2">Predictive Insights Coming Soon</h4>
+                <p className="text-gray-600 text-sm">
+                  Advanced AI-powered insights and recommendations will be available as more data is collected and analyzed.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </Card>
