@@ -235,6 +235,16 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId }) 
         searchType={searchConfig.type}
         initialFilters={searchConfig.filters}
         searchContext={searchConfig.context}
+        onSegmentClick={(segmentId, segmentName) => {
+          closeSearch();
+          setView('fundraising');
+          // Trigger segment click after navigation
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('openSegment', {
+              detail: { segmentId, segmentName }
+            }));
+          }, 100);
+        }}
       />
     </div>
   );

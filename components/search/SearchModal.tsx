@@ -17,6 +17,7 @@ interface SearchModalProps {
   searchType: 'people' | 'money' | 'events' | 'pledges';
   initialFilters?: SearchFilter[];
   searchContext?: string;
+  onSegmentClick?: (segmentId: string, segmentName: string) => void;
 }
 
 const SearchModal: React.FC<SearchModalProps> = ({
@@ -24,7 +25,8 @@ const SearchModal: React.FC<SearchModalProps> = ({
   onClose,
   searchType,
   initialFilters = [],
-  searchContext
+  searchContext,
+  onSegmentClick
 }) => {
   if (!isOpen) return null;
 
@@ -36,6 +38,7 @@ const SearchModal: React.FC<SearchModalProps> = ({
             initialFilters={initialFilters}
             searchContext={searchContext}
             onClose={onClose}
+            onSegmentClick={onSegmentClick}
           />
         );
       case 'pledges':

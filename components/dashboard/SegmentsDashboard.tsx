@@ -251,11 +251,19 @@ const SegmentsDashboard: React.FC = () => {
       loadCustomSegments(); // Reload all segments
     };
 
+    const handleOpenSegment = (event: CustomEvent) => {
+      const { segmentId, segmentName } = event.detail;
+      setSelectedSegment({ id: segmentId, name: segmentName });
+      setShowDonorList(true);
+    };
+
     loadCustomSegments();
     window.addEventListener('newSegmentCreated', handleNewSegment as EventListener);
+    window.addEventListener('openSegment', handleOpenSegment as EventListener);
 
     return () => {
       window.removeEventListener('newSegmentCreated', handleNewSegment as EventListener);
+      window.removeEventListener('openSegment', handleOpenSegment as EventListener);
     };
   }, []);
 
@@ -503,15 +511,19 @@ const SegmentsDashboard: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="text-crimson-blue">{segment.icon}</div>
                       <div>
-                        <button
-                          onClick={() => handleSegmentClick(segment.id, segment.funName)}
-                          className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left flex items-center gap-2"
-                        >
-                          {segment.funName}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleSegmentClick(segment.id, segment.funName)}
+                            className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left"
+                          >
+                            {segment.funName}
+                          </button>
                           {segment.isAI && (
-                            <SparklesIcon className="w-4 h-4 text-purple-500" title="AI-Generated Segment" />
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border border-purple-200" title="AI-Generated Segment">
+                              AI
+                            </span>
                           )}
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </td>

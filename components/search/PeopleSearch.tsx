@@ -29,9 +29,10 @@ interface PeopleSearchProps {
   initialFilters?: SearchFilter[];
   searchContext?: string;
   onClose?: () => void;
+  onSegmentClick?: (segmentId: string, segmentName: string) => void;
 }
 
-const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], searchContext, onClose }) => {
+const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], searchContext, onClose, onSegmentClick }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<SearchFilter[]>(initialFilters);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -371,6 +372,7 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
         onClose={() => setShowCreateSegmentModal(false)}
         searchCriteria={searchQuery || 'Current search results'}
         resultCount={results.length}
+        onSegmentCreated={onSegmentClick}
       />
     </div>
   );

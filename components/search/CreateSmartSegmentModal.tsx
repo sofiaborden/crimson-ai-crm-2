@@ -6,13 +6,15 @@ interface CreateSmartSegmentModalProps {
   onClose: () => void;
   searchCriteria: string;
   resultCount: number;
+  onSegmentCreated?: (segmentId: string, segmentName: string) => void;
 }
 
 const CreateSmartSegmentModal: React.FC<CreateSmartSegmentModalProps> = ({
   isOpen,
   onClose,
   searchCriteria,
-  resultCount
+  resultCount,
+  onSegmentCreated
 }) => {
   const [segmentName, setSegmentName] = useState('');
   const [description, setDescription] = useState('');
@@ -40,6 +42,8 @@ const CreateSmartSegmentModal: React.FC<CreateSmartSegmentModalProps> = ({
       createdAt: new Date().toISOString()
     };
 
+    const segmentId = `custom-${segmentData.createdAt}`;
+
     // Store in localStorage to be picked up by SegmentsDashboard
     const existingSegments = JSON.parse(localStorage.getItem('customSegments') || '[]');
     existingSegments.unshift(segmentData);
@@ -48,10 +52,17 @@ const CreateSmartSegmentModal: React.FC<CreateSmartSegmentModalProps> = ({
     // Trigger a custom event to notify SegmentsDashboard
     window.dispatchEvent(new CustomEvent('newSegmentCreated', { detail: segmentData }));
 
-    alert(`✅ Smart Segment Created!\n\nName: ${segmentName}\nType: ${isOneTime ? 'One-time' : 'Dynamic'}\nRecords: ${resultCount.toLocaleString()}\n\nYour segment has been saved and is now available in the Smart Segments section.`);
+    alert(`✅ Smart Segment Created!\n\nName: ${segmentName}\nType: ${isOneTime ? 'One-time' : 'Dynamic'}\nRecords: ${resultCount.toLocaleString()}\n\nOpening segment details...`);
 
     setIsCreating(false);
     onClose();
+
+    // Auto-open the newly created segment
+    if (onSegmentCreated) {
+      setTimeout(() => {
+        onSegmentCreated(segmentId, segmentName);
+      }, 500);
+    }
 
     // Reset form
     setSegmentName('');
