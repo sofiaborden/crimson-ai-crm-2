@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { CurrencyDollarIcon, TrophyIcon, FireIcon, SparklesIcon, ComputerDesktopIcon, PhoneIcon, CalendarIcon, MailIcon, ChevronLeftIcon, ChevronRightIcon } from '../../constants';
+import { CurrencyDollarIcon, TrophyIcon, FireIcon, SparklesIcon, ComputerDesktopIcon, PhoneIcon, CalendarIcon, MailIcon, ChevronLeftIcon, ChevronRightIcon, ArrowTopRightOnSquareIcon } from '../../constants';
 import DonorProfileModal from '../ui/DonorProfileModal';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import { Donor } from '../../types';
+
+interface RealTimeDonationTrackerProps {
+  showPopoutButton?: boolean;
+}
 
 interface Donation {
   id: string;
@@ -20,7 +24,7 @@ interface Goal {
   color: string;
 }
 
-const RealTimeDonationTracker: React.FC = () => {
+const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showPopoutButton = false }) => {
   const [recentDonations, setRecentDonations] = useState<Donation[]>([
     { id: '1', donor: 'Sarah J.', amount: 250, timeAgo: '3 minutes ago', method: 'online' },
     { id: '2', donor: 'Michael R.', amount: 100, timeAgo: '12 minutes ago', method: 'phone' },
@@ -39,6 +43,114 @@ const RealTimeDonationTracker: React.FC = () => {
   const [newDonationAlert, setNewDonationAlert] = useState<Donation | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
   const [showDonorProfile, setShowDonorProfile] = useState(false);
+  const [isPopoutOpen, setIsPopoutOpen] = useState(false);
+
+  const handlePopoutClick = () => {
+    // Open a new window with the donation tracker
+    const popupWindow = window.open(
+      '/donation-tracker-popup',
+      'donationTracker',
+      'width=500,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+    );
+
+    if (popupWindow) {
+      // Write the donation tracker content to the new window
+      popupWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Live Donation Tracker</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.5; }
+            }
+            .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+          </style>
+        </head>
+        <body class="bg-gray-50 p-4">
+          <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="bg-green-500 p-2 rounded-lg">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h1 class="text-lg font-bold text-gray-900">Live Donation Tracker</h1>
+                  <p class="text-sm text-gray-600">Real-time activity</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                LIVE
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div>
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Recent Donations</h3>
+                <div class="space-y-2">
+                  ${recentDonations.map(donation => `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                          <span class="text-green-600 text-xs font-bold">${donation.donor.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <div class="font-medium text-gray-900">${donation.donor}</div>
+                          <div class="text-xs text-gray-500">${donation.timeAgo}</div>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <div class="font-bold text-green-600">$${donation.amount.toLocaleString()}</div>
+                        <div class="text-xs text-gray-500 capitalize">${donation.method}</div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Goals Progress</h3>
+                <div class="space-y-3">
+                  ${goals.map(goal => `
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-900">${goal.label}</span>
+                        <span class="text-xs text-gray-500">${goal.deadline}</span>
+                      </div>
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="text-lg font-bold text-gray-900">$${goal.current.toLocaleString()}</span>
+                        <span class="text-sm text-gray-600">of $${goal.target.toLocaleString()}</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="${goal.color} h-2 rounded-full" style="width: ${(goal.current / goal.target) * 100}%"></div>
+                      </div>
+                      <div class="text-xs text-gray-500 mt-1">${Math.round((goal.current / goal.target) * 100)}% complete</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <script>
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+              window.location.reload();
+            }, 30000);
+          </script>
+        </body>
+        </html>
+      `);
+      popupWindow.document.close();
+    }
+  };
   const [currentGoalIndex, setCurrentGoalIndex] = useState(0);
 
   const handleDonorClick = (donorName: string) => {
@@ -146,7 +258,7 @@ const RealTimeDonationTracker: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 h-80">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="bg-green-500 p-1.5 rounded-lg">
@@ -157,46 +269,25 @@ const RealTimeDonationTracker: React.FC = () => {
               <p className="text-xs text-gray-600">Real-time activity</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-            LIVE
+          <div className="flex items-center gap-2">
+            {showPopoutButton && (
+              <button
+                onClick={handlePopoutClick}
+                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                title="Open in popup window"
+              >
+                <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-600" />
+              </button>
+            )}
+            <div className="flex items-center gap-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+              LIVE
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* Compact Goal Progress */}
-          <div>
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-2 text-sm">
-              <TrophyIcon className="w-4 h-4 text-yellow-500" />
-              Goal Progress
-            </h3>
-            <div className="space-y-2">
-              {goals.map((goal, index) => {
-                const percentage = getProgressPercentage(goal.current, goal.target);
-                return (
-                  <div key={index} className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-medium text-gray-900">{goal.label}</span>
-                      <span className="text-xs text-gray-500">{percentage.toFixed(0)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1">
-                      <div
-                        className={`h-1.5 rounded-full transition-all duration-500 ${goal.color}`}
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-medium text-gray-900">{formatCurrency(goal.current)}</span>
-                      <span className="text-gray-500">of {formatCurrency(goal.target)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Recent Donations Feed */}
-          <div>
+        {/* Recent Donations Feed - Single Column */}
+        <div>
             <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-2 text-sm">
               <SparklesIcon className="w-4 h-4 text-blue-500" />
               Recent Donations
@@ -236,7 +327,6 @@ const RealTimeDonationTracker: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
         </div>
       </div>
 
@@ -278,6 +368,8 @@ const RealTimeDonationTracker: React.FC = () => {
         isOpen={showDonorProfile}
         onClose={() => setShowDonorProfile(false)}
       />
+
+
     </div>
   );
 };

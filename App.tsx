@@ -10,38 +10,7 @@ import PeopleDashboard from './components/dashboard/PeopleDashboard';
 import SearchDemo from './pages/SearchDemo';
 import DonorProfileDemo from './pages/DonorProfileDemo';
 import { View, Donor } from './types';
-
-const mockDonor: Donor = {
-    id: 'joseph-banks',
-    name: 'Joseph M. Banks, Sr.',
-    photoUrl: 'https://i.pravatar.cc/150?u=joseph-banks',
-    email: 'j.banks.sr@example.com',
-    phone: '(202) 555-0182',
-    address: 'Phoenix, AZ',
-    contactInfo: {
-        home: '(202) 555-0182',
-        work: '(202) 555-0199',
-        email: 'j.banks.sr@example.com',
-        website: 'https://example.com'
-    },
-    aiBadges: ['Gold Donor', 'High Likelihood to Give'],
-    predictiveAsk: 500,
-    recurrencePrediction: 'Quarterly',
-    suggestedAction: 'Invite to Q3 Major Donor Dinner',
-    givingOverview: {
-        totalRaised: 14698,
-        consecutiveGifts: 4,
-        tier: 'Gold',
-        topGifts: [
-            { name: 'Gala 21', value: 5000 },
-            { name: 'Q4 Appeal', value: 2500 },
-            { name: 'Gala 22', value: 5000 },
-            { name: 'Spring Mail', value: 1000 },
-            { name: 'Q1 E-Appeal', value: 1198 }
-        ]
-    },
-    aiSnapshot: 'Joseph is a high-income Republican in his mid-50s from Arizona. He consistently gives to major fundraising pushes. Likely ready for a $500 ask, ideally before August 15.'
-};
+import { mockDonorProfiles } from './utils/mockDonorProfiles';
 
 
 const App: React.FC = () => {
@@ -53,8 +22,8 @@ const App: React.FC = () => {
       case 'home':
         return <HomeDashboard setView={setCurrentView} setProfileId={setProfileId} />;
       case 'profile':
-        if (profileId === 'joseph-banks') {
-          return <DonorProfile donor={mockDonor} />;
+        if (profileId && mockDonorProfiles[profileId]) {
+          return <DonorProfile donor={mockDonorProfiles[profileId]} />;
         }
         // Fallback or show an error/list if no ID matches
         return <div>Profile not found.</div>;

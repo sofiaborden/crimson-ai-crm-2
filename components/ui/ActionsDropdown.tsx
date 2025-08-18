@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDownIcon, EnvelopeIcon, PhoneIcon, UsersIcon, XMarkIcon } from '../../constants.tsx';
+import { ChevronDownIcon, EnvelopeIcon, PhoneIcon, UsersIcon, XMarkIcon, TargetIcon } from '../../constants.tsx';
 
 interface ActionsDropdownProps {
   segmentId: string;
@@ -11,10 +11,20 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ segmentId, segmentNam
   const [isOpen, setIsOpen] = useState(false);
   const [showDialRModal, setShowDialRModal] = useState(false);
   const [showMailChimpModal, setShowMailChimpModal] = useState(false);
-  const [showNameModal, setShowNameModal] = useState(false);
+
   const [mailChimpStep, setMailChimpStep] = useState<'account' | 'list' | 'confirm'>('account');
 
   const actions = [
+    {
+      id: 'targetpath',
+      label: 'Send to TargetPath',
+      description: 'Export to TargetPath platform',
+      icon: <TargetIcon className="w-4 h-4" />,
+      action: () => {
+        alert(`📍 Sending ${donorCount} contacts from "${segmentName}" to TargetPath...\n\nThis will create a new audience in your TargetPath account.\nEstimated completion: 45 seconds`);
+        setIsOpen(false);
+      }
+    },
     {
       id: 'mailchimp',
       label: 'Push to MailChimp',
@@ -29,13 +39,7 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ segmentId, segmentNam
       icon: <PhoneIcon className="w-4 h-4" />,
       action: () => setShowDialRModal(true)
     },
-    {
-      id: 'segment',
-      label: 'Create Targeted Segment',
-      description: 'Build custom audience',
-      icon: <UsersIcon className="w-4 h-4" />,
-      action: () => setShowNameModal(true)
-    }
+
   ];
 
   const handlePushToMailChimp = () => {

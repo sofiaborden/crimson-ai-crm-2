@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  ChevronDownIcon, 
-  ArrowDownTrayIcon, 
-  PlusIcon, 
-  PrinterIcon, 
-  MapPinIcon, 
-  DocumentTextIcon, 
-  EnvelopeIcon, 
+import {
+  ChevronDownIcon,
+  ArrowDownTrayIcon,
+  PlusIcon,
+  PrinterIcon,
+  MapPinIcon,
+  DocumentTextIcon,
+  EnvelopeIcon,
   UserGroupIcon,
   XMarkIcon,
-  SparklesIcon
+  SparklesIcon,
+  TargetIcon
 } from '../../constants';
 
 interface PeopleSearchActionsDropdownProps {
@@ -30,6 +31,17 @@ const PeopleSearchActionsDropdown: React.FC<PeopleSearchActionsDropdownProps> = 
   const [showMailMergeModal, setShowMailMergeModal] = useState(false);
 
   const actions = [
+    {
+      id: 'targetpath',
+      label: 'Send to TargetPath',
+      description: 'Export to TargetPath platform',
+      icon: <TargetIcon className="w-4 h-4" />,
+      action: () => {
+        const count = selectedCount > 0 ? selectedCount : totalCount;
+        alert(`📍 Sending ${count} contacts to TargetPath...\n\nThis will create a new audience in your TargetPath account.\nEstimated completion: 45 seconds`);
+        setIsOpen(false);
+      }
+    },
     {
       id: 'export-channel',
       label: 'Export by Channel',

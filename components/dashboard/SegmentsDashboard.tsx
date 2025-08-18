@@ -10,7 +10,7 @@ import DonorListView from '../ui/DonorListView';
 import SmartListBuilder from '../ui/SmartListBuilder';
 import CampaignBuilder from '../ui/CampaignBuilder';
 import AudienceInsights from '../insights/AudienceInsights';
-import PerformanceTable from '../insights/PerformanceTable';
+
 import {
   ArrowPathIcon,
   LightBulbIcon,
@@ -402,53 +402,7 @@ const SegmentsDashboard: React.FC = () => {
         </div>
       </Card>
 
-      {/* Progress Summary */}
-      <Card>
-        <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg">
-          <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-            <ChartBarIcon className="w-5 h-5 text-crimson-blue" />
-            Segment Performance Overview
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-1">
-                ${segments.reduce((sum, s) => sum + s.potentialRevenue, 0).toLocaleString()}
-              </div>
-              <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
-                <CurrencyDollarIcon className="w-4 h-4" />
-                Total Potential
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {segments.reduce((sum, s) => sum + s.count, 0).toLocaleString()} donors across all segments
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-1">
-                ${segments.reduce((sum, s) => sum + s.inProgressRevenue, 0).toLocaleString()}
-              </div>
-              <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
-                <ClockIcon className="w-4 h-4" />
-                In Progress
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Active campaigns & outreach
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 mb-1">
-                ${segments.reduce((sum, s) => sum + s.realizedRevenue, 0).toLocaleString()}
-              </div>
-              <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
-                <CheckCircleIcon className="w-4 h-4" />
-                Realized
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {Math.round((segments.reduce((sum, s) => sum + s.realizedRevenue, 0) / segments.reduce((sum, s) => sum + s.potentialRevenue, 0)) * 100)}% conversion rate
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
+
 
       <Card>
         <div className="overflow-x-auto">
@@ -800,8 +754,7 @@ const SegmentsDashboard: React.FC = () => {
         />
       )}
 
-      {/* Performance Table at Bottom */}
-      <PerformanceTable onSegmentClick={handleSegmentClick} />
+
     </div>
   );
 };

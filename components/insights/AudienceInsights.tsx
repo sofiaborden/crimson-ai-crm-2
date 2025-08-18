@@ -403,93 +403,95 @@ const AudienceInsights: React.FC<AudienceInsightsProps> = ({ onSegmentClick }) =
 
   return (
     <div className="space-y-4">
-      {/* Collapsible Segment Performance Section - Top Priority */}
+      {/* Segment Performance - Streamlined */}
       <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-gray-200 shadow-sm">
         <div
-          className="p-4 cursor-pointer hover:bg-blue-100/30 transition-colors rounded-lg"
+          className="p-5 cursor-pointer hover:bg-blue-100/30 transition-colors rounded-lg"
           onClick={() => setIsTrackerExpanded(!isTrackerExpanded)}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Segment Performance</h2>
-            <ChevronUpIcon
-              className={`w-5 h-5 text-gray-600 transition-transform ${isTrackerExpanded ? 'rotate-180' : ''}`}
-            />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <ChartBarIcon className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Segment Performance</h2>
+                <p className="text-sm text-gray-600">Revenue opportunities & insights</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-lg font-bold text-green-600">$281K</div>
+                <div className="text-xs text-gray-600">Total Potential</div>
+              </div>
+              <ChevronUpIcon
+                className={`w-5 h-5 text-gray-600 transition-transform ${isTrackerExpanded ? 'rotate-180' : ''}`}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Always Visible Content When Expanded */}
+        {/* Expanded Content */}
         {isTrackerExpanded && (
-          <div className="px-4 pb-4">
-            {/* Original Attractive Revenue Tracker Bar */}
+          <div className="px-5 pb-5">
+            {/* Compact Revenue Tracker */}
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-gray-900">Revenue Opportunity Tracker</h3>
-                <button className="bg-crimson-blue hover:bg-crimson-dark-blue text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                  <SparklesIcon className="w-4 h-4" />
+                <h3 className="text-base font-semibold text-gray-900">Revenue Pipeline</h3>
+                <button className="bg-crimson-blue hover:bg-crimson-dark-blue text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                  <SparklesIcon className="w-3 h-3" />
                   Start Campaign
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4 mb-3">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">$280,700</div>
-                  <div className="text-sm text-gray-600">Total Potential</div>
+                  <div className="text-xl font-bold text-blue-600">$42K</div>
+                  <div className="text-xs text-gray-600">In Progress</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">$42,105</div>
-                  <div className="text-sm text-gray-600">In Progress (15%)</div>
+                  <div className="text-xl font-bold text-red-600">$239K</div>
+                  <div className="text-xs text-gray-600">Untapped</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">$238,595</div>
-                  <div className="text-sm text-gray-600">Untapped (85%)</div>
+                  <div className="text-xl font-bold text-green-600">15%</div>
+                  <div className="text-xs text-gray-600">Progress</div>
                 </div>
-                <div className="text-center">
-                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                    <div className="h-3 rounded-full transition-all duration-500 bg-gradient-to-r from-green-500 to-blue-500" style={{ width: '15%' }}></div>
-                  </div>
-                  <div className="text-xs text-gray-500">Progress: 15% of potential revenue being actively pursued</div>
-                </div>
+              </div>
+
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="h-2 rounded-full transition-all duration-500 bg-gradient-to-r from-green-500 to-blue-500" style={{ width: '15%' }}></div>
               </div>
             </div>
 
-            {/* Segment Performance Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Over-Performers - Focus on Stewardship */}
+            {/* Quick Insights Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Over-Performers */}
               <div
-                className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-all"
+                className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:shadow-md hover:bg-green-50 hover:border-green-300 transition-all"
                 onClick={() => onSegmentClick?.('over-performers')}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <FireIcon className="w-5 h-5 text-green-500" />
-                    <h3 className="text-sm font-semibold text-gray-900">Over-Performers</h3>
-                  </div>
-                  <ExclamationTriangleIcon className="w-4 h-4 text-orange-500" />
+                <div className="flex items-center gap-2 mb-2">
+                  <FireIcon className="w-4 h-4 text-green-500" />
+                  <h3 className="text-sm font-semibold text-gray-900">Over-Performers</h3>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">234 donors</div>
-                <div className="text-sm text-gray-600 mb-2">Giving 40% above capacity — Focus: maintain engagement, avoid over-asking</div>
-                <div className="flex items-center gap-2 text-xs">
-                  <ClockIcon className="w-3 h-3 text-orange-500" />
-                  <span className="text-orange-600 font-medium">Monitor for fatigue</span>
-                  <span className="text-gray-500">(14-day cool-down recommended)</span>
-                </div>
+                <div className="text-lg font-bold text-gray-900">234</div>
+                <div className="text-xs text-gray-600">40% above capacity</div>
+                <div className="text-xs text-orange-600 mt-1">⚠️ Monitor fatigue</div>
               </div>
 
               {/* Expansion Opportunities */}
               <div
-                className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-all"
+                className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:shadow-md hover:bg-blue-50 hover:border-blue-300 transition-all"
                 onClick={() => onSegmentClick?.('expansion-opportunities')}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <TrendingUpIcon className="w-5 h-5 text-blue-500" />
-                    <h3 className="text-sm font-semibold text-gray-900">Expansion Opportunities</h3>
-                  </div>
-                  <ArrowTrendingUpIcon className="w-4 h-4 text-blue-500" />
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUpIcon className="w-4 h-4 text-blue-500" />
+                  <h3 className="text-sm font-semibold text-gray-900">Expansion</h3>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">86 donors</div>
-                <div className="text-sm text-gray-600 mb-2">Primed for upgrade — $121K upgrade potential</div>
-                <div className="text-xs text-gray-500">Mid-Level to Major Donor pathway</div>
+                <div className="text-lg font-bold text-gray-900">86</div>
+                <div className="text-xs text-gray-600">$121K potential</div>
+                <div className="text-xs text-blue-600 mt-1">📈 Ready to upgrade</div>
               </div>
 
               {/* Under-Performers - Untapped Potential */}

@@ -21,6 +21,9 @@ interface SearchResult {
   address: string;
   lastGift: string;
   totalGifts: number;
+  lifetimeTotal: number;
+  suggestedAsk: number;
+  suggestedAction: string;
   party: string;
   tags: string[];
 }
@@ -53,6 +56,9 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
       address: '123 Main St, Washington DC',
       lastGift: '2024-06-15',
       totalGifts: 2500,
+      lifetimeTotal: 8750,
+      suggestedAsk: 1000,
+      suggestedAction: 'Schedule major donor meeting',
       party: 'Republican',
       tags: ['Major Donor', 'VIP']
     },
@@ -65,6 +71,9 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
       address: '456 Oak Ave, Arlington VA',
       lastGift: '2024-07-01',
       totalGifts: 750,
+      lifetimeTotal: 2250,
+      suggestedAsk: 500,
+      suggestedAction: 'Send personalized thank you',
       party: 'Republican',
       tags: ['Active Voter']
     },
@@ -77,6 +86,9 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
       address: '789 Pine Rd, Alexandria VA',
       lastGift: '2024-05-20',
       totalGifts: 1200,
+      lifetimeTotal: 4800,
+      suggestedAsk: 750,
+      suggestedAction: 'Invite to VIP event',
       party: 'Independent',
       tags: ['Recurring Donor']
     }
@@ -278,33 +290,35 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
           <table className="w-full">
             <thead className="bg-crimson-blue text-white">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   <input type="checkbox" className="rounded" />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Gift</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Total Gifts</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Party</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Gift</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Lifetime Total</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Suggested Ask</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Suggested Action</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Party</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {results.map((result, index) => (
                 <tr key={result.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <input type="checkbox" className="rounded" />
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                         <UserIcon className="w-4 h-4 text-gray-600" />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{result.firstName} {result.lastName}</div>
+                        <div className="font-medium text-gray-900 text-sm">{result.firstName} {result.lastName}</div>
                         <div className="flex gap-1 mt-1">
-                          {result.tags.map((tag, i) => (
-                            <span key={i} className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                          {result.tags.slice(0, 2).map((tag, i) => (
+                            <span key={i} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
                               {tag}
                             </span>
                           ))}
@@ -312,22 +326,26 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <div className="text-sm text-gray-900">{result.email}</div>
                     <div className="text-sm text-gray-600">{result.phone}</div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{result.lastGift}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-green-600">${result.totalGifts.toLocaleString()}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 text-sm text-gray-900">{result.lastGift}</td>
+                  <td className="px-3 py-3 text-sm font-medium text-green-600">${result.lifetimeTotal.toLocaleString()}</td>
+                  <td className="px-3 py-3 text-sm font-medium text-blue-600">${result.suggestedAsk.toLocaleString()}</td>
+                  <td className="px-3 py-3">
+                    <div className="text-sm text-gray-900">{result.suggestedAction}</div>
+                  </td>
+                  <td className="px-3 py-3">
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      result.party === 'Republican' ? 'bg-red-100 text-red-800' : 
-                      result.party === 'Democrat' ? 'bg-blue-100 text-blue-800' : 
+                      result.party === 'Republican' ? 'bg-red-100 text-red-800' :
+                      result.party === 'Democrat' ? 'bg-blue-100 text-blue-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {result.party}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <div className="flex gap-1">
                       <button className="p-1 text-green-600 hover:bg-green-100 rounded" title="Call">
                         <PhoneIcon className="w-4 h-4" />

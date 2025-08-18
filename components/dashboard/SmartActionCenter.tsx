@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { 
-  SparklesIcon, 
-  PhoneIcon, 
-  EnvelopeIcon, 
-  FireIcon, 
-  ClockIcon, 
+import {
+  SparklesIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  FireIcon,
+  ClockIcon,
   TrendingUpIcon,
   UserGroupIcon,
   CurrencyDollarIcon,
   HeartIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '../../constants';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -48,6 +50,7 @@ interface SmartActionCenterProps {
 
 const SmartActionCenter: React.FC<SmartActionCenterProps> = ({ setView, setProfileId }) => {
   const [completedActions, setCompletedActions] = useState<string[]>([]);
+  const [currentActionIndex, setCurrentActionIndex] = useState(0);
 
   // Combined smart actions from AI Briefing and Hot Leads
   const smartActions: SmartAction[] = [
@@ -172,119 +175,160 @@ const SmartActionCenter: React.FC<SmartActionCenterProps> = ({ setView, setProfi
     }
   };
 
-  // Get top 4-5 actions, prioritizing urgent and high priority
-  const topActions = smartActions
+  // Filter available actions and get current action
+  const availableActions = smartActions
     .filter(action => !completedActions.includes(action.id))
     .sort((a, b) => {
       const priorityOrder = { urgent: 3, high: 2, medium: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority] || b.confidence - a.confidence;
-    })
-    .slice(0, 5);
+    });
+
+  const currentAction = availableActions[currentActionIndex];
+
+  const handlePrevious = () => {
+    setCurrentActionIndex(prev => prev > 0 ? prev - 1 : availableActions.length - 1);
+  };
+
+  const handleNext = () => {
+    setCurrentActionIndex(prev => prev < availableActions.length - 1 ? prev + 1 : 0);
+  };
 
   return (
-    <Card>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-crimson-blue/10 p-3 rounded-xl shadow-sm">
-          <SparklesIcon className="w-5 h-5 text-crimson-blue" />
+    <Card className="h-80 lg:h-80 flex flex-col overflow-hidden">
+      <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+        <div className="bg-crimson-blue p-1.5 rounded-lg">
+          <SparklesIcon className="w-4 h-4 text-white" />
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Smart Actions & Prospects</h2>
-          <p className="text-sm text-gray-600 mt-1">Prioritized actions to maximize fundraising today</p>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-bold text-gray-900">Smart Actions</h2>
+          <p className="text-xs text-gray-600">Prioritized actions to maximize fundraising today</p>
         </div>
       </div>
 
       {/* Donor Health Snapshot */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <HeartIcon className="w-4 h-4 text-red-500" />
-          <h3 className="font-semibold text-gray-900 text-sm">Donor Health Snapshot</h3>
+      <div className="mb-3 p-2.5 bg-gray-50 rounded-lg flex-shrink-0">
+        <div className="flex items-center gap-2 mb-2">
+          <HeartIcon className="w-3 h-3 text-red-500" />
+          <h3 className="font-semibold text-gray-900 text-xs">Donor Health Snapshot</h3>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
           {donorHealthMetrics.map((metric, index) => (
-            <div key={index} className="text-center">
-              <div className={`text-lg font-bold ${getStatusColor(metric.status)}`}>
+            <div key={index} className="text-center min-w-0">
+              <div className={`text-sm sm:text-base font-bold ${getStatusColor(metric.status)} truncate`}>
                 {metric.value}
               </div>
               <div className="flex items-center justify-center gap-1 text-xs text-gray-600">
-                <span>{metric.label}</span>
-                {getTrendIcon(metric.trend)}
+                <span className="truncate text-xs">{metric.label}</span>
+                <div className="flex-shrink-0">
+                  {getTrendIcon(metric.trend)}
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Smart Actions */}
-      <div className="space-y-4">
-        {topActions.map((action, index) => (
-          <div key={action.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-4 hover:shadow-md hover:border-blue-200 transition-all duration-300">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3 flex-1">
-                <div className="bg-white p-2 rounded-xl shadow-sm border border-blue-200">
-                  {getTypeIcon(action.type)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-semibold text-gray-900 text-sm">
-                      {action.contactInfo ? (
-                        <button
-                          onClick={() => handleDonorClick(action.contactInfo!.name)}
-                          className="text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline transition-colors"
-                        >
-                          {action.title}
-                        </button>
-                      ) : (
-                        action.title
-                      )}
-                    </span>
-                    <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${getPriorityColor(action.priority)}`}>
-                      {action.priority}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700 mb-2">{action.description}</p>
-                  <p className="text-xs text-gray-600 mb-3">{action.reason}</p>
-                  <div className="flex items-center gap-4 text-xs">
-                    <span className="flex items-center gap-1 text-gray-600 bg-white px-2 py-1 rounded-full">
-                      <ClockIcon className="w-3 h-3" />
-                      {action.estimatedTime}
-                    </span>
-                    <span className="font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                      ${action.potentialValue.toLocaleString()}
-                    </span>
-                    <span className="font-bold text-crimson-blue bg-blue-50 px-2 py-1 rounded-full">
-                      {action.confidence}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                {action.contactInfo?.phone && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => window.open(`tel:${action.contactInfo!.phone}`, '_self')}
+      {/* Smart Actions - Single Action with Navigation */}
+      <div className="flex-1 overflow-hidden min-h-0">
+        {currentAction && (
+          <div className="h-full flex flex-col min-h-0">
+            {/* Current Action with Inline Navigation */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100 p-3 hover:shadow-md hover:border-blue-200 transition-all duration-300 flex-1 relative">
+              {/* Navigation Arrows */}
+              {availableActions.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevious}
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 p-1.5 bg-white/90 border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all z-10"
                   >
-                    <PhoneIcon className="w-3 h-3" />
-                  </Button>
+                    <ChevronLeftIcon className="w-3 h-3 text-gray-600" />
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 bg-white/90 border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all z-10"
+                  >
+                    <ChevronRightIcon className="w-3 h-3 text-gray-600" />
+                  </button>
+                </>
+              )}
+
+              <div className="flex items-start justify-between h-full px-8">
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                  <div className="bg-white p-1.5 rounded-lg shadow-sm border border-blue-200 flex-shrink-0">
+                    {getTypeIcon(currentAction.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-semibold text-gray-900 text-sm truncate">
+                        {currentAction.contactInfo ? (
+                          <button
+                            onClick={() => handleDonorClick(currentAction.contactInfo!.name)}
+                            className="text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline transition-colors"
+                          >
+                            {currentAction.title}
+                          </button>
+                        ) : (
+                          currentAction.title
+                        )}
+                      </span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full border font-semibold flex-shrink-0 ${getPriorityColor(currentAction.priority)}`}>
+                        {currentAction.priority}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-1 line-clamp-1">{currentAction.description}</p>
+                    <p className="text-xs text-gray-600 mb-2 line-clamp-1">{currentAction.reason}</p>
+                    <div className="flex items-center gap-1 text-xs flex-wrap">
+                      <span className="flex items-center gap-1 text-gray-600 bg-white px-1.5 py-0.5 rounded-full flex-shrink-0">
+                        <ClockIcon className="w-3 h-3" />
+                        {currentAction.estimatedTime}
+                      </span>
+                      <span className="font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                        ${currentAction.potentialValue.toLocaleString()}
+                      </span>
+                      <span className="font-bold text-crimson-blue bg-blue-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                        {currentAction.confidence}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {currentAction.contactInfo?.phone && (
+                  <div className="ml-2 flex-shrink-0">
+                    <button
+                      onClick={() => window.open(`tel:${currentAction.contactInfo!.phone}`, '_self')}
+                      className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-full hover:bg-green-700 transition-colors shadow-sm flex items-center gap-1"
+                      title={`Call ${currentAction.contactInfo!.phone}`}
+                    >
+                      <PhoneIcon className="w-3 h-3" />
+                      Call
+                    </button>
+                  </div>
                 )}
-                <Button
-                  size="sm"
-                  onClick={() => handleActionStart(action)}
-                  className="bg-crimson-blue text-white hover:bg-crimson-dark-blue"
-                >
-                  Start
-                </Button>
               </div>
+
+              {/* Action Counter at Bottom */}
+              {availableActions.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
+                  <span className="text-xs text-gray-500 bg-white/80 px-2 py-1 rounded-full">
+                    {currentActionIndex + 1} of {availableActions.length}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
-        ))}
+        )}
+
+        {!currentAction && (
+          <div className="text-center py-8 text-gray-500">
+            <p>No actions available at this time.</p>
+          </div>
+        )}
       </div>
 
       {completedActions.length > 0 && (
-        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg flex-shrink-0">
           <div className="flex items-center gap-2 text-green-800">
-            <CheckCircleIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">
+            <CheckCircleIcon className="w-3 h-3" />
+            <span className="text-xs font-medium">
               {completedActions.length} action{completedActions.length > 1 ? 's' : ''} completed today
             </span>
           </div>
