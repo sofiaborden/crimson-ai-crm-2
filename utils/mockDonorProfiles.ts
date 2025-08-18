@@ -944,6 +944,74 @@ export const mockDonorProfiles: Record<string, Donor> = {
       lastUpdated: '2024-02-20',
       disclaimer: 'This information is provided from public FEC filings for compliance, vetting, and benchmarking only. It may not be used for solicitation or commercial purposes (11 CFR §104.15).'
     }
+  },
+
+  'margaret-banks': {
+    id: 'margaret-banks',
+    pid: 'MB-2024-001',
+    name: 'Margaret Banks',
+    photoUrl: 'https://i.pravatar.cc/150?u=margaret-banks',
+    email: 'margaret.banks@email.com',
+    phone: '(555) 678-9014',
+    address: '456 Elm Street, Springfield, IL 62701',
+    primaryAddress: {
+      street: '456 Elm Street',
+      city: 'Springfield',
+      state: 'IL',
+      zip: '62701',
+      country: 'USA'
+    },
+    contactInfo: {
+      home: '(555) 678-9014',
+      work: '(555) 678-9015',
+      email: 'margaret.banks@email.com',
+      website: 'linkedin.com/in/margaretbanks'
+    },
+    aiBadges: ['Major Donor', 'Community Volunteer', 'Education Advocate'],
+    predictiveAsk: 3500,
+    recurrencePrediction: 'Very Likely (89%)',
+    suggestedAction: 'Invite to education policy roundtable',
+    givingOverview: {
+      totalRaised: 8750,
+      consecutiveGifts: 8,
+      tier: 'Gold Supporter',
+      topGifts: [
+        { name: 'Q1 2024', value: 2500 },
+        { name: 'Q4 2023', value: 1500 },
+        { name: 'Q3 2023', value: 2000 },
+        { name: 'Q2 2023', value: 1250 },
+        { name: 'Q1 2023', value: 1500 }
+      ]
+    },
+    aiSnapshot: 'Margaret is a dedicated education advocate and community volunteer who complements her husband Joseph\'s political engagement. She has a strong focus on education policy and children\'s welfare initiatives. Margaret prefers smaller, more intimate events and responds well to personal appeals about education funding. She has been instrumental in organizing community support for local school initiatives.',
+    totalLifetimeGiving: 8750,
+    lastGiftAmount: 2500,
+    lastGiftDate: '2024-03-15',
+    giftCount: 8,
+    engagementScore: 87,
+    urgencyIndicators: {
+      isHotLead: false,
+      hasRecentActivity: true,
+      needsAttention: false
+    },
+    relationshipMapping: {
+      spouse: 'Joseph M. Banks',
+      family: ['Joseph Banks Jr.', 'Sarah Banks-Wilson'],
+      professionalConnections: ['Springfield Education Foundation', 'Parent Teacher Association'],
+      mutualConnections: ['Patricia Williams', 'Robert Davis', 'School Board Members'],
+      influenceNetwork: ['Education Advocacy Group', 'Community Volunteer Network'],
+      employerMatching: false
+    },
+    givingIntelligence: {
+      capacityScore: 82,
+      engagementLevel: 'High',
+      preferredContactMethod: 'Email',
+      bestContactTime: 'Weekday mornings',
+      givingMotivation: 'Education and children\'s welfare',
+      responseToAsk: 'Thoughtful consideration',
+      eventAttendance: 'Selective - education focused',
+      volunteerHistory: 'Active in school committees'
+    }
   }
 };
 
@@ -962,7 +1030,9 @@ export const getDonorProfileByName = (name: string): Donor | null => {
     'Lisa M.': 'lisa-m',
     'Lisa Martinez': 'lisa-m',
     'Joseph M. Banks': 'joseph-banks',
-    'Joseph Banks': 'joseph-banks'
+    'Joseph Banks': 'joseph-banks',
+    'Margaret Banks': 'margaret-banks',
+    'Margaret M. Banks': 'margaret-banks'
   };
 
   const profileKey = nameMapping[name];

@@ -3,6 +3,7 @@ import { Donor } from '../../types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+import DonorProfileModal from '../ui/DonorProfileModal';
 import { generateMockDonorResearch, generateDonorResearch } from '../../utils/aiDonorResearch';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import {
@@ -115,6 +116,10 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   const [showLookalikes, setShowLookalikes] = useState(false);
   const [aiResearch, setAiResearch] = useState<any>(null);
   const [isLoadingResearch, setIsLoadingResearch] = useState(false);
+  const [showSpouseProfile, setShowSpouseProfile] = useState(false);
+  const [selectedSpouse, setSelectedSpouse] = useState<Donor | null>(null);
+  const [showGivingBreakdown, setShowGivingBreakdown] = useState(false);
+  const [showSourcesModal, setShowSourcesModal] = useState(false);
 
   // Enhanced Lookalike Finder state
   const [lookalikeExpanded, setLookalikeExpanded] = useState(false);
@@ -135,7 +140,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   const [showFecComplianceModal, setShowFecComplianceModal] = useState(false);
   const [expandedCommittees, setExpandedCommittees] = useState<Set<string>>(new Set());
   const [showAllCommittees, setShowAllCommittees] = useState(false);
-  const [showSourcesModal, setShowSourcesModal] = useState(false);
   const [committeeTransactionPages, setCommitteeTransactionPages] = useState<Record<string, number>>({});
   const enrichedData = getEnrichedData(donor.id);
 
@@ -362,9 +366,9 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   };
 
   const generateAISnapshot = () => {
-    // Joseph Banks specific content
+    // Joseph Banks specific content - more concise but still useful
     if (donor.name === 'Joseph M. Banks' || donor.name.includes('Joseph')) {
-      return "Joseph is a cornerstone supporter and community leader in the Neighborhood MVPs segment. He has consistently increased his giving over the past 3 years and serves as an informal campaign ambassador in his community. His recent $5,000 gift demonstrates strong commitment. He prefers in-person meetings and responds well to policy briefings. Excellent candidate for campaign advisory role.";
+      return "Cornerstone supporter & community leader. Consistent 3-year growth pattern, recent $5K gift shows strong commitment. Prefers in-person meetings, responds to policy briefings. Prime candidate for campaign advisory role.";
     }
 
     // Default content for other donors
@@ -810,18 +814,27 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   <h3 className="text-lg font-semibold text-text-primary mb-4">Donation Summary</h3>
 
                   {/* Primary Metrics Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {/* Total Raised Card - Clickable */}
+                    <div
+                      className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setShowGivingBreakdown(true)}
+                    >
                       <p className="text-sm text-blue-700 font-medium mb-1">Total Raised</p>
                       <p className="text-2xl font-bold text-blue-900">${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}</p>
+                      <p className="text-xs text-blue-600 mt-1">{donor.givingOverview?.consecutiveGifts || donor.giftCount} total gifts</p>
                     </div>
+
+                    {/* Unrealized Potential - Corrected Calculation */}
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
                       <p className="text-sm text-purple-700 font-medium mb-1">Unrealized Potential</p>
                       <p className="text-2xl font-bold text-purple-900">
-                        ${((donor.givingOverview?.totalRaised || donor.totalLifetimeGiving) * 1.6).toLocaleString()}
+                        ${(24500 - (donor.givingOverview?.totalRaised || donor.totalLifetimeGiving)).toLocaleString()}
                       </p>
-                      <p className="text-xs text-purple-600 mt-1">Based on capacity model</p>
+                      <p className="text-xs text-purple-600 mt-1">Gap to modeled capacity</p>
                     </div>
+
+                    {/* Consecutive Gifts with Cycles */}
                     <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
                       <div className="flex items-center gap-2 mb-1">
                         <p className="text-sm text-green-700 font-medium">Consecutive Gifts</p>
@@ -831,43 +844,68 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                           <TrendingDownIcon className="w-4 h-4 text-orange-500" title="Needs attention" />
                         )}
                       </div>
-                      <p className="text-2xl font-bold text-green-900">{donor.givingOverview?.consecutiveGifts || donor.giftCount}</p>
-                      <p className="text-xs text-green-600 mt-1">
-                        {(donor.givingOverview?.consecutiveGifts || donor.giftCount) > 5 ? 'Strong momentum' : 'Building consistency'}
-                      </p>
+                      <p className="text-2xl font-bold text-green-900">{donor.givingOverview?.consecutiveGifts || donor.giftCount} Cycles</p>
+                      <p className="text-xs text-green-600 mt-1">Since 2008</p>
                     </div>
+                  </div>
+
+                  {/* Secondary Metrics Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    {/* Soft Credits */}
+                    <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-4 rounded-lg border border-teal-200">
+                      <p className="text-sm text-teal-700 font-medium mb-1">Soft Credits</p>
+                      <p className="text-2xl font-bold text-teal-900">$5,030</p>
+                      <p className="text-xs text-teal-600 mt-1">2 gifts attributed</p>
+                    </div>
+
+                    {/* Pledges */}
+                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-lg border border-indigo-200">
+                      <p className="text-sm text-indigo-700 font-medium mb-1">Open Pledges</p>
+                      <p className="text-2xl font-bold text-indigo-900">$2,500</p>
+                      <p className="text-xs text-indigo-600 mt-1">1 outstanding pledge</p>
+                    </div>
+
+                    {/* Tier Level */}
                     <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
                       <p className="text-sm text-orange-700 font-medium mb-1">Tier Level</p>
                       <p className="text-lg font-bold text-orange-900">{donor.givingOverview?.tier || (donor.totalLifetimeGiving > 1000 ? 'Gold' : 'Silver')}</p>
                     </div>
                   </div>
 
-                  {/* Spouse & Family Information */}
+                  {/* Enhanced Spouse & Family Information */}
                   {donor.relationshipMapping?.spouse && (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <UserGroupIcon className="w-4 h-4 text-gray-600" />
-                        <h4 className="font-medium text-gray-900">Family Information</h4>
+                    <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-lg border border-gray-200 mb-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <UserGroupIcon className="w-4 h-4 text-gray-600" />
+                          <h4 className="font-medium text-gray-900">Family Information</h4>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-700">
-                        <span className="font-medium">Spouse:</span>{' '}
-                        <button
-                          className="text-crimson-blue hover:text-crimson-dark-blue underline font-medium"
-                          onClick={() => {
-                            // For now, show the same profile - in real app would link to spouse profile
-                            const spouseProfile = getDonorProfileByName(donor.relationshipMapping?.spouse || '');
-                            if (spouseProfile) {
-                              // Could open spouse profile modal here
-                              console.log('Opening spouse profile:', donor.relationshipMapping?.spouse);
-                            }
-                          }}
-                        >
-                          {donor.relationshipMapping.spouse}
-                        </button>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-gray-700">
+                            <span className="font-medium">Spouse:</span>{' '}
+                            <button
+                              className="text-crimson-blue hover:text-crimson-dark-blue underline font-medium"
+                              onClick={() => {
+                                const spouseProfile = getDonorProfileByName(donor.relationshipMapping?.spouse || '');
+                                if (spouseProfile) {
+                                  setSelectedSpouse(spouseProfile);
+                                  setShowSpouseProfile(true);
+                                }
+                              }}
+                            >
+                              {donor.relationshipMapping.spouse}
+                            </button>
+                          </div>
+                          <div className="text-xs text-gray-600 bg-white px-2 py-1 rounded border">
+                            Total Given: $8,750 • 8 gifts
+                          </div>
+                        </div>
                         {donor.relationshipMapping.family && donor.relationshipMapping.family.length > 0 && (
-                          <span className="ml-4">
+                          <div className="text-sm text-gray-700 pt-2 border-t border-gray-200">
                             <span className="font-medium">Family:</span> {donor.relationshipMapping.family.join(', ')}
-                          </span>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -3429,6 +3467,88 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
               <button className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
                 Export Sources
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Spouse Profile Modal */}
+      <DonorProfileModal
+        donor={selectedSpouse}
+        isOpen={showSpouseProfile}
+        onClose={() => setShowSpouseProfile(false)}
+      />
+
+      {/* Giving Breakdown Modal */}
+      {showGivingBreakdown && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Giving History Breakdown</h3>
+              <button
+                onClick={() => setShowGivingBreakdown(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">First Gift</p>
+                  <p className="font-semibold text-gray-900">Jan 2008</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">Last Gift</p>
+                  <p className="font-semibold text-gray-900">Mar 2024</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">Highest Gift</p>
+                  <p className="font-semibold text-green-600">$5,000</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">Average Gift</p>
+                  <p className="font-semibold text-blue-600">$1,267</p>
+                </div>
+              </div>
+
+              {/* Year by Year Breakdown */}
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Year-by-Year Totals</h4>
+                <div className="space-y-2">
+                  {[
+                    { year: '2024', amount: 5000, gifts: 1 },
+                    { year: '2023', amount: 4200, gifts: 3 },
+                    { year: '2022', amount: 3500, gifts: 2 },
+                    { year: '2021', amount: 2500, gifts: 2 },
+                    { year: '2020', amount: 0, gifts: 0 },
+                    { year: '2019', amount: 0, gifts: 0 },
+                    { year: '2018', amount: 0, gifts: 0 },
+                    { year: '2017', amount: 0, gifts: 0 },
+                    { year: '2016', amount: 0, gifts: 0 },
+                    { year: '2015', amount: 0, gifts: 0 },
+                    { year: '2014', amount: 0, gifts: 0 },
+                    { year: '2013', amount: 0, gifts: 0 },
+                    { year: '2012', amount: 0, gifts: 0 },
+                    { year: '2011', amount: 0, gifts: 0 },
+                    { year: '2010', amount: 0, gifts: 0 },
+                    { year: '2009', amount: 0, gifts: 0 },
+                    { year: '2008', amount: 0, gifts: 0 }
+                  ].map((yearData) => (
+                    <div key={yearData.year} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                      <span className="font-medium text-gray-900">{yearData.year}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm text-gray-600">{yearData.gifts} gifts</span>
+                        <span className="font-semibold text-gray-900">
+                          {yearData.amount > 0 ? `$${yearData.amount.toLocaleString()}` : '—'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
