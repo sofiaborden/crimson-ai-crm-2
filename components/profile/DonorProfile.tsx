@@ -4,6 +4,7 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { generateMockDonorResearch, generateDonorResearch } from '../../utils/aiDonorResearch';
+import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import {
   SparklesIcon,
   ShieldCheckIcon,
@@ -800,37 +801,125 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* AI Snapshot */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <BrainIcon className="w-5 h-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-text-primary">AI Donor Research</h3>
-                <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-xs">Live Analysis</Badge>
-              </div>
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
-                <div className="flex items-start gap-4">
-                  <div className="bg-white p-3 rounded-full shadow-sm">
-                    <SparklesIcon className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    {isLoadingResearch ? (
-                      <div className="flex items-center gap-3">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                        <p className="text-gray-600 text-sm">Researching donor background...</p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-800 leading-relaxed text-sm">
-                        {aiResearch?.summary || donor.aiSnapshot || aiSnapshot}
+            {/* Main Overview Layout - 3/4 left, 1/4 right */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Left Column - Donation Summary (3/4 width) */}
+              <div className="lg:col-span-3 space-y-6">
+                {/* Enhanced Giving Overview */}
+                <div>
+                  <h3 className="text-lg font-semibold text-text-primary mb-4">Donation Summary</h3>
+
+                  {/* Primary Metrics Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-700 font-medium mb-1">Total Raised</p>
+                      <p className="text-2xl font-bold text-blue-900">${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                      <p className="text-sm text-purple-700 font-medium mb-1">Unrealized Potential</p>
+                      <p className="text-2xl font-bold text-purple-900">
+                        ${((donor.givingOverview?.totalRaised || donor.totalLifetimeGiving) * 1.6).toLocaleString()}
                       </p>
-                    )}
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-purple-200">
-                      <div className="flex items-center gap-4">
-                        <div className="text-xs text-purple-700">
-                          <span className="font-medium">Last Updated:</span> {aiResearch?.lastUpdated ? new Date(aiResearch.lastUpdated).toLocaleString() : new Date().toLocaleString()}
-                        </div>
-                        <div className="text-xs text-purple-700">
-                          <span className="font-medium">Confidence:</span> {aiResearch?.confidence || 94}%
-                        </div>
+                      <p className="text-xs text-purple-600 mt-1">Based on capacity model</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm text-green-700 font-medium">Consecutive Gifts</p>
+                        {(donor.givingOverview?.consecutiveGifts || donor.giftCount) > 5 ? (
+                          <ArrowTrendingUpIcon className="w-4 h-4 text-green-600" title="Positive momentum" />
+                        ) : (
+                          <TrendingDownIcon className="w-4 h-4 text-orange-500" title="Needs attention" />
+                        )}
+                      </div>
+                      <p className="text-2xl font-bold text-green-900">{donor.givingOverview?.consecutiveGifts || donor.giftCount}</p>
+                      <p className="text-xs text-green-600 mt-1">
+                        {(donor.givingOverview?.consecutiveGifts || donor.giftCount) > 5 ? 'Strong momentum' : 'Building consistency'}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+                      <p className="text-sm text-orange-700 font-medium mb-1">Tier Level</p>
+                      <p className="text-lg font-bold text-orange-900">{donor.givingOverview?.tier || (donor.totalLifetimeGiving > 1000 ? 'Gold' : 'Silver')}</p>
+                    </div>
+                  </div>
+
+                  {/* Spouse & Family Information */}
+                  {donor.relationshipMapping?.spouse && (
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <UserGroupIcon className="w-4 h-4 text-gray-600" />
+                        <h4 className="font-medium text-gray-900">Family Information</h4>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        <span className="font-medium">Spouse:</span>{' '}
+                        <button
+                          className="text-crimson-blue hover:text-crimson-dark-blue underline font-medium"
+                          onClick={() => {
+                            // For now, show the same profile - in real app would link to spouse profile
+                            const spouseProfile = getDonorProfileByName(donor.relationshipMapping?.spouse || '');
+                            if (spouseProfile) {
+                              // Could open spouse profile modal here
+                              console.log('Opening spouse profile:', donor.relationshipMapping?.spouse);
+                            }
+                          }}
+                        >
+                          {donor.relationshipMapping.spouse}
+                        </button>
+                        {donor.relationshipMapping.family && donor.relationshipMapping.family.length > 0 && (
+                          <span className="ml-4">
+                            <span className="font-medium">Family:</span> {donor.relationshipMapping.family.join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Performance Status */}
+                  <div className={`p-4 rounded-lg border ${performance.color}`}>
+                    <div className="flex items-center gap-2">
+                      <TrendingUpIcon className="w-5 h-5" />
+                      <span className="font-medium">{performance.message}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - AI Snapshot (1/4 width) */}
+              <div className="lg:col-span-1">
+                <div className="sticky top-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <BrainIcon className="w-5 h-5 text-purple-600" />
+                    <h3 className="text-lg font-semibold text-text-primary">AI Research</h3>
+                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-xs">Live</Badge>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="bg-white p-2 rounded-full shadow-sm flex-shrink-0">
+                        <SparklesIcon className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {isLoadingResearch ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600"></div>
+                            <p className="text-gray-600 text-xs">Researching...</p>
+                          </div>
+                        ) : (
+                          <p className="text-gray-800 leading-relaxed text-sm">
+                            {aiResearch?.summary || donor.aiSnapshot || aiSnapshot}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-3 border-t border-purple-200">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-purple-700 font-medium">Confidence:</span>
+                        <span className="text-purple-900 font-semibold">{aiResearch?.confidence || 94}%</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-purple-700 font-medium">Updated:</span>
+                        <span className="text-purple-900">{new Date().toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex gap-2 pt-2">
                         {!isLoadingResearch && (
                           <button
                             onClick={() => {
@@ -839,11 +928,9 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                             }}
                             className="text-xs text-purple-600 hover:text-purple-800 underline"
                           >
-                            Refresh Research
+                            Refresh
                           </button>
                         )}
-                      </div>
-                      <div className="relative">
                         <button
                           onClick={() => setShowSourcesModal(true)}
                           className="text-xs text-purple-600 hover:text-purple-800 underline"
@@ -856,37 +943,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 </div>
               </div>
             </div>
-
-              {/* Giving Overview */}
-              <div>
-                <h3 className="text-lg font-semibold text-text-primary mb-4">Giving Overview</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gray-50 p-4 rounded-lg text-center">
-                    <p className="text-sm text-text-secondary">Total Raised</p>
-                    <p className="text-2xl font-bold text-crimson-blue">${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg text-center">
-                    <p className="text-sm text-text-secondary">Consecutive Gifts</p>
-                    <p className="text-2xl font-bold text-green-600">{donor.givingOverview?.consecutiveGifts || donor.giftCount}</p>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg text-center">
-                    <p className="text-sm text-text-secondary">Tier</p>
-                    <p className="text-lg font-semibold text-orange-600">{donor.givingOverview?.tier || (donor.totalLifetimeGiving > 1000 ? 'Gold' : 'Silver')}</p>
-                  </div>
-                </div>
-
-                {/* Performance Status */}
-                <div className={`mt-4 p-3 rounded-lg border ${performance.color}`}>
-                  <div className="flex items-center gap-2">
-                    <TrendingUpIcon className="w-4 h-4" />
-                    <span className="font-medium text-sm">{performance.message}</span>
-                  </div>
-                </div>
-              </div>
-
-
-
-
           </div>
         )}
 
