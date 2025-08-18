@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDownIcon, EnvelopeIcon, PhoneIcon, UsersIcon, XMarkIcon, TargetIcon } from '../../constants.tsx';
+import { ChevronDownIcon, EnvelopeIcon, PhoneIcon, UsersIcon, XMarkIcon, TargetIcon, ClockIcon } from '../../constants.tsx';
 
 interface ActionsDropdownProps {
   segmentId: string;
@@ -11,6 +11,7 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ segmentId, segmentNam
   const [isOpen, setIsOpen] = useState(false);
   const [showDialRModal, setShowDialRModal] = useState(false);
   const [showMailChimpModal, setShowMailChimpModal] = useState(false);
+  const [showMonitorFatigueModal, setShowMonitorFatigueModal] = useState(false);
 
   const [mailChimpStep, setMailChimpStep] = useState<'account' | 'list' | 'confirm'>('account');
 
@@ -38,6 +39,13 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ segmentId, segmentNam
       description: 'Create call list',
       icon: <PhoneIcon className="w-4 h-4" />,
       action: () => setShowDialRModal(true)
+    },
+    {
+      id: 'monitor-fatigue',
+      label: 'Monitor Fatigue',
+      description: 'Set follow-up pause period',
+      icon: <ClockIcon className="w-4 h-4" />,
+      action: () => setShowMonitorFatigueModal(true)
     },
 
   ];
@@ -156,7 +164,7 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ segmentId, segmentNam
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+          <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
             {actions.map((action, index) => (
               <button
                 key={action.id}
@@ -474,6 +482,112 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ segmentId, segmentNam
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Monitor Fatigue Modal */}
+      {showMonitorFatigueModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-6 border-b border-base-300">
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary">Monitor Fatigue</h3>
+                <p className="text-sm text-text-secondary mt-1">Set follow-up pause period for "{segmentName}"</p>
+              </div>
+              <button
+                onClick={() => setShowMonitorFatigueModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Pause follow-up activities for:
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => {
+                        alert(`✅ Monitor Fatigue activated for "${segmentName}"\n\n• Duration: 2 weeks\n• ${donorCount} contacts will be paused from follow-up activities\n• You'll be notified when the pause period ends`);
+                        setShowMonitorFatigueModal(false);
+                        setIsOpen(false);
+                      }}
+                      className="p-3 border border-gray-300 rounded-lg hover:border-crimson-blue hover:bg-crimson-blue/5 transition-colors text-center"
+                    >
+                      <div className="font-medium text-gray-900">2 weeks</div>
+                      <div className="text-xs text-gray-500">Recommended</div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        alert(`✅ Monitor Fatigue activated for "${segmentName}"\n\n• Duration: 1 month\n• ${donorCount} contacts will be paused from follow-up activities\n• You'll be notified when the pause period ends`);
+                        setShowMonitorFatigueModal(false);
+                        setIsOpen(false);
+                      }}
+                      className="p-3 border border-gray-300 rounded-lg hover:border-crimson-blue hover:bg-crimson-blue/5 transition-colors text-center"
+                    >
+                      <div className="font-medium text-gray-900">1 month</div>
+                      <div className="text-xs text-gray-500">Extended</div>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom date range:
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                      <input
+                        type="date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crimson-blue focus:border-transparent"
+                        defaultValue={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">End Date</label>
+                      <input
+                        type="date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crimson-blue focus:border-transparent"
+                        defaultValue={new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <ClockIcon className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-amber-800">
+                      <strong>What this does:</strong> Temporarily pauses automated follow-up activities (calls, emails, campaigns) for this segment to prevent donor fatigue while maintaining engagement tracking.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowMonitorFatigueModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    alert(`✅ Monitor Fatigue activated for "${segmentName}"\n\n• Custom date range applied\n• ${donorCount} contacts will be paused from follow-up activities\n• You'll be notified when the pause period ends`);
+                    setShowMonitorFatigueModal(false);
+                    setIsOpen(false);
+                  }}
+                  className="flex-1 px-4 py-2 bg-crimson-blue text-white rounded-lg hover:bg-crimson-blue/90 transition-colors"
+                >
+                  Activate Monitor
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -315,7 +315,9 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
                         <UserIcon className="w-4 h-4 text-gray-600" />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900 text-sm">{result.firstName} {result.lastName}</div>
+                        <div className="font-medium text-gray-900 text-sm">
+                          {result.firstName} {result.lastName}
+                        </div>
                         <div className="flex gap-1 mt-1">
                           {result.tags.slice(0, 2).map((tag, i) => (
                             <span key={i} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">

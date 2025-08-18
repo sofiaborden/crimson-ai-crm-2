@@ -471,12 +471,22 @@ const SegmentsDashboard: React.FC = () => {
                         )}
                       </div>
                       <div>
-                        <button
-                          onClick={() => handleSegmentClick(segment.id, segment.funName)}
-                          className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left"
-                        >
-                          {segment.funName}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleSegmentClick(segment.id, segment.funName)}
+                            className="font-semibold text-crimson-blue hover:text-crimson-dark-blue underline-offset-2 hover:underline transition-colors text-left"
+                          >
+                            {segment.funName}
+                          </button>
+                          {segment.id === 'over-performers' && (
+                            <div className="group relative">
+                              <ClockIcon className="w-4 h-4 text-amber-600" />
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-2 px-3 whitespace-nowrap z-10">
+                                Monitor Fatigue active until Dec 15, 2024
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>

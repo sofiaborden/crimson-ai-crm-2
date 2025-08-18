@@ -100,64 +100,67 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId }) 
 
   return (
     <div className="space-y-8">
-      {/* Welcome Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hi Sofia! Here's your Daily Updates:</h1>
-        </div>
-        <div className="flex gap-3">
-          {/* Secondary Action Buttons */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 text-gray-600 hover:text-crimson-blue hover:border-crimson-blue transition-colors"
-            onClick={() => setShowSearchesModal(true)}
-          >
-            <BookmarkIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">My Saved Searches</span>
-            <span className="sm:hidden">Searches</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 text-gray-600 hover:text-crimson-blue hover:border-crimson-blue transition-colors"
-            onClick={() => setShowReportsModal(true)}
-          >
-            <DocumentTextIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">My Reports</span>
-            <span className="sm:hidden">Reports</span>
-          </Button>
+      {/* Daily Updates Section with Background */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+        {/* Welcome Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Hi Sofia! Here's your Daily Updates:</h1>
+          </div>
+          <div className="flex gap-3">
+            {/* Secondary Action Buttons */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-gray-600 hover:text-crimson-blue hover:border-crimson-blue transition-colors"
+              onClick={() => setShowSearchesModal(true)}
+            >
+              <BookmarkIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">My Saved Searches</span>
+              <span className="sm:hidden">Searches</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-gray-600 hover:text-crimson-blue hover:border-crimson-blue transition-colors"
+              onClick={() => setShowReportsModal(true)}
+            >
+              <DocumentTextIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">My Reports</span>
+              <span className="sm:hidden">Reports</span>
+            </Button>
 
-          {/* Primary Action Buttons */}
-          <Button
-            variant="primary"
-            className="flex items-center gap-2 bg-crimson-blue hover:bg-crimson-dark-blue"
-            onClick={() => searchFromCard('people-search', { count: 245678 })}
-          >
-            <MagnifyingGlassIcon className="w-4 h-4" />
-            People Search
-          </Button>
-          <Button
-            variant="secondary"
-            className="flex items-center gap-2 border-gray-300 hover:border-crimson-blue hover:text-crimson-blue transition-colors"
-            onClick={() => {
-              // TODO: Implement import functionality
-              alert('Import functionality coming soon!');
-            }}
-          >
-            <ArrowDownTrayIcon className="w-4 h-4" />
-            Import
-          </Button>
+            {/* Primary Action Buttons */}
+            <Button
+              variant="primary"
+              className="flex items-center gap-2 bg-crimson-blue hover:bg-crimson-dark-blue"
+              onClick={() => searchFromCard('people-search', { count: 245678 })}
+            >
+              <MagnifyingGlassIcon className="w-4 h-4" />
+              People Search
+            </Button>
+            <Button
+              variant="secondary"
+              className="flex items-center gap-2 border-gray-300 hover:border-crimson-blue hover:text-crimson-blue transition-colors"
+              onClick={() => {
+                // TODO: Implement import functionality
+                alert('Import functionality coming soon!');
+              }}
+            >
+              <ArrowDownTrayIcon className="w-4 h-4" />
+              Import
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Top Row - Compact Smart Actions and Live Donation Tracker */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="lg:col-span-1">
-          <SmartActionCenter setView={setView} setProfileId={setProfileId} />
-        </div>
-        <div className="lg:col-span-1">
-          <RealTimeDonationTracker showPopoutButton={true} />
+        {/* Top Row - Compact Smart Actions and Live Donation Tracker */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="lg:col-span-1">
+            <SmartActionCenter setView={setView} setProfileId={setProfileId} />
+          </div>
+          <div className="lg:col-span-1">
+            <RealTimeDonationTracker showPopoutButton={true} />
+          </div>
         </div>
       </div>
 

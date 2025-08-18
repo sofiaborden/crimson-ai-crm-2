@@ -2,9 +2,33 @@
 import React, { useState } from 'react';
 import { BellIcon, MailIcon, SparklesIcon } from '../../constants';
 import CrimsonGPTPanel from '../ui/CrimsonGPTPanel';
+import DonorProfileModal from '../ui/DonorProfileModal';
+import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
+import { Donor } from '../../types';
 
 const Header: React.FC = () => {
   const [showCrimsonGPT, setShowCrimsonGPT] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
+  const [showDonorProfile, setShowDonorProfile] = useState(false);
+
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      // For now, always show Joseph Banks profile for any search
+      const donor = getDonorProfileByName('Joseph Banks');
+      if (donor) {
+        setSelectedDonor(donor);
+        setShowDonorProfile(true);
+        setSearchQuery(''); // Clear search after opening profile
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch(searchQuery);
+    }
+  };
 
   return (
     <>
@@ -18,6 +42,9 @@ const Header: React.FC = () => {
           <div className="relative w-96">
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Quick People Search"
               className="bg-base-200 border border-slate-200 rounded-lg w-full pl-4 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-crimson-blue"
             />
@@ -56,6 +83,13 @@ const Header: React.FC = () => {
         </div>
       </div>
     </header>
+
+    {/* Donor Profile Modal */}
+    <DonorProfileModal
+      donor={selectedDonor}
+      isOpen={showDonorProfile}
+      onClose={() => setShowDonorProfile(false)}
+    />
     </>
   );
 };
