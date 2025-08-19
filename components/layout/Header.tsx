@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
-import { BellIcon, MailIcon, SparklesIcon } from '../../constants';
+import { BellIcon, MailIcon, SparklesIcon, SettingsIcon } from '../../constants';
 import CrimsonGPTPanel from '../ui/CrimsonGPTPanel';
 import DonorProfileModal from '../ui/DonorProfileModal';
+import SettingsModal from '../settings/SettingsModal';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import { Donor } from '../../types';
 
 const Header: React.FC = () => {
   const [showCrimsonGPT, setShowCrimsonGPT] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
   const [showDonorProfile, setShowDonorProfile] = useState(false);
@@ -71,6 +73,13 @@ const Header: React.FC = () => {
                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-crimson-red"></span>
                </span>
              </button>
+             <button
+               onClick={() => setShowSettings(true)}
+               className="p-2 rounded-full hover:bg-base-200 text-slate-500 relative"
+               title="Settings"
+             >
+               <SettingsIcon className="w-6 h-6" />
+             </button>
              <div className="h-8 w-px bg-slate-200 mx-2"></div>
              <button className="flex items-center gap-2">
                  <img
@@ -89,6 +98,12 @@ const Header: React.FC = () => {
       donor={selectedDonor}
       isOpen={showDonorProfile}
       onClose={() => setShowDonorProfile(false)}
+    />
+
+    {/* Settings Modal */}
+    <SettingsModal
+      isOpen={showSettings}
+      onClose={() => setShowSettings(false)}
     />
     </>
   );

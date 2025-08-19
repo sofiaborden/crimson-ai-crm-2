@@ -6,6 +6,9 @@ import DonorProfileModal from './DonorProfileModal';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import { Donor as DonorProfile } from '../../types';
 import ActionsDropdown from './ActionsDropdown';
+import ColumnCustomizer from './ColumnCustomizer';
+import SortableHeader from './SortableHeader';
+import SmartTag from './SmartTag';
 
 // Individual Donor Actions Dropdown Component
 interface IndividualDonorActionsProps {
@@ -133,6 +136,25 @@ interface Donor {
   zip: string;
   predictedPotential: number; // Percentage (0-100)
   suggestedAskAmount: number; // Dollar amount
+  smartTags?: Array<{
+    name: string;
+    emoji: string;
+    color: string;
+  }>;
+  // Additional fields for column customization
+  firstGiftDate?: string;
+  highestGift?: number;
+  highestGiftDate?: string;
+  ctdTotal?: number;
+  homePhone?: string;
+  employer?: string;
+  occupation?: string;
+  mrc?: string;
+  mrcDate?: string;
+  firstGift?: number;
+  middle?: string;
+  suffix?: string;
+  street?: string;
 }
 
 interface DonorListViewProps {
@@ -149,6 +171,35 @@ interface DonorListViewProps {
     lastUpdated?: string;
   };
 }
+
+// Helper function to generate smart tags for a donor
+const generateSmartTags = (donor: Donor) => {
+  const tags = [];
+
+  if (donor.totalLifetimeGiving > 500) {
+    tags.push({ name: 'Big Givers', emoji: '💰', color: '#10B981' });
+  }
+
+  if (donor.status === 'major' || (donor.totalLifetimeGiving > 1000 && donor.engagementScore > 80)) {
+    tags.push({ name: 'Prime Persuadables', emoji: '🎯', color: '#8B5CF6' });
+  }
+
+  if (donor.status === 'new' || donor.giftCount <= 3) {
+    tags.push({ name: 'New & Rising Donors', emoji: '⚡', color: '#3B82F6' });
+  }
+
+  if (donor.status === 'lapsed') {
+    tags.push({ name: 'Lapsed / At-Risk', emoji: '🕒', color: '#EF4444' });
+  }
+
+  // Mock logic for voter registration
+  const nameHash = donor.name.length;
+  if (nameHash % 5 === 0) {
+    tags.push({ name: 'Not Yet Registered to Vote', emoji: '🚧', color: '#F59E0B' });
+  }
+
+  return tags;
+};
 
 // Generate 10 diverse donors per segment with varied AI suggested actions
 const generateDonorData = (segmentId: string): Donor[] => {
@@ -269,7 +320,7 @@ const generateDonorData = (segmentId: string): Donor[] => {
                    30 + Math.floor(Math.random() * 90);
     const lastGiftDate = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    return {
+    const donor = {
       id: `${segmentId}-${index}`,
       name,
       email,
@@ -282,8 +333,27 @@ const generateDonorData = (segmentId: string): Donor[] => {
       engagementScore: profile.engagementScore,
       predictedPotential,
       suggestedAskAmount,
-      ...addresses[index]
+      ...addresses[index],
+      // Additional fields
+      firstGiftDate: new Date(Date.now() - (daysAgo + 365) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      highestGift: Math.round(profile.giftAmount * (1.2 + Math.random() * 0.8)),
+      highestGiftDate: new Date(Date.now() - Math.floor(Math.random() * 365) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      ctdTotal: Math.round(profile.lifetimeGiving * (0.3 + Math.random() * 0.4)),
+      homePhone: phone,
+      employer: ['Tech Corp', 'Healthcare Inc', 'Education Foundation', 'Legal Associates', 'Finance Group'][index % 5],
+      occupation: ['Engineer', 'Doctor', 'Teacher', 'Lawyer', 'Analyst'][index % 5],
+      mrc: ['Technology', 'Healthcare', 'Education', 'Legal', 'Finance'][index % 5],
+      mrcDate: '2024-01-01',
+      firstGift: Math.round(profile.giftAmount * 0.5),
+      middle: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K'][index],
+      suffix: index % 3 === 0 ? 'Jr.' : '',
+      street: addresses[index].address.split(',')[0]
     };
+
+    // Add smart tags
+    donor.smartTags = generateSmartTags(donor);
+
+    return donor;
   });
 };
 
@@ -293,6 +363,36 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedDonor, setSelectedDonor] = useState<DonorProfile | null>(null);
   const [showDonorProfile, setShowDonorProfile] = useState(false);
+  const [showColumnCustomizer, setShowColumnCustomizer] = useState(false);
+
+  // Column configuration
+  const [columns, setColumns] = useState([
+    { id: 'name', label: 'Name', enabled: true, category: 'Basic Info' },
+    { id: 'contact', label: 'Contact', enabled: true, category: 'Basic Info' },
+    { id: 'lastGiftAmount', label: 'Last Gift', enabled: true, category: 'Giving History' },
+    { id: 'totalLifetimeGiving', label: 'Total($)', enabled: true, category: 'Giving History' },
+    { id: 'giftCount', label: '#Gifts', enabled: true, category: 'Giving History' },
+    { id: 'suggestedAskAmount', label: 'Suggested Ask', enabled: true, category: 'Giving History' },
+    { id: 'actions', label: 'Actions', enabled: true, category: 'Basic Info' },
+    // Additional columns
+    { id: 'firstGiftDate', label: 'First Gift Date', enabled: false, category: 'Giving History' },
+    { id: 'highestGift', label: 'Highest $', enabled: false, category: 'Giving History' },
+    { id: 'highestGiftDate', label: 'Highest $ Date', enabled: false, category: 'Giving History' },
+    { id: 'ctdTotal', label: 'CTD $', enabled: false, category: 'Giving History' },
+    { id: 'zip', label: 'Zip', enabled: false, category: 'Address' },
+    { id: 'homePhone', label: 'Home#', enabled: false, category: 'Contact' },
+    { id: 'email', label: 'Email', enabled: false, category: 'Contact' },
+    { id: 'employer', label: 'Employer', enabled: false, category: 'Professional' },
+    { id: 'occupation', label: 'Occupation', enabled: false, category: 'Professional' },
+    { id: 'mrc', label: 'MRC', enabled: false, category: 'Professional' },
+    { id: 'mrcDate', label: 'MRC Date', enabled: false, category: 'Professional' },
+    { id: 'firstGift', label: 'First Gift', enabled: false, category: 'Giving History' },
+    { id: 'middle', label: 'Middle', enabled: false, category: 'Name' },
+    { id: 'suffix', label: 'Suffix', enabled: false, category: 'Name' },
+    { id: 'street', label: 'Street', enabled: false, category: 'Address' },
+    { id: 'city', label: 'City', enabled: false, category: 'Address' },
+    { id: 'state', label: 'State', enabled: false, category: 'Address' }
+  ]);
 
   // Advanced filtering state
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -596,6 +696,14 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
               <EyeIcon className="w-4 h-4" />
               {showRemovedDonors ? 'Show Active' : `Show Removed (${removedDonors.size})`}
             </button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowColumnCustomizer(true)}
+            >
+              <SettingsIcon className="w-4 h-4 mr-1" />
+              Columns
+            </Button>
             <Button variant="secondary" size="sm">
               <CurrencyDollarIcon className="w-4 h-4 mr-1" />
               Export CSV
@@ -787,146 +895,154 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
           <table className="w-full table-fixed">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="w-[18%] px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('name')}>
-                  Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="w-[16%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="w-[10%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('lastGiftAmount')}>
-                  Last Gift {sortField === 'lastGiftAmount' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="w-[12%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('totalLifetimeGiving')}>
-                  Lifetime {sortField === 'totalLifetimeGiving' && (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="w-[12%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('suggestedAskAmount')}>
-                  <div className="flex items-center gap-1">
-                    Ask Amount
-                    <BrainIcon className="w-3 h-3 text-purple-500 cursor-help" title="AI ask amount and potential score" />
-                    {sortField === 'suggestedAskAmount' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </div>
-                </th>
-                <th className="w-[10%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort('status')}>
-                  <div className="flex items-center gap-1">
-                    Status
-                    <ExclamationTriangleIcon className="w-3 h-3 text-orange-500 cursor-help" title="Click for status insights and recommendations" />
-                    {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </div>
-                </th>
-                <th className="w-[14%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    Suggested Action
-                    <BrainIcon className="w-3 h-3 text-indigo-500 cursor-help" title="AI-generated outreach recommendations based on DialR data and donor behavior" />
-                  </div>
-                </th>
-                <th className="w-[8%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                {columns.filter(col => col.enabled).map(column => (
+                  <th key={column.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {column.id === 'actions' ? (
+                      column.label
+                    ) : (
+                      <SortableHeader
+                        label={column.label}
+                        sortKey={column.id}
+                        currentSort={{ key: sortField as string, direction: sortDirection }}
+                        onSort={(key) => handleSort(key as keyof Donor)}
+                        className="text-gray-500 hover:text-gray-700"
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAndSortedDonors.map((donor) => (
                 <tr key={donor.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div>
-                      <button
-                        onClick={() => handleDonorClick(donor.name)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline transition-colors text-left truncate block w-full"
-                      >
-                        {donor.name}
-                      </button>
-                      <div className="text-xs text-gray-500 truncate">{donor.city}, {donor.state}</div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <a
-                      href={`mailto:${donor.email}`}
-                      className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors block truncate"
-                    >
-                      {donor.email}
-                    </a>
-                    <div>
-                      <a
-                        href={`tel:${donor.phone}`}
-                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                      >
-                        {donor.phone}
-                      </a>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="text-sm font-medium text-gray-900">${donor.lastGiftAmount.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">{new Date(donor.lastGiftDate).toLocaleDateString()}</div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="text-sm font-medium text-gray-900">${donor.totalLifetimeGiving.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">{donor.giftCount} gifts</div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="group relative">
-                      <div className="text-sm font-bold text-green-600 hover:text-green-700 cursor-help transition-colors">${donor.suggestedAskAmount.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500 hover:text-purple-600 cursor-help transition-colors">{donor.predictedPotential}% potential</div>
-                      <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-2 px-3 z-50 w-48 shadow-lg">
-                        <div className="font-semibold mb-1">AI Ask: ${donor.suggestedAskAmount.toLocaleString()}</div>
-                        <div className="whitespace-pre-line">• {donor.predictedPotential}% potential score{'\n'}• Last gift: ${donor.lastGiftAmount}{'\n'}• Avg gift: ${Math.round(donor.totalLifetimeGiving / donor.giftCount)}</div>
-                        <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="group relative">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-help hover:opacity-80 transition-opacity ${getStatusBadge(donor.status)}`}>
-                        {donor.status}
-                      </span>
-                      <div className="text-xs text-gray-500 mt-1">Score: {donor.engagementScore}</div>
-                      <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-2 px-3 z-50 w-48 shadow-lg">
-                        <div className="font-semibold mb-1">
-                          {donor.status === 'lapsed' ? 'Lapsed Status' :
-                           donor.status === 'active' ? 'Active Status' :
-                           donor.status === 'major' ? 'Major Donor' :
-                           'New Donor'}
+                  {columns.filter(col => col.enabled).map(column => (
+                    <td key={column.id} className="px-3 py-3">
+                      {column.id === 'name' && (
+                        <div>
+                          <button
+                            onClick={() => handleDonorClick(donor.name)}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline transition-colors text-left truncate block w-full"
+                          >
+                            {donor.name}
+                          </button>
+                          <div className="flex flex-wrap gap-0.5 mt-0.5">
+                            {donor.smartTags?.slice(0, 2).map((tag, i) => (
+                              <SmartTag
+                                key={i}
+                                name={tag.name}
+                                emoji={tag.emoji}
+                                color={tag.color}
+                                size="xs"
+                                showAI={false}
+                              />
+                            ))}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">{donor.city}, {donor.state}</div>
                         </div>
-                        <div className="whitespace-pre-line">
-                          {donor.status === 'lapsed' ? '• No gift 6+ months\n• Personal outreach needed\n• Reactivation priority' :
-                           donor.status === 'active' ? '• Recent giving activity\n• Continue stewardship\n• Upgrade opportunity' :
-                           donor.status === 'major' ? '• High-value donor\n• VIP treatment\n• Major gift potential' :
-                           '• First-time donor\n• Welcome series needed\n• Second gift focus'}
+                      )}
+                      {column.id === 'contact' && (
+                        <div>
+                          <a
+                            href={`mailto:${donor.email}`}
+                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors block truncate"
+                          >
+                            {donor.email}
+                          </a>
+                          <div>
+                            <a
+                              href={`tel:${donor.phone}`}
+                              className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                            >
+                              {donor.phone}
+                            </a>
+                          </div>
                         </div>
-                        <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3">
-                    {(() => {
-                      const suggestion = getSuggestedAction(donor);
-                      return (
+                      )}
+                      {column.id === 'lastGiftAmount' && (
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">${donor.lastGiftAmount.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">{new Date(donor.lastGiftDate).toLocaleDateString()}</div>
+                        </div>
+                      )}
+                      {column.id === 'totalLifetimeGiving' && (
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">${donor.totalLifetimeGiving.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">{donor.giftCount} gifts</div>
+                        </div>
+                      )}
+                      {column.id === 'giftCount' && (
+                        <div className="text-sm text-gray-900">{donor.giftCount}</div>
+                      )}
+                      {column.id === 'suggestedAskAmount' && (
                         <div className="group relative">
-                          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium cursor-help ${suggestion.color} ${suggestion.bgColor} hover:opacity-80 transition-opacity`}>
-                            {suggestion.icon}
-                            <span className="truncate">{suggestion.action}</span>
-                          </div>
-                          <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-2 px-3 z-50 w-48 shadow-lg">
-                            <div className="font-semibold mb-1">Why {suggestion.action}?</div>
-                            <div className="whitespace-pre-line">{suggestion.reasoning}</div>
-                            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-                          </div>
+                          <div className="text-sm font-bold text-green-600 hover:text-green-700 cursor-help transition-colors">${donor.suggestedAskAmount.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500 hover:text-purple-600 cursor-help transition-colors">{donor.predictedPotential}% potential</div>
                         </div>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-3 py-3 text-sm font-medium relative overflow-visible">
-                    <IndividualDonorActions
-                      donor={donor}
-                      onRemove={handleRemoveDonor}
-                      onRestore={handleRestoreDonor}
-                      isRemoved={removedDonors.has(donor.id)}
-                    />
-                  </td>
+                      )}
+                      {/* Additional columns */}
+                      {column.id === 'firstGiftDate' && (
+                        <div className="text-sm text-gray-900">{donor.firstGiftDate ? new Date(donor.firstGiftDate).toLocaleDateString() : '—'}</div>
+                      )}
+                      {column.id === 'highestGift' && (
+                        <div className="text-sm font-medium text-green-600">${donor.highestGift?.toLocaleString() || '—'}</div>
+                      )}
+                      {column.id === 'highestGiftDate' && (
+                        <div className="text-sm text-gray-900">{donor.highestGiftDate ? new Date(donor.highestGiftDate).toLocaleDateString() : '—'}</div>
+                      )}
+                      {column.id === 'ctdTotal' && (
+                        <div className="text-sm font-medium text-green-600">${donor.ctdTotal?.toLocaleString() || '—'}</div>
+                      )}
+                      {column.id === 'zip' && (
+                        <div className="text-sm text-gray-900">{donor.zip || '—'}</div>
+                      )}
+                      {column.id === 'homePhone' && (
+                        <div className="text-sm text-gray-900">{donor.homePhone || '—'}</div>
+                      )}
+                      {column.id === 'email' && (
+                        <div className="text-sm text-gray-900">{donor.email}</div>
+                      )}
+                      {column.id === 'employer' && (
+                        <div className="text-sm text-gray-900">{donor.employer || '—'}</div>
+                      )}
+                      {column.id === 'occupation' && (
+                        <div className="text-sm text-gray-900">{donor.occupation || '—'}</div>
+                      )}
+                      {column.id === 'mrc' && (
+                        <div className="text-sm text-gray-900">{donor.mrc || '—'}</div>
+                      )}
+                      {column.id === 'mrcDate' && (
+                        <div className="text-sm text-gray-900">{donor.mrcDate || '—'}</div>
+                      )}
+                      {column.id === 'firstGift' && (
+                        <div className="text-sm font-medium text-green-600">${donor.firstGift?.toLocaleString() || '—'}</div>
+                      )}
+                      {column.id === 'middle' && (
+                        <div className="text-sm text-gray-900">{donor.middle || '—'}</div>
+                      )}
+                      {column.id === 'suffix' && (
+                        <div className="text-sm text-gray-900">{donor.suffix || '—'}</div>
+                      )}
+                      {column.id === 'street' && (
+                        <div className="text-sm text-gray-900">{donor.street || '—'}</div>
+                      )}
+                      {column.id === 'city' && (
+                        <div className="text-sm text-gray-900">{donor.city || '—'}</div>
+                      )}
+                      {column.id === 'state' && (
+                        <div className="text-sm text-gray-900">{donor.state || '—'}</div>
+                      )}
+                      {column.id === 'actions' && (
+                        <div className="relative overflow-visible">
+                          <IndividualDonorActions
+                            donor={donor}
+                            onRemove={handleRemoveDonor}
+                            onRestore={handleRestoreDonor}
+                            isRemoved={removedDonors.has(donor.id)}
+                          />
+                        </div>
+                      )}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -998,6 +1114,15 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
         donor={selectedDonor}
         isOpen={showDonorProfile}
         onClose={() => setShowDonorProfile(false)}
+      />
+
+      {/* Column Customizer Modal */}
+      <ColumnCustomizer
+        isOpen={showColumnCustomizer}
+        onClose={() => setShowColumnCustomizer(false)}
+        columns={columns}
+        onColumnsChange={setColumns}
+        title={`Customize ${segmentName} Columns`}
       />
     </div>
   );

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, MicrophoneIcon, SparklesIcon, FunnelIcon, BookmarkIcon, XMarkIcon, ChevronDownIcon, UserIcon, PhoneIcon, EnvelopeIcon, PlusIcon } from '../../constants';
+import { MagnifyingGlassIcon, MicrophoneIcon, SparklesIcon, FunnelIcon, BookmarkIcon, XMarkIcon, ChevronDownIcon, UserIcon, PhoneIcon, EnvelopeIcon, PlusIcon, SettingsIcon } from '../../constants';
 import PeopleSearchActionsDropdown from './PeopleSearchActionsDropdown';
 import CreateSmartSegmentModal from './CreateSmartSegmentModal';
 import SearchFilters from './SearchFilters';
+import ColumnCustomizer from '../ui/ColumnCustomizer';
+import SortableHeader from '../ui/SortableHeader';
+import SmartTag from '../ui/SmartTag';
 
 interface SearchFilter {
   id: string;
@@ -26,6 +29,28 @@ interface SearchResult {
   suggestedAction: string;
   party: string;
   tags: string[];
+  smartTags?: Array<{
+    name: string;
+    emoji: string;
+    color: string;
+  }>;
+  // Additional fields for column customization
+  firstGiftDate?: string;
+  highestGift?: number;
+  highestGiftDate?: string;
+  ctdTotal?: number;
+  zip?: string;
+  homePhone?: string;
+  employer?: string;
+  occupation?: string;
+  mrc?: string;
+  mrcDate?: string;
+  firstGift?: number;
+  middle?: string;
+  suffix?: string;
+  street?: string;
+  city?: string;
+  state?: string;
 }
 
 interface PeopleSearchProps {
@@ -44,6 +69,87 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
   const [selectedResults, setSelectedResults] = useState<string[]>([]);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [showCreateSegmentModal, setShowCreateSegmentModal] = useState(false);
+  const [showColumnCustomizer, setShowColumnCustomizer] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{key: string; direction: 'asc' | 'desc'} | null>(null);
+
+  // Column configuration
+  const [columns, setColumns] = useState([
+    { id: 'name', label: 'Name', enabled: true, category: 'Basic Info' },
+    { id: 'contact', label: 'Contact', enabled: true, category: 'Basic Info' },
+    { id: 'lastGift', label: 'Last Gift', enabled: true, category: 'Giving History' },
+    { id: 'lifetimeTotal', label: 'Total($)', enabled: true, category: 'Giving History' },
+    { id: 'suggestedAsk', label: 'Suggested Ask', enabled: true, category: 'Giving History' },
+    { id: 'suggestedAction', label: 'Suggested Action', enabled: true, category: 'Basic Info' },
+    { id: 'party', label: 'Party', enabled: true, category: 'Political' },
+    { id: 'actions', label: 'Actions', enabled: true, category: 'Basic Info' },
+    // Additional columns from your requirements
+    { id: 'firstGiftDate', label: 'First Gift Date', enabled: false, category: 'Giving History' },
+    { id: 'highestGift', label: 'Highest $', enabled: false, category: 'Giving History' },
+    { id: 'highestGiftDate', label: 'Highest $ Date', enabled: false, category: 'Giving History' },
+    { id: 'totalGifts', label: '#Gifts', enabled: false, category: 'Giving History' },
+    { id: 'ctdTotal', label: 'CTD $', enabled: false, category: 'Giving History' },
+    { id: 'zip', label: 'Zip', enabled: false, category: 'Address' },
+    { id: 'homePhone', label: 'Home#', enabled: false, category: 'Contact' },
+    { id: 'email', label: 'Email', enabled: false, category: 'Contact' },
+    { id: 'employer', label: 'Employer', enabled: false, category: 'Professional' },
+    { id: 'occupation', label: 'Occupation', enabled: false, category: 'Professional' },
+    { id: 'mrc', label: 'MRC', enabled: false, category: 'Professional' },
+    { id: 'mrcDate', label: 'MRC Date', enabled: false, category: 'Professional' },
+    { id: 'firstGift', label: 'First Gift', enabled: false, category: 'Giving History' },
+    { id: 'middle', label: 'Middle', enabled: false, category: 'Name' },
+    { id: 'suffix', label: 'Suffix', enabled: false, category: 'Name' },
+    { id: 'street', label: 'Street', enabled: false, category: 'Address' },
+    { id: 'city', label: 'City', enabled: false, category: 'Address' },
+    { id: 'state', label: 'State', enabled: false, category: 'Address' }
+  ]);
+
+  // Helper function to generate smart tags for a result
+  const generateSmartTags = (result: SearchResult) => {
+    const tags = [];
+
+    if (result.lifetimeTotal > 500) {
+      tags.push({ name: 'Big Givers', emoji: '💰', color: '#10B981' });
+    }
+
+    if (result.party === 'Republican' && result.lifetimeTotal > 200) {
+      tags.push({ name: 'Prime Persuadables', emoji: '🎯', color: '#8B5CF6' });
+    }
+
+    if (result.totalGifts <= 3) {
+      tags.push({ name: 'New & Rising Donors', emoji: '⚡', color: '#3B82F6' });
+    }
+
+    // Mock logic for other tags
+    const nameHash = result.firstName.length + result.lastName.length;
+    if (nameHash % 5 === 0) {
+      tags.push({ name: 'Not Yet Registered to Vote', emoji: '🚧', color: '#F59E0B' });
+    }
+
+    return tags;
+  };
+
+  // Sorting function
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Sort results based on current sort config
+  const sortedResults = React.useMemo(() => {
+    if (!sortConfig) return results;
+
+    return [...results].sort((a, b) => {
+      const aValue = a[sortConfig.key as keyof SearchResult];
+      const bValue = b[sortConfig.key as keyof SearchResult];
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [results, sortConfig]);
 
   // Mock data for demonstration
   const mockResults: SearchResult[] = [
@@ -55,12 +161,28 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
       phone: '(202) 555-0182',
       address: '123 Main St, Washington DC',
       lastGift: '2024-06-15',
-      totalGifts: 2500,
+      totalGifts: 12,
       lifetimeTotal: 8750,
       suggestedAsk: 1000,
       suggestedAction: 'Schedule major donor meeting',
       party: 'Republican',
-      tags: ['Major Donor', 'VIP']
+      tags: ['Major Donor', 'VIP'],
+      firstGiftDate: '2022-01-15',
+      highestGift: 2500,
+      highestGiftDate: '2024-06-15',
+      ctdTotal: 5000,
+      zip: '20001',
+      homePhone: '(202) 555-0182',
+      employer: 'Banks & Associates',
+      occupation: 'Attorney',
+      mrc: 'Legal Services',
+      mrcDate: '2024-01-01',
+      firstGift: 250,
+      middle: 'M',
+      suffix: '',
+      street: '123 Main St',
+      city: 'Washington',
+      state: 'DC'
     },
     {
       id: '2',
@@ -70,12 +192,28 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
       phone: '(555) 123-4567',
       address: '456 Oak Ave, Arlington VA',
       lastGift: '2024-07-01',
-      totalGifts: 750,
-      lifetimeTotal: 2250,
+      totalGifts: 3,
+      lifetimeTotal: 750,
       suggestedAsk: 500,
       suggestedAction: 'Send personalized thank you',
       party: 'Republican',
-      tags: ['Active Voter']
+      tags: ['Active Voter'],
+      firstGiftDate: '2024-01-15',
+      highestGift: 300,
+      highestGiftDate: '2024-07-01',
+      ctdTotal: 750,
+      zip: '22201',
+      homePhone: '(555) 123-4567',
+      employer: 'Johnson Marketing',
+      occupation: 'Marketing Director',
+      mrc: 'Marketing',
+      mrcDate: '2024-01-01',
+      firstGift: 150,
+      middle: 'A',
+      suffix: '',
+      street: '456 Oak Ave',
+      city: 'Arlington',
+      state: 'VA'
     },
     {
       id: '3',
@@ -85,12 +223,28 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
       phone: '(703) 555-9876',
       address: '789 Pine Rd, Alexandria VA',
       lastGift: '2024-05-20',
-      totalGifts: 1200,
-      lifetimeTotal: 4800,
+      totalGifts: 8,
+      lifetimeTotal: 1200,
       suggestedAsk: 750,
       suggestedAction: 'Invite to VIP event',
       party: 'Independent',
-      tags: ['Recurring Donor']
+      tags: ['Recurring Donor'],
+      firstGiftDate: '2023-03-10',
+      highestGift: 400,
+      highestGiftDate: '2024-05-20',
+      ctdTotal: 800,
+      zip: '22314',
+      homePhone: '(703) 555-9876',
+      employer: 'Tech Solutions Inc',
+      occupation: 'Software Engineer',
+      mrc: 'Technology',
+      mrcDate: '2024-01-01',
+      firstGift: 100,
+      middle: 'L',
+      suffix: '',
+      street: '789 Pine Rd',
+      city: 'Alexandria',
+      state: 'VA'
     }
   ];
 
@@ -103,14 +257,23 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
 
   useEffect(() => {
     setAiSuggestions(aiSuggestionsData);
-    setResults(mockResults);
+    // Add smart tags to mock results
+    const resultsWithSmartTags = mockResults.map(result => ({
+      ...result,
+      smartTags: generateSmartTags(result)
+    }));
+    setResults(resultsWithSmartTags);
   }, []);
 
   const handleSearch = () => {
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
-      setResults(mockResults);
+      const resultsWithSmartTags = mockResults.map(result => ({
+        ...result,
+        smartTags: generateSmartTags(result)
+      }));
+      setResults(resultsWithSmartTags);
       setIsLoading(false);
     }, 1000);
   };
@@ -266,6 +429,13 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
               </div>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => setShowColumnCustomizer(true)}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
+              >
+                <SettingsIcon className="w-4 h-4 inline mr-2" />
+                Columns
+              </button>
               <button className="px-4 py-2 bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors text-sm">
                 <BookmarkIcon className="w-4 h-4 inline mr-2" />
                 Save Search
@@ -293,73 +463,152 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
                 <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   <input type="checkbox" className="rounded" />
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Gift</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Lifetime Total</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Suggested Ask</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Suggested Action</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Party</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                {columns.filter(col => col.enabled).map(column => (
+                  <th key={column.id} className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    {column.id === 'actions' ? (
+                      column.label
+                    ) : (
+                      <SortableHeader
+                        label={column.label}
+                        sortKey={column.id}
+                        currentSort={sortConfig}
+                        onSort={handleSort}
+                        className="text-white hover:text-gray-200"
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {results.map((result, index) => (
+              {sortedResults.map((result, index) => (
                 <tr key={result.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="px-3 py-3">
                     <input type="checkbox" className="rounded" />
                   </td>
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                        <UserIcon className="w-4 h-4 text-gray-600" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900 text-sm">
-                          {result.firstName} {result.lastName}
+                  {columns.filter(col => col.enabled).map(column => (
+                    <td key={column.id} className="px-3 py-3">
+                      {column.id === 'name' && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                            <UserIcon className="w-4 h-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900 text-sm">
+                              {result.firstName} {result.lastName}
+                            </div>
+                            <div className="flex flex-wrap gap-0.5 mt-0.5">
+                              {result.smartTags?.slice(0, 2).map((tag, i) => (
+                                <SmartTag
+                                  key={i}
+                                  name={tag.name}
+                                  emoji={tag.emoji}
+                                  color={tag.color}
+                                  size="xs"
+                                  showAI={false}
+                                />
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex gap-1 mt-1">
-                          {result.tags.slice(0, 2).map((tag, i) => (
-                            <span key={i} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                              {tag}
-                            </span>
-                          ))}
+                      )}
+                      {column.id === 'contact' && (
+                        <div>
+                          <div className="text-sm text-gray-900">{result.email}</div>
+                          <div className="text-sm text-gray-600">{result.phone}</div>
                         </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="text-sm text-gray-900">{result.email}</div>
-                    <div className="text-sm text-gray-600">{result.phone}</div>
-                  </td>
-                  <td className="px-3 py-3 text-sm text-gray-900">{result.lastGift}</td>
-                  <td className="px-3 py-3 text-sm font-medium text-green-600">${result.lifetimeTotal.toLocaleString()}</td>
-                  <td className="px-3 py-3 text-sm font-medium text-blue-600">${result.suggestedAsk.toLocaleString()}</td>
-                  <td className="px-3 py-3">
-                    <div className="text-sm text-gray-900">{result.suggestedAction}</div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      result.party === 'Republican' ? 'bg-red-100 text-red-800' :
-                      result.party === 'Democrat' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {result.party}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3">
-                    <div className="flex gap-1">
-                      <button className="p-1 text-green-600 hover:bg-green-100 rounded" title="Call">
-                        <PhoneIcon className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-blue-600 hover:bg-blue-100 rounded" title="Email">
-                        <EnvelopeIcon className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-purple-600 hover:bg-purple-100 rounded" title="Add to List">
-                        <PlusIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+                      )}
+                      {column.id === 'lastGift' && (
+                        <div className="text-sm text-gray-900">{result.lastGift}</div>
+                      )}
+                      {column.id === 'lifetimeTotal' && (
+                        <div className="text-sm font-medium text-green-600">${result.lifetimeTotal.toLocaleString()}</div>
+                      )}
+                      {column.id === 'suggestedAsk' && (
+                        <div className="text-sm font-medium text-blue-600">${result.suggestedAsk.toLocaleString()}</div>
+                      )}
+                      {column.id === 'suggestedAction' && (
+                        <div className="text-sm text-gray-900">{result.suggestedAction}</div>
+                      )}
+                      {column.id === 'party' && (
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          result.party === 'Republican' ? 'bg-red-100 text-red-800' :
+                          result.party === 'Democrat' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {result.party}
+                        </span>
+                      )}
+                      {column.id === 'actions' && (
+                        <div className="flex gap-1">
+                          <button className="p-1 text-green-600 hover:bg-green-100 rounded" title="Call">
+                            <PhoneIcon className="w-4 h-4" />
+                          </button>
+                          <button className="p-1 text-blue-600 hover:bg-blue-100 rounded" title="Email">
+                            <EnvelopeIcon className="w-4 h-4" />
+                          </button>
+                          <button className="p-1 text-purple-600 hover:bg-purple-100 rounded" title="Add to List">
+                            <PlusIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                      {/* Additional columns */}
+                      {column.id === 'firstGiftDate' && (
+                        <div className="text-sm text-gray-900">{result.firstGiftDate || '—'}</div>
+                      )}
+                      {column.id === 'highestGift' && (
+                        <div className="text-sm font-medium text-green-600">${result.highestGift?.toLocaleString() || '—'}</div>
+                      )}
+                      {column.id === 'highestGiftDate' && (
+                        <div className="text-sm text-gray-900">{result.highestGiftDate || '—'}</div>
+                      )}
+                      {column.id === 'totalGifts' && (
+                        <div className="text-sm text-gray-900">{result.totalGifts}</div>
+                      )}
+                      {column.id === 'ctdTotal' && (
+                        <div className="text-sm font-medium text-green-600">${result.ctdTotal?.toLocaleString() || '—'}</div>
+                      )}
+                      {column.id === 'zip' && (
+                        <div className="text-sm text-gray-900">{result.zip || '—'}</div>
+                      )}
+                      {column.id === 'homePhone' && (
+                        <div className="text-sm text-gray-900">{result.homePhone || '—'}</div>
+                      )}
+                      {column.id === 'email' && (
+                        <div className="text-sm text-gray-900">{result.email}</div>
+                      )}
+                      {column.id === 'employer' && (
+                        <div className="text-sm text-gray-900">{result.employer || '—'}</div>
+                      )}
+                      {column.id === 'occupation' && (
+                        <div className="text-sm text-gray-900">{result.occupation || '—'}</div>
+                      )}
+                      {column.id === 'mrc' && (
+                        <div className="text-sm text-gray-900">{result.mrc || '—'}</div>
+                      )}
+                      {column.id === 'mrcDate' && (
+                        <div className="text-sm text-gray-900">{result.mrcDate || '—'}</div>
+                      )}
+                      {column.id === 'firstGift' && (
+                        <div className="text-sm font-medium text-green-600">${result.firstGift?.toLocaleString() || '—'}</div>
+                      )}
+                      {column.id === 'middle' && (
+                        <div className="text-sm text-gray-900">{result.middle || '—'}</div>
+                      )}
+                      {column.id === 'suffix' && (
+                        <div className="text-sm text-gray-900">{result.suffix || '—'}</div>
+                      )}
+                      {column.id === 'street' && (
+                        <div className="text-sm text-gray-900">{result.street || '—'}</div>
+                      )}
+                      {column.id === 'city' && (
+                        <div className="text-sm text-gray-900">{result.city || '—'}</div>
+                      )}
+                      {column.id === 'state' && (
+                        <div className="text-sm text-gray-900">{result.state || '—'}</div>
+                      )}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -393,6 +642,15 @@ const PeopleSearch: React.FC<PeopleSearchProps> = ({ initialFilters = [], search
         searchCriteria={searchQuery || 'Current search results'}
         resultCount={results.length}
         onSegmentCreated={onSegmentClick}
+      />
+
+      {/* Column Customizer Modal */}
+      <ColumnCustomizer
+        isOpen={showColumnCustomizer}
+        onClose={() => setShowColumnCustomizer(false)}
+        columns={columns}
+        onColumnsChange={setColumns}
+        title="Customize People Search Columns"
       />
     </div>
   );

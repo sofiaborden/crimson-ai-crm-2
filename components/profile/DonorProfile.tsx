@@ -3,7 +3,10 @@ import { Donor } from '../../types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+import SmartTag from '../ui/SmartTag';
+import CodesManager from './CodesManager';
 import DonorProfileModal from '../ui/DonorProfileModal';
+import { GiftModal } from './GiftModal';
 import { generateMockDonorResearch, generateDonorResearch } from '../../utils/aiDonorResearch';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import {
@@ -141,7 +144,37 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   const [expandedCommittees, setExpandedCommittees] = useState<Set<string>>(new Set());
   const [showAllCommittees, setShowAllCommittees] = useState(false);
   const [committeeTransactionPages, setCommitteeTransactionPages] = useState<Record<string, number>>({});
+
+  // Gift modal state
+  const [showGiftModal, setShowGiftModal] = useState(false);
+  const [selectedGift, setSelectedGift] = useState<any>(null);
+  const [giftModalMode, setGiftModalMode] = useState<'view' | 'add' | 'edit'>('view');
+
   const enrichedData = getEnrichedData(donor.id);
+
+  // Gift modal handlers
+  const handleViewGift = (gift: any) => {
+    setSelectedGift(gift);
+    setGiftModalMode('view');
+    setShowGiftModal(true);
+  };
+
+  const handleAddGift = () => {
+    setSelectedGift(null);
+    setGiftModalMode('add');
+    setShowGiftModal(true);
+  };
+
+  const handleEditGift = (gift: any) => {
+    setSelectedGift(gift);
+    setGiftModalMode('edit');
+    setShowGiftModal(true);
+  };
+
+  const handleCloseGiftModal = () => {
+    setShowGiftModal(false);
+    setSelectedGift(null);
+  };
 
   // Mock lookalike data
   const generateMockLookalikes = () => {
@@ -365,6 +398,40 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
     setShowLookalikes(true);
   };
 
+  // Get smart tags for this donor based on their profile
+  const getSmartTags = () => {
+    const tags = [];
+
+    // Big Givers - donors who gave above $500 in last 12 months
+    if (donor.totalLifetimeGiving > 500) {
+      tags.push({ name: 'Big Givers', emoji: '💰', color: '#10B981' });
+    }
+
+    // Prime Persuadables - FL residents, Age 35-44, or high engagement
+    if (donor.location?.includes('FL') || donor.engagementScore > 8 || donor.name.includes('Joseph')) {
+      tags.push({ name: 'Prime Persuadables', emoji: '🎯', color: '#8B5CF6' });
+    }
+
+    // New & Rising Donors - recent first-time donors or upgrades
+    if (donor.status === 'new' || donor.giftCount <= 3) {
+      tags.push({ name: 'New & Rising Donors', emoji: '⚡', color: '#3B82F6' });
+    }
+
+    // Lapsed / At-Risk - haven't given recently
+    const daysSinceLastGift = Math.floor((Date.now() - new Date(donor.lastGiftDate).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSinceLastGift > 180) {
+      tags.push({ name: 'Lapsed / At-Risk', emoji: '🕒', color: '#EF4444' });
+    }
+
+    // Not Yet Registered to Vote - based on name hash for consistency
+    const nameHash = donor.name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+    if (nameHash % 5 === 0) { // 20% of donors consistently
+      tags.push({ name: 'Not Yet Registered to Vote', emoji: '🚧', color: '#F59E0B' });
+    }
+
+    return tags;
+  };
+
   const generateAISnapshot = () => {
     // Joseph Banks specific content - more concise but still useful
     if (donor.name === 'Joseph M. Banks' || donor.name.includes('Joseph')) {
@@ -497,8 +564,22 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
               </div>
 
               <h2 className="text-lg font-bold text-gray-900 mb-1">{donor.name}</h2>
-              <div className="text-xs text-gray-500 font-mono mb-3">
+              <div className="text-xs text-gray-500 font-mono mb-2">
                 {donor.pid || 'PID-2024-001847'}
+              </div>
+
+              {/* Smart Tags */}
+              <div className="flex flex-wrap justify-center gap-1 mb-3">
+                {getSmartTags().map((tag, index) => (
+                  <SmartTag
+                    key={index}
+                    name={tag.name}
+                    emoji={tag.emoji}
+                    color={tag.color}
+                    size="sm"
+                    showAI={true}
+                  />
+                ))}
               </div>
 
               {/* Quick Actions - Unified Blue Style */}
@@ -541,7 +622,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
 
                 {/* Add Gift */}
                 <button
-                  onClick={() => {/* Add gift functionality */}}
+                  onClick={handleAddGift}
                   className="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full flex items-center justify-center transition-colors shadow-sm border border-blue-100"
                   title="Add Gift"
                 >
@@ -805,6 +886,88 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            {/* CTD Hero Section */}
+            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-xl p-6 text-white">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Primary CTD Info */}
+                <div className="lg:col-span-2">
+                  <div className="text-3xl font-bold mb-2">
+                    ${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}
+                  </div>
+                  <div className="text-crimson-accent-blue text-lg font-medium mb-1">
+                    Total Raised (CTD) | {donor.givingOverview?.consecutiveGifts || donor.giftCount} Gifts
+                  </div>
+
+                  {/* Cycle Breakdown */}
+                  <div className="space-y-2 mt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white font-medium">P2024</span>
+                      <span className="text-white">$3,750</span>
+                      <span className="text-crimson-accent-blue">($450 Excessive)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white font-medium">G2024</span>
+                      <span className="text-white">$474.56</span>
+                      <span className="text-crimson-accent-blue">($2,825.44 Remaining)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white font-medium">G2022</span>
+                      <span className="text-white">$230</span>
+                      <span className="text-crimson-accent-blue">($2,670 Remaining)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-white font-medium">CDUIT</span>
+                      <span className="text-white">$25</span>
+                      <span className="text-crimson-accent-blue"></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Giving Overview */}
+                <div className="bg-white bg-opacity-10 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">Giving Overview</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-white font-medium">$100</div>
+                      <div className="text-crimson-accent-blue text-sm">First Gift (6/20/16)</div>
+                    </div>
+                    <div>
+                      <div className="text-white font-medium">$2.22</div>
+                      <div className="text-crimson-accent-blue text-sm">Latest Gift (4/1/25)</div>
+                    </div>
+                    <div>
+                      <div className="text-white font-medium">$3,750</div>
+                      <div className="text-crimson-accent-blue text-sm">Highest Gift (3/30/23)</div>
+                    </div>
+                    <div>
+                      <div className="text-white font-medium">$927.64</div>
+                      <div className="text-crimson-accent-blue text-sm">Average Gift</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Spouse Info (if available) */}
+                <div className="bg-white bg-opacity-10 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-white mb-1">$8,785.01</div>
+                  <div className="text-crimson-accent-blue text-sm mb-1">Spouse: Ms. Ellen Banks</div>
+                  <div className="text-white text-sm mb-3">Total Raised (CTD) | 18 Gifts</div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-white">P2016</span>
+                      <span className="text-white">$85</span>
+                      <span className="text-crimson-accent-blue">($2,615 Remaining)</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-white">C-PAC</span>
+                      <span className="text-white">$</span>
+                      <span className="text-crimson-accent-blue">($5,000 Remaining)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Main Overview Layout - 3/4 left, 1/4 right */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Left Column - Donation Summary (3/4 width) */}
@@ -813,62 +976,59 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 <div>
                   <h3 className="text-lg font-semibold text-text-primary mb-4">Donation Summary</h3>
 
-                  {/* Primary Metrics Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Compact Metrics Row - All 6 Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
                     {/* Total Raised Card - Clickable */}
                     <div
-                      className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-shadow"
+                      className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-shadow text-center"
                       onClick={() => setShowGivingBreakdown(true)}
                     >
-                      <p className="text-sm text-blue-700 font-medium mb-1">Total Raised</p>
-                      <p className="text-2xl font-bold text-blue-900">${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}</p>
+                      <p className="text-xs text-blue-700 font-medium mb-1">Total Raised</p>
+                      <p className="text-lg font-bold text-blue-900">${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}</p>
                       <p className="text-xs text-blue-600 mt-1">{donor.givingOverview?.consecutiveGifts || donor.giftCount} total gifts</p>
                     </div>
 
                     {/* Unrealized Potential - Corrected Calculation */}
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
-                      <p className="text-sm text-purple-700 font-medium mb-1">Unrealized Potential</p>
-                      <p className="text-2xl font-bold text-purple-900">
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 rounded-lg border border-purple-200 text-center">
+                      <p className="text-xs text-purple-700 font-medium mb-1">Unrealized Potential</p>
+                      <p className="text-lg font-bold text-purple-900">
                         ${(24500 - (donor.givingOverview?.totalRaised || donor.totalLifetimeGiving)).toLocaleString()}
                       </p>
                       <p className="text-xs text-purple-600 mt-1">Gap to modeled capacity</p>
                     </div>
 
                     {/* Consecutive Gifts with Cycles */}
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm text-green-700 font-medium">Consecutive Gifts</p>
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-lg border border-green-200 text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <p className="text-xs text-green-700 font-medium">Consecutive Gifts</p>
                         {(donor.givingOverview?.consecutiveGifts || donor.giftCount) > 5 ? (
-                          <ArrowTrendingUpIcon className="w-4 h-4 text-green-600" title="Positive momentum" />
+                          <ArrowTrendingUpIcon className="w-3 h-3 text-green-600" title="Positive momentum" />
                         ) : (
-                          <TrendingDownIcon className="w-4 h-4 text-orange-500" title="Needs attention" />
+                          <TrendingDownIcon className="w-3 h-3 text-orange-500" title="Needs attention" />
                         )}
                       </div>
-                      <p className="text-2xl font-bold text-green-900">{donor.givingOverview?.consecutiveGifts || donor.giftCount} Cycles</p>
+                      <p className="text-lg font-bold text-green-900">{donor.givingOverview?.consecutiveGifts || donor.giftCount} Cycles</p>
                       <p className="text-xs text-green-600 mt-1">Since 2008</p>
                     </div>
-                  </div>
 
-                  {/* Secondary Metrics Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     {/* Soft Credits */}
-                    <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-4 rounded-lg border border-teal-200">
-                      <p className="text-sm text-teal-700 font-medium mb-1">Soft Credits</p>
-                      <p className="text-2xl font-bold text-teal-900">$5,030</p>
+                    <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-3 rounded-lg border border-teal-200 text-center">
+                      <p className="text-xs text-teal-700 font-medium mb-1">Soft Credits</p>
+                      <p className="text-lg font-bold text-teal-900">$5,030</p>
                       <p className="text-xs text-teal-600 mt-1">2 gifts attributed</p>
                     </div>
 
                     {/* Pledges */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-4 rounded-lg border border-indigo-200">
-                      <p className="text-sm text-indigo-700 font-medium mb-1">Open Pledges</p>
-                      <p className="text-2xl font-bold text-indigo-900">$2,500</p>
+                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-3 rounded-lg border border-indigo-200 text-center">
+                      <p className="text-xs text-indigo-700 font-medium mb-1">Open Pledges</p>
+                      <p className="text-lg font-bold text-indigo-900">$2,500</p>
                       <p className="text-xs text-indigo-600 mt-1">1 outstanding pledge</p>
                     </div>
 
                     {/* Tier Level */}
-                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
-                      <p className="text-sm text-orange-700 font-medium mb-1">Tier Level</p>
-                      <p className="text-lg font-bold text-orange-900">{donor.givingOverview?.tier || (donor.totalLifetimeGiving > 1000 ? 'Gold' : 'Silver')}</p>
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-3 rounded-lg border border-orange-200 text-center">
+                      <p className="text-xs text-orange-700 font-medium mb-1">Tier Level</p>
+                      <p className="text-sm font-bold text-orange-900">{donor.givingOverview?.tier || (donor.totalLifetimeGiving > 1000 ? 'Diamond Supporter' : 'Gold')}</p>
                     </div>
                   </div>
 
@@ -923,7 +1083,26 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
 
               {/* Right Column - AI Snapshot (1/4 width) */}
               <div className="lg:col-span-1">
-                <div className="sticky top-6">
+                <div className="sticky top-6 space-y-6">
+                  {/* Quick CTD Reference */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CurrencyDollarIcon className="w-4 h-4 text-crimson-blue" />
+                      <h4 className="font-semibold text-gray-900 text-sm">Cycle-to-Date</h4>
+                    </div>
+                    <div className="text-center mb-3">
+                      <div className="text-xl font-bold text-crimson-blue">$4,225</div>
+                      <div className="text-xs text-crimson-blue">46 gifts</div>
+                    </div>
+                    <div className="border-t border-gray-100 pt-3">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-gray-900">$2</div>
+                        <div className="text-xs text-crimson-blue">Most Recent</div>
+                        <div className="text-xs text-gray-500">04/01/2025</div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-2 mb-4">
                     <BrainIcon className="w-5 h-5 text-purple-600" />
                     <h3 className="text-lg font-semibold text-text-primary">AI Research</h3>
@@ -2258,25 +2437,84 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   12 Donations
                 </Badge>
               </div>
-              <Button size="sm" variant="secondary">
+              <Button size="sm" variant="secondary" onClick={handleAddGift}>
                 <PlusIcon className="w-4 h-4 mr-2" />
                 Add Gift
               </Button>
             </div>
 
-            {/* Transaction Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* CTD Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-crimson-blue to-crimson-dark-blue text-white rounded-lg p-4">
+                <div className="text-2xl font-bold mb-1">$4,225</div>
+                <div className="text-sm text-crimson-accent-blue">Cycle-to-Date Total</div>
+                <div className="text-xs text-white opacity-80 mt-1">46 gifts this cycle</div>
+              </div>
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="text-2xl font-bold text-green-800 mb-1">$12,750</div>
-                <div className="text-sm text-green-600">Total Donated</div>
+                <div className="text-sm text-green-600">Lifetime Total</div>
+                <div className="text-xs text-green-700 mt-1">All-time giving</div>
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="text-2xl font-bold text-blue-800 mb-1">$1,063</div>
+                <div className="text-2xl font-bold text-blue-800 mb-1">$927.64</div>
                 <div className="text-sm text-blue-600">Average Gift</div>
+                <div className="text-xs text-blue-700 mt-1">Current cycle</div>
               </div>
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="text-2xl font-bold text-purple-800 mb-1">$2,500</div>
-                <div className="text-sm text-purple-600">Largest Gift</div>
+                <div className="text-2xl font-bold text-purple-800 mb-1">$3,750</div>
+                <div className="text-sm text-purple-600">Highest Gift</div>
+                <div className="text-xs text-purple-700 mt-1">3/30/23 (P2024)</div>
+              </div>
+            </div>
+
+            {/* Cycle Breakdown */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Cycle Breakdown</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-gray-900">P2024</span>
+                      <span className="text-sm text-gray-600 ml-2">Primary</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">$3,750</div>
+                      <div className="text-sm text-red-600">$450 Excessive</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-gray-900">G2024</span>
+                      <span className="text-sm text-gray-600 ml-2">General</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">$474.56</div>
+                      <div className="text-sm text-green-600">$2,825.44 Remaining</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-gray-900">G2022</span>
+                      <span className="text-sm text-gray-600 ml-2">General</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">$230</div>
+                      <div className="text-sm text-green-600">$2,670 Remaining</div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <span className="font-medium text-gray-900">CDUIT</span>
+                      <span className="text-sm text-gray-600 ml-2">Committee</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">$25</div>
+                      <div className="text-sm text-gray-500">—</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -2301,9 +2539,13 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   { mid: '452108', check: '987', date: '9/28/22', amount: '$2,500', method: 'CH', fund: 'General', source: 'Major Gift' },
                   { mid: '448765', check: '876', date: '8/15/22', amount: '$100', method: 'Online', fund: 'C-PAC', source: 'Website' }
                 ].map((transaction, index) => (
-                  <div key={index} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div
+                    key={index}
+                    className="px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleViewGift(transaction)}
+                  >
                     <div className="grid grid-cols-12 gap-4 text-sm">
-                      <div className="col-span-2 font-medium text-blue-600">{transaction.mid}</div>
+                      <div className="col-span-2 font-medium text-blue-600 hover:text-blue-800">{transaction.mid}</div>
                       <div className="col-span-1 text-gray-600">#{transaction.check}</div>
                       <div className="col-span-2 text-gray-900">{transaction.date}</div>
                       <div className="col-span-2 font-semibold text-green-600">{transaction.amount}</div>
@@ -2474,86 +2716,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
 
             {/* Codes Sub-tab */}
             {activeMoreTab === 'codes' && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <FlagIcon className="w-5 h-5 text-red-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Codes & Attributes</h3>
-                </div>
-
-                {/* Flags */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Assigned Flags</h4>
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { name: 'Do Not Telephone', color: 'red', date: '6/27/19' },
-                        { name: 'Do Not Rent or Exchange', color: 'red', date: '7/17/19' },
-                        { name: 'Earmarked', color: 'orange', date: '8/26/20' },
-                        { name: 'Biography Included', color: 'blue', date: '2/3/22' },
-                        { name: 'Family', color: 'purple', date: '9/5/18' }
-                      ].map((flag, index) => (
-                        <div key={index} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                          <Badge className={`text-xs ${
-                            flag.color === 'red' ? 'bg-red-100 text-red-800 border-red-200' :
-                            flag.color === 'orange' ? 'bg-orange-100 text-orange-800 border-orange-200' :
-                            flag.color === 'blue' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                            'bg-purple-100 text-purple-800 border-purple-200'
-                          }`}>
-                            {flag.name}
-                          </Badge>
-                          <span className="text-xs text-gray-500">{flag.date}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Keywords */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Assigned Keywords</h4>
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { name: 'DOOR TO DOOR', date: '9/17/13' },
-                        { name: 'Adamlist', date: '3/28/18' },
-                        { name: 'lv lx', date: '12/7/20' },
-                        { name: 'bc xvnfbfn', date: '12/2/20' },
-                        { name: 'COUNTY FAIR', date: '9/17/13' }
-                      ].map((keyword, index) => (
-                        <div key={index} className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2">
-                          <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-xs">
-                            {keyword.name}
-                          </Badge>
-                          <span className="text-xs text-gray-500">{keyword.date}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Attributes */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Assigned Attributes</h4>
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { name: 'Volunteer', period: '4/6/20 - Present', type: 'Event' },
-                        { name: 'Volunteer', period: '5/24/23 - 3/23/25', type: 'Administrative' }
-                      ].map((attr, index) => (
-                        <div key={index} className="flex items-center gap-2 bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2">
-                          <Badge className="bg-cyan-100 text-cyan-800 border-cyan-200 text-xs">
-                            {attr.name}
-                          </Badge>
-                          <span className="text-xs text-gray-500">{attr.period}</span>
-                          <Badge className="bg-gray-100 text-gray-800 border-gray-200 text-xs">
-                            {attr.type}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CodesManager donor={donor} />
             )}
 
             {/* Moves Management Sub-tab */}
@@ -3553,6 +3716,14 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
           </div>
         </div>
       )}
+
+      {/* Gift Modal */}
+      <GiftModal
+        isOpen={showGiftModal}
+        onClose={handleCloseGiftModal}
+        gift={selectedGift}
+        mode={giftModalMode}
+      />
     </div>
   );
 };
