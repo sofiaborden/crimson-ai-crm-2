@@ -184,6 +184,15 @@ export interface Donor {
     }[];
   };
 
+  // Recurring Readiness Score fields
+  recurringReadiness?: {
+    probability: number; // 0-1 float
+    confidence: number; // 0-1 float
+    lastScoredAt: string; // datetime
+    recommendedMonthlyAmount?: number; // optional float
+    bucket: 'HIGH' | 'MED' | 'LOW'; // derived from probability
+  };
+
   predictiveInsights?: {
     nextBestAction: {
       action: string;

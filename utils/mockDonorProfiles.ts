@@ -32,6 +32,15 @@ export const mockDonorProfiles: Record<string, Donor> = {
     },
     aiSnapshot: 'Sarah is a dedicated supporter who has shown consistent growth in her giving pattern. She responds well to email communications and has a strong interest in education policy. Her giving frequency suggests she prefers quarterly contributions. Recent engagement data shows high email open rates and website visits during campaign updates.',
 
+    // Recurring Readiness Score
+    recurringReadiness: {
+      probability: 0.72, // 72%
+      confidence: 0.89, // 89%
+      lastScoredAt: '2024-08-19T08:30:00Z',
+      recommendedMonthlyAmount: 45,
+      bucket: 'HIGH'
+    },
+
     // Enhanced AI-powered fields
     contactIntelligence: {
       lastContactDate: '19 months ago',
@@ -710,6 +719,15 @@ export const mockDonorProfiles: Record<string, Donor> = {
     },
     aiSnapshot: 'Joseph is a cornerstone supporter and community leader in the Neighborhood MVPs segment. He has consistently increased his giving over the past 3 years and serves as an informal campaign ambassador in his community. His recent $5,000 gift demonstrates strong commitment. He prefers in-person meetings and responds well to policy briefings. Excellent candidate for campaign advisory role.',
 
+    // Recurring Readiness Score
+    recurringReadiness: {
+      probability: 0.58, // 58%
+      confidence: 0.76, // 76%
+      lastScoredAt: '2024-08-19T08:30:00Z',
+      recommendedMonthlyAmount: 125,
+      bucket: 'MED'
+    },
+
     // Enhanced AI-powered fields
     contactIntelligence: {
       lastContactDate: '2024-01-15',
@@ -984,6 +1002,16 @@ export const mockDonorProfiles: Record<string, Donor> = {
       ]
     },
     aiSnapshot: 'Margaret is a dedicated education advocate and community volunteer who complements her husband Joseph\'s political engagement. She has a strong focus on education policy and children\'s welfare initiatives. Margaret prefers smaller, more intimate events and responds well to personal appeals about education funding. She has been instrumental in organizing community support for local school initiatives.',
+
+    // Recurring Readiness Score
+    recurringReadiness: {
+      probability: 0.34, // 34%
+      confidence: 0.68, // 68%
+      lastScoredAt: '2024-08-19T08:30:00Z',
+      recommendedMonthlyAmount: 25,
+      bucket: 'LOW'
+    },
+
     totalLifetimeGiving: 8750,
     lastGiftAmount: 2500,
     lastGiftDate: '2024-03-15',

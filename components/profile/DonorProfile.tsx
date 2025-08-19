@@ -149,6 +149,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [selectedGift, setSelectedGift] = useState<any>(null);
   const [giftModalMode, setGiftModalMode] = useState<'view' | 'add' | 'edit'>('view');
+  const [isGivingOverviewExpanded, setIsGivingOverviewExpanded] = useState(false);
 
   const enrichedData = getEnrichedData(donor.id);
 
@@ -814,6 +815,8 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   <div className="text-sm text-gray-600">Giving at 60% of potential capacity</div>
                 </div>
 
+
+
                 {/* Status and Segment */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 flex-shrink-0">
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 w-fit">
@@ -849,10 +852,61 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   Send to TargetPath
                 </Button>
               </div>
+
+
             </div>
           </div>
+
+
         </div>
       </Card>
+
+      {/* Recurring Readiness - Separate Widget */}
+      {donor.recurringReadiness && (
+        <Card className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <BoltIcon className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-gray-700">Recurring Readiness</span>
+              </div>
+
+              <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-2 py-1">ML Model</Badge>
+
+              <div
+                className={`text-lg font-bold ${
+                  donor.recurringReadiness.bucket === 'HIGH' ? 'text-green-600' :
+                  donor.recurringReadiness.bucket === 'MED' ? 'text-yellow-600' :
+                  'text-gray-500'
+                }`}
+                title="Calculated by our Recurrence Probability model using giving history and look-alike donor patterns."
+              >
+                {Math.round(donor.recurringReadiness.probability * 100)}%
+              </div>
+
+              <div className="text-xs text-gray-600 bg-yellow-100 px-2 py-1 rounded">Medium</div>
+
+              <span className="text-sm text-gray-600">Modeled readiness to convert to a recurring gift.</span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {donor.recurringReadiness.recommendedMonthlyAmount && (
+                <div className="text-right">
+                  <span className="text-sm text-gray-600">Suggested monthly: </span>
+                  <span className="text-lg font-bold text-green-700">
+                    ${donor.recurringReadiness.recommendedMonthlyAmount}
+                  </span>
+                </div>
+              )}
+              <div className="text-xs text-gray-500">
+                Last updated {new Date(donor.recurringReadiness.lastScoredAt).toLocaleDateString()} • Confidence: {Math.round(donor.recurringReadiness.confidence * 100)}%
+              </div>
+              <button className="text-xs text-blue-600 hover:text-blue-800 underline">Refresh</button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Enhanced Tabbed Navigation */}
       <Card>
         <div className="border-b border-gray-200 mb-6">
@@ -886,86 +940,114 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* CTD Hero Section */}
-            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-xl p-6 text-white">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Primary CTD Info */}
-                <div className="lg:col-span-2">
-                  <div className="text-3xl font-bold mb-2">
-                    ${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}
+            {/* Collapsible Giving Overview Section */}
+            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-xl text-white overflow-hidden">
+              {/* Minimized Header - Always Visible */}
+              <div
+                className="flex items-center justify-between p-6 cursor-pointer hover:bg-white hover:bg-opacity-5 transition-colors"
+                onClick={() => setIsGivingOverviewExpanded(!isGivingOverviewExpanded)}
+              >
+                <div className="flex items-center gap-6">
+                  <div>
+                    <div className="text-3xl font-bold">
+                      ${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}
+                    </div>
+                    <div className="text-crimson-accent-blue text-lg font-medium">
+                      Total Raised (CTD) | {donor.givingOverview?.consecutiveGifts || donor.giftCount} Gifts
+                    </div>
                   </div>
-                  <div className="text-crimson-accent-blue text-lg font-medium mb-1">
-                    Total Raised (CTD) | {donor.givingOverview?.consecutiveGifts || donor.giftCount} Gifts
-                  </div>
-
-                  {/* Cycle Breakdown */}
-                  <div className="space-y-2 mt-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-white font-medium">P2024</span>
-                      <span className="text-white">$3,750</span>
-                      <span className="text-crimson-accent-blue">($450 Excessive)</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white font-medium">G2024</span>
-                      <span className="text-white">$474.56</span>
-                      <span className="text-crimson-accent-blue">($2,825.44 Remaining)</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white font-medium">G2022</span>
-                      <span className="text-white">$230</span>
-                      <span className="text-crimson-accent-blue">($2,670 Remaining)</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white font-medium">CDUIT</span>
-                      <span className="text-white">$25</span>
-                      <span className="text-crimson-accent-blue"></span>
-                    </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">$8,785.01</div>
+                    <div className="text-crimson-accent-blue text-sm">Spouse: Ms. Ellen Banks</div>
                   </div>
                 </div>
-
-                {/* Giving Overview */}
-                <div className="bg-white bg-opacity-10 rounded-lg p-4">
-                  <h4 className="text-white font-semibold mb-3">Giving Overview</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-white font-medium">$100</div>
-                      <div className="text-crimson-accent-blue text-sm">First Gift (6/20/16)</div>
-                    </div>
-                    <div>
-                      <div className="text-white font-medium">$2.22</div>
-                      <div className="text-crimson-accent-blue text-sm">Latest Gift (4/1/25)</div>
-                    </div>
-                    <div>
-                      <div className="text-white font-medium">$3,750</div>
-                      <div className="text-crimson-accent-blue text-sm">Highest Gift (3/30/23)</div>
-                    </div>
-                    <div>
-                      <div className="text-white font-medium">$927.64</div>
-                      <div className="text-crimson-accent-blue text-sm">Average Gift</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Spouse Info (if available) */}
-                <div className="bg-white bg-opacity-10 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-white mb-1">$8,785.01</div>
-                  <div className="text-crimson-accent-blue text-sm mb-1">Spouse: Ms. Ellen Banks</div>
-                  <div className="text-white text-sm mb-3">Total Raised (CTD) | 18 Gifts</div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-white">P2016</span>
-                      <span className="text-white">$85</span>
-                      <span className="text-crimson-accent-blue">($2,615 Remaining)</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-white">C-PAC</span>
-                      <span className="text-white">$</span>
-                      <span className="text-crimson-accent-blue">($5,000 Remaining)</span>
-                    </div>
-                  </div>
+                <div className="flex items-center">
+                  <ChevronDownIcon
+                    className={`w-6 h-6 text-white transition-transform duration-200 ${
+                      isGivingOverviewExpanded ? 'rotate-180' : ''
+                    }`}
+                  />
                 </div>
               </div>
+
+              {/* Expanded Details - Collapsible */}
+              {isGivingOverviewExpanded && (
+                <div className="px-6 pb-6 border-t border-white border-opacity-20">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                    {/* Primary CTD Cycle Breakdown */}
+                    <div>
+                      <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">Cycle Breakdown</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-medium">P2024</span>
+                          <span className="text-white">$3,750</span>
+                          <span className="text-crimson-accent-blue text-sm">($450 Excessive)</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-medium">G2024</span>
+                          <span className="text-white">$474.56</span>
+                          <span className="text-crimson-accent-blue text-sm">($2,825.44 Remaining)</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-medium">G2022</span>
+                          <span className="text-white">$230</span>
+                          <span className="text-crimson-accent-blue text-sm">($2,670 Remaining)</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-medium">CDUIT</span>
+                          <span className="text-white">$25</span>
+                          <span className="text-crimson-accent-blue text-sm">$25</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Giving Overview Stats */}
+                    <div className="bg-white bg-opacity-10 rounded-lg p-4">
+                      <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">Giving Overview</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-white font-medium">$100</div>
+                          <div className="text-crimson-accent-blue text-sm">First Gift (6/20/16)</div>
+                        </div>
+                        <div>
+                          <div className="text-white font-medium">$2.22</div>
+                          <div className="text-crimson-accent-blue text-sm">Latest Gift (4/1/25)</div>
+                        </div>
+                        <div>
+                          <div className="text-white font-medium">$3,750</div>
+                          <div className="text-crimson-accent-blue text-sm">Highest Gift (3/30/23)</div>
+                        </div>
+                        <div>
+                          <div className="text-white font-medium">$927.64</div>
+                          <div className="text-crimson-accent-blue text-sm">Average Gift</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Spouse Details */}
+                    <div className="bg-white bg-opacity-10 rounded-lg p-4">
+                      <h4 className="text-white font-semibold mb-3 text-sm uppercase tracking-wide">Spouse Details</h4>
+                      <div className="mb-3">
+                        <div className="text-2xl font-bold text-white">$8,785.01</div>
+                        <div className="text-crimson-accent-blue text-sm">Ms. Ellen Banks</div>
+                        <div className="text-white text-sm">Total Raised (CTD) | 18 Gifts</div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-white">P2016</span>
+                          <span className="text-white">$85</span>
+                          <span className="text-crimson-accent-blue">($2,615 Remaining)</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-white">C-PAC</span>
+                          <span className="text-white">$</span>
+                          <span className="text-crimson-accent-blue">($5,000 Remaining)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Main Overview Layout - 3/4 left, 1/4 right */}
@@ -1157,6 +1239,8 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                       </div>
                     </div>
                   </div>
+
+
                 </div>
               </div>
             </div>
