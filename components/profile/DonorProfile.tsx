@@ -1734,6 +1734,50 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">{enrichedData.dataSource}</Badge>
                 </div>
 
+                {/* AI Snapshot for Enhanced Data */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <SparklesIcon className="w-5 h-5 text-blue-600" />
+                    <h4 className="text-lg font-semibold text-blue-900">AI Snapshot</h4>
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">Enhanced Analysis</Badge>
+                  </div>
+
+                  <div className="prose prose-sm text-blue-800 leading-relaxed">
+                    <p className="mb-3">
+                      <strong>{donor.name}</strong> is a {enrichedData.age}-year-old {enrichedData.gender?.toLowerCase()}
+                      {enrichedData.homeowner ? ' homeowner' : ' renter'} with {enrichedData.education?.toLowerCase()} education
+                      and an estimated household income of {enrichedData.householdIncome}.
+                    </p>
+
+                    <p className="mb-3">
+                      <strong>Political Profile:</strong> Registered {enrichedData.party} voter with {enrichedData.politicalEngagement}%
+                      political engagement score. Shows {enrichedData.volunteerPropensity}% volunteer propensity and
+                      {enrichedData.eventAttendancePropensity}% likelihood to attend events.
+                    </p>
+
+                    <p className="mb-0">
+                      <strong>Fundraising Insights:</strong> Classified as {enrichedData.givingCapacity} giving capacity.
+                      {enrichedData.politicalEngagement && enrichedData.politicalEngagement > 70 ?
+                        ' High political engagement suggests strong potential for political giving and advocacy involvement.' :
+                        ' Moderate political engagement indicates potential for targeted outreach and cultivation.'
+                      }
+                      {enrichedData.volunteerPropensity && enrichedData.volunteerPropensity > 60 ?
+                        ' Strong volunteer propensity makes them an excellent candidate for event participation and hands-on involvement.' :
+                        ''
+                      }
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-blue-200">
+                    <div className="text-xs text-blue-600">
+                      Analysis generated from {enrichedData.dataSource} • Last updated {enrichedData.lastUpdated}
+                    </div>
+                    <button className="text-xs text-blue-600 hover:text-blue-800 underline">
+                      Refresh Analysis
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Demographics */}
                   <div className="bg-gray-50 p-6 rounded-lg">
@@ -2113,6 +2157,63 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
 
             {donor.fecInsights ? (
               <>
+                {/* AI Snapshot for FEC Data */}
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <SparklesIcon className="w-5 h-5 text-amber-600" />
+                    <h4 className="text-lg font-semibold text-amber-900">AI Snapshot</h4>
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-xs">FEC Analysis</Badge>
+                  </div>
+
+                  <div className="prose prose-sm text-amber-800 leading-relaxed">
+                    <p className="mb-3">
+                      <strong>{donor.name}</strong> has contributed <strong>${donor.fecInsights.contributionHistory.totalAmount.toLocaleString()}</strong>
+                      across {donor.fecInsights.contributionHistory.totalContributions} federal contributions,
+                      supporting {donor.fecInsights.committeesSupported.length} different committees
+                      from {new Date(donor.fecInsights.contributionHistory.firstContributionDate).getFullYear()}
+                      to {new Date(donor.fecInsights.contributionHistory.lastContributionDate).getFullYear()}.
+                    </p>
+
+                    <p className="mb-3">
+                      <strong>Recent Activity:</strong> In {donor.fecInsights.contributionHistory.yearToDate.year},
+                      they've contributed ${donor.fecInsights.contributionHistory.yearToDate.amount.toLocaleString()}
+                      ({donor.fecInsights.contributionHistory.yearToDate.contributionCount} contributions).
+                      Current cycle total: ${donor.fecInsights.contributionHistory.cycleToDate.amount.toLocaleString()}.
+                    </p>
+
+                    <p className="mb-0">
+                      <strong>Giving Pattern:</strong>
+                      {(() => {
+                        const avgPerContribution = donor.fecInsights.contributionHistory.totalAmount / donor.fecInsights.contributionHistory.totalContributions;
+                        const isHighVolume = donor.fecInsights.contributionHistory.totalContributions > 20;
+                        const isHighValue = avgPerContribution > 1000;
+                        const isRecent = donor.fecInsights.contributionHistory.yearToDate.amount > 0;
+
+                        if (isHighVolume && isHighValue) {
+                          return ' High-volume, high-value donor with strong federal giving history. Excellent prospect for major gift solicitation.';
+                        } else if (isHighVolume) {
+                          return ' Frequent contributor with consistent federal giving pattern. Good candidate for sustained engagement and upgrade opportunities.';
+                        } else if (isHighValue) {
+                          return ' Selective but generous contributor. Focus on relationship building and targeted major gift asks.';
+                        } else if (isRecent) {
+                          return ' Active contributor with recent federal giving. Good timing for cultivation and engagement.';
+                        } else {
+                          return ' Historical federal contributor. Consider reactivation strategies and renewed engagement.';
+                        }
+                      })()}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-amber-200">
+                    <div className="text-xs text-amber-600">
+                      Analysis based on public FEC filings • Last updated {new Date(donor.fecInsights.lastUpdated).toLocaleDateString()}
+                    </div>
+                    <button className="text-xs text-amber-600 hover:text-amber-800 underline">
+                      Refresh Analysis
+                    </button>
+                  </div>
+                </div>
+
                 {/* Contribution History Snapshot */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                   <div className="flex items-center gap-2 mb-4">
