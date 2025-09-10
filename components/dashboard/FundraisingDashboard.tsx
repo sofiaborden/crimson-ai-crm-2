@@ -19,8 +19,12 @@ import {
 
 type FundraisingView = 'overview' | 'segments' | 'campaigns' | 'analytics' | 'performance';
 
-const FundraisingDashboard: React.FC = () => {
-  const [currentView, setCurrentView] = useState<FundraisingView>('overview');
+interface FundraisingDashboardProps {
+  segmentId?: string | null;
+}
+
+const FundraisingDashboard: React.FC<FundraisingDashboardProps> = ({ segmentId }) => {
+  const [currentView, setCurrentView] = useState<FundraisingView>(segmentId ? 'segments' : 'overview');
   const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
   const [showDonorProfile, setShowDonorProfile] = useState(false);
 
@@ -35,7 +39,7 @@ const FundraisingDashboard: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'segments':
-        return <SegmentsDashboard />;
+        return <SegmentsDashboard selectedSegmentId={segmentId} />;
       case 'analytics':
         return <ComprehensiveAnalytics onSegmentClick={handleDonorClick} />;
       case 'performance':

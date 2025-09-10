@@ -211,7 +211,11 @@ const initialSegments: Segment[] = [
   }
 ];
 
-const SegmentsDashboard: React.FC = () => {
+interface SegmentsDashboardProps {
+  selectedSegmentId?: string | null;
+}
+
+const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId }) => {
   const [showCallScript, setShowCallScript] = useState(false);
   const [selectedSegment, setSelectedSegment] = useState({ id: '', name: '' });
   const [showPredictiveScoring, setShowPredictiveScoring] = useState(false);
@@ -266,6 +270,17 @@ const SegmentsDashboard: React.FC = () => {
       window.removeEventListener('openSegment', handleOpenSegment as EventListener);
     };
   }, []);
+
+  // Auto-open segment if selectedSegmentId is provided
+  useEffect(() => {
+    if (selectedSegmentId) {
+      const segment = segments.find(s => s.id === selectedSegmentId);
+      if (segment) {
+        setSelectedSegment({ id: segment.id, name: segment.funName });
+        setShowDonorList(true);
+      }
+    }
+  }, [selectedSegmentId, segments]);
 
   const handleSegmentClick = (segmentId: string, segmentName: string) => {
     setSelectedSegment({ id: segmentId, name: segmentName });

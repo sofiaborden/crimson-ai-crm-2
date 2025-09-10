@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 import { CurrencyDollarIcon, TrophyIcon, FireIcon, SparklesIcon, ComputerDesktopIcon, PhoneIcon, CalendarIcon, MailIcon, ChevronLeftIcon, ChevronRightIcon, ArrowTopRightOnSquareIcon } from '../../constants';
 import DonorProfileModal from '../ui/DonorProfileModal';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
@@ -12,146 +14,24 @@ interface Donation {
   id: string;
   donor: string;
   amount: number;
-  timeAgo: string;
   method: 'online' | 'phone' | 'event' | 'mail';
+  timestamp: Date;
+  isNew?: boolean;
 }
 
-interface Goal {
-  label: string;
-  current: number;
-  target: number;
-  deadline: string;
-  color: string;
-}
-
-const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showPopoutButton = false }) => {
+const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showPopoutButton = true }) => {
   const [recentDonations, setRecentDonations] = useState<Donation[]>([
-    { id: '1', donor: 'Sarah J.', amount: 250, timeAgo: '3 minutes ago', method: 'online' },
-    { id: '2', donor: 'Michael R.', amount: 100, timeAgo: '12 minutes ago', method: 'phone' },
-    { id: '3', donor: 'Jennifer L.', amount: 500, timeAgo: '28 minutes ago', method: 'event' },
-    { id: '4', donor: 'David K.', amount: 75, timeAgo: '45 minutes ago', method: 'online' },
-    { id: '5', donor: 'Lisa M.', amount: 1000, timeAgo: '1 hour ago', method: 'phone' },
-  ]);
-
-  const [goals] = useState<Goal[]>([
-    { label: 'Today', current: 12750, target: 15000, deadline: 'End of day', color: 'bg-green-500' },
-    { label: 'This Week', current: 67200, target: 85000, deadline: '3 days left', color: 'bg-blue-500' },
-    { label: 'Monthly', current: 234500, target: 350000, deadline: '12 days left', color: 'bg-purple-500' },
+    { id: '1', donor: 'Sarah Johnson', amount: 500, method: 'online', timestamp: new Date(Date.now() - 2 * 60 * 1000) },
+    { id: '2', donor: 'Michael Chen', amount: 250, method: 'phone', timestamp: new Date(Date.now() - 5 * 60 * 1000) },
+    { id: '3', donor: 'Emily Rodriguez', amount: 1000, method: 'event', timestamp: new Date(Date.now() - 8 * 60 * 1000) },
+    { id: '4', donor: 'David Wilson', amount: 150, method: 'online', timestamp: new Date(Date.now() - 12 * 60 * 1000) },
+    { id: '5', donor: 'Lisa Thompson', amount: 750, method: 'mail', timestamp: new Date(Date.now() - 15 * 60 * 1000) }
   ]);
 
   const [celebrationVisible, setCelebrationVisible] = useState(false);
   const [newDonationAlert, setNewDonationAlert] = useState<Donation | null>(null);
   const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
   const [showDonorProfile, setShowDonorProfile] = useState(false);
-  const [isPopoutOpen, setIsPopoutOpen] = useState(false);
-
-  const handlePopoutClick = () => {
-    // Open a new window with the donation tracker
-    const popupWindow = window.open(
-      '/donation-tracker-popup',
-      'donationTracker',
-      'width=500,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
-    );
-
-    if (popupWindow) {
-      // Write the donation tracker content to the new window
-      popupWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Live Donation Tracker</title>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <script src="https://cdn.tailwindcss.com"></script>
-          <style>
-            @keyframes pulse {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0.5; }
-            }
-            .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-          </style>
-        </head>
-        <body class="bg-gray-50 p-4">
-          <div class="bg-white rounded-lg shadow-lg p-6">
-            <div class="flex items-center justify-between mb-6">
-              <div class="flex items-center gap-3">
-                <div class="bg-green-500 p-2 rounded-lg">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                  </svg>
-                </div>
-                <div>
-                  <h1 class="text-lg font-bold text-gray-900">Live Donation Tracker</h1>
-                  <p class="text-sm text-gray-600">Real-time activity</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                LIVE
-              </div>
-            </div>
-
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">Recent Donations</h3>
-                <div class="space-y-2">
-                  ${recentDonations.map(donation => `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <span class="text-green-600 text-xs font-bold">${donation.donor.charAt(0)}</span>
-                        </div>
-                        <div>
-                          <div class="font-medium text-gray-900">${donation.donor}</div>
-                          <div class="text-xs text-gray-500">${donation.timeAgo}</div>
-                        </div>
-                      </div>
-                      <div class="text-right">
-                        <div class="font-bold text-green-600">$${donation.amount.toLocaleString()}</div>
-                        <div class="text-xs text-gray-500 capitalize">${donation.method}</div>
-                      </div>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <div>
-                <h3 class="text-sm font-semibold text-gray-900 mb-3">Goals Progress</h3>
-                <div class="space-y-3">
-                  ${goals.map(goal => `
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-gray-900">${goal.label}</span>
-                        <span class="text-xs text-gray-500">${goal.deadline}</span>
-                      </div>
-                      <div class="flex items-center justify-between mb-1">
-                        <span class="text-lg font-bold text-gray-900">$${goal.current.toLocaleString()}</span>
-                        <span class="text-sm text-gray-600">of $${goal.target.toLocaleString()}</span>
-                      </div>
-                      <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="${goal.color} h-2 rounded-full" style="width: ${(goal.current / goal.target) * 100}%"></div>
-                      </div>
-                      <div class="text-xs text-gray-500 mt-1">${Math.round((goal.current / goal.target) * 100)}% complete</div>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <script>
-            // Auto-refresh every 30 seconds
-            setInterval(() => {
-              window.location.reload();
-            }, 30000);
-          </script>
-        </body>
-        </html>
-      `);
-      popupWindow.document.close();
-    }
-  };
-  const [currentGoalIndex, setCurrentGoalIndex] = useState(0);
 
   const handleDonorClick = (donorName: string) => {
     const donor = getDonorProfileByName(donorName);
@@ -161,41 +41,81 @@ const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showP
     }
   };
 
-  const nextGoal = () => {
-    setCurrentGoalIndex((prev) => (prev + 1) % goals.length);
+  const handlePopoutClick = () => {
+    const popupWindow = window.open(
+      '',
+      'donationTracker',
+      'width=800,height=600,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+    );
+
+    if (popupWindow) {
+      popupWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Live Donation Tracker</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-gray-50 p-4">
+          <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="p-2 bg-green-100 rounded-lg">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                </svg>
+              </div>
+              <div>
+                <h1 class="text-2xl font-bold text-gray-900">Live Donation Tracker</h1>
+                <p class="text-gray-600">Real-time donation monitoring</p>
+              </div>
+            </div>
+            <div id="donation-feed" class="space-y-3 max-h-96 overflow-y-auto">
+              <p class="text-center text-gray-500 py-8">Loading live donations...</p>
+            </div>
+          </div>
+          <script>
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+              location.reload();
+            }, 30000);
+          </script>
+        </body>
+        </html>
+      `);
+      popupWindow.document.close();
+    }
   };
 
-  const prevGoal = () => {
-    setCurrentGoalIndex((prev) => (prev - 1 + goals.length) % goals.length);
-  };
-
-  // Simulate new donations
   useEffect(() => {
     const interval = setInterval(() => {
-      const donors = ['Emma T.', 'James W.', 'Maria G.', 'Robert H.', 'Ashley P.', 'Kevin M.'];
-      const amounts = [25, 50, 75, 100, 150, 200, 250, 300, 500, 1000];
-      const methods: ('online' | 'phone' | 'event' | 'mail')[] = ['online', 'phone', 'event', 'mail'];
-      
+      const donors = ['Alex Thompson', 'Jennifer Lee', 'Robert Garcia', 'Amanda Davis', 'Christopher Brown'];
+      const methods = ['online', 'phone', 'event', 'mail'] as const;
+      const amounts = [50, 100, 150, 200, 250, 300, 500, 750, 1000, 1500, 2000];
+
       const newDonation: Donation = {
         id: Date.now().toString(),
         donor: donors[Math.floor(Math.random() * donors.length)],
         amount: amounts[Math.floor(Math.random() * amounts.length)],
-        timeAgo: 'Just now',
-        method: methods[Math.floor(Math.random() * methods.length)]
+        method: methods[Math.floor(Math.random() * methods.length)],
+        timestamp: new Date(),
+        isNew: true
       };
 
-      setRecentDonations(prev => [newDonation, ...prev.slice(0, 4)]);
+      setRecentDonations(prev => [newDonation, ...prev.slice(0, 9)]);
       setNewDonationAlert(newDonation);
-      
-      // Show celebration for large donations
-      if (newDonation.amount >= 500) {
+
+      if (newDonation.amount >= 1000) {
         setCelebrationVisible(true);
         setTimeout(() => setCelebrationVisible(false), 3000);
       }
 
-      // Hide alert after 5 seconds
-      setTimeout(() => setNewDonationAlert(null), 5000);
-    }, 15000); // New donation every 15 seconds
+      setTimeout(() => {
+        setNewDonationAlert(null);
+        setRecentDonations(prev => prev.map(d => ({ ...d, isNew: false })));
+      }, 5000);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, []);
@@ -228,12 +148,8 @@ const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showP
     }).format(amount);
   };
 
-  const getProgressPercentage = (current: number, target: number) => {
-    return Math.min((current / target) * 100, 100);
-  };
-
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {/* Celebration Animation */}
       {celebrationVisible && (
         <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center">
@@ -258,41 +174,43 @@ const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showP
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 h-80">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="bg-green-500 p-1.5 rounded-lg">
-              <CurrencyDollarIcon className="w-4 h-4 text-white" />
+      <Card className="h-full bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-green-200 hover:shadow-lg transition-all duration-300">
+        <div className="p-4 h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-green-100 rounded-lg">
+                <CurrencyDollarIcon className="w-4 h-4 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Live Donation Tracker</h3>
+                <p className="text-xs text-gray-600">Real-time donation activity</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold text-gray-900">Live Donation Tracker</h2>
-              <p className="text-xs text-gray-600">Real-time activity</p>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                <div className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></div>
+                Live
+              </div>
+              {showPopoutButton && (
+                <Button
+                  onClick={handlePopoutClick}
+                  variant="outline"
+                  size="sm"
+                  className="border-green-200 text-green-700 hover:bg-green-50"
+                >
+                  <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                </Button>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {showPopoutButton && (
-              <button
-                onClick={handlePopoutClick}
-                className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                title="Open in popup window"
-              >
-                <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-600" />
-              </button>
-            )}
-            <div className="flex items-center gap-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-              LIVE
-            </div>
-          </div>
-        </div>
 
-        {/* Recent Donations Feed - Single Column */}
-        <div>
+          {/* Recent Donations Feed */}
+          <div className="flex-1 min-h-0">
             <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-2 text-sm">
-              <SparklesIcon className="w-4 h-4 text-blue-500" />
+              <SparklesIcon className="w-4 h-4 text-green-500" />
               Recent Donations
             </h3>
-            <div className="bg-white rounded-lg border border-gray-200 max-h-48 overflow-y-auto">
+            <div className="bg-white rounded-lg border border-green-100 h-full overflow-y-auto">
               {recentDonations.map((donation, index) => (
                 <div
                   key={donation.id}
@@ -302,17 +220,19 @@ const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showP
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-gray-50 rounded">
+                      <div className="p-1 bg-gray-50 rounded">
                         {getMethodIcon(donation.method)}
                       </div>
                       <div>
                         <button
                           onClick={() => handleDonorClick(donation.donor)}
-                          className="font-medium text-blue-600 hover:text-blue-800 text-sm underline-offset-2 hover:underline transition-colors text-left"
+                          className="font-medium text-gray-900 hover:text-blue-600 transition-colors text-sm"
                         >
                           {donation.donor}
                         </button>
-                        <div className="text-xs text-gray-600">{donation.timeAgo}</div>
+                        <div className="text-xs text-gray-500">
+                          {donation.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
@@ -327,40 +247,41 @@ const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showP
                 </div>
               ))}
             </div>
+          </div>
         </div>
-      </div>
 
-      <style jsx>{`
-        @keyframes slide-in-right {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
+        <style jsx>{`
+          @keyframes slide-in-right {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
           }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
 
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
+          @keyframes fade-in {
+            from {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
+
+          .animate-slide-in-right {
+            animation: slide-in-right 0.5s ease-out;
           }
-        }
 
-        .animate-slide-in-right {
-          animation: slide-in-right 0.5s ease-out;
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
-        }
-      `}</style>
+          .animate-fade-in {
+            animation: fade-in 0.5s ease-out;
+          }
+        `}</style>
+      </Card>
 
       {/* Donor Profile Modal */}
       <DonorProfileModal
@@ -368,8 +289,6 @@ const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showP
         isOpen={showDonorProfile}
         onClose={() => setShowDonorProfile(false)}
       />
-
-
     </div>
   );
 };

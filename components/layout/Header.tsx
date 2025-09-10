@@ -16,12 +16,15 @@ const Header: React.FC = () => {
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      // For now, always show Joseph Banks profile for any search
-      const donor = getDonorProfileByName('Joseph Banks');
+      // Search for the actual query entered by the user
+      const donor = getDonorProfileByName(query.trim());
       if (donor) {
         setSelectedDonor(donor);
         setShowDonorProfile(true);
         setSearchQuery(''); // Clear search after opening profile
+      } else {
+        // If no exact match found, show an alert or could implement fuzzy search
+        alert(`No donor profile found for "${query.trim()}". Try: Sofia Borden, Rachel Gideon, Jeff Wernsing, Jack Simms, Tom Newhouse, or Joseph Banks.`);
       }
     }
   };

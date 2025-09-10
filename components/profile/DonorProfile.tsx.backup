@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Donor } from '../../types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -9,7 +9,6 @@ import DonorProfileModal from '../ui/DonorProfileModal';
 import { GiftModal } from './GiftModal';
 import { generateMockDonorResearch, generateDonorResearch } from '../../utils/aiDonorResearch';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
-import PerplexityBioGenerator from './PerplexityBioGenerator';
 import {
   SparklesIcon,
   ShieldCheckIcon,
@@ -114,12 +113,9 @@ const getEnrichedData = (donorId: string): EnrichedData | null => {
 };
 
 const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'intelligence' | 'enriched' | 'donor-discovery' | 'fec-insights' | 'donations' | 'actions' | 'more'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'intelligence' | 'insights' | 'enriched' | 'fec-insights' | 'donations' | 'actions' | 'more'>('overview');
   const [activeMoreTab, setActiveMoreTab] = useState<'codes' | 'moves' | 'tasks' | 'notes' | 'events'>('codes');
-  const [activeAITab, setActiveAITab] = useState<'insights' | 'bio'>('insights');
   const [showDialRModal, setShowDialRModal] = useState(false);
-  const [showDialRLogModal, setShowDialRLogModal] = useState(false);
-  const [showTargetPathLogModal, setShowTargetPathLogModal] = useState(false);
   const [showLookalikes, setShowLookalikes] = useState(false);
   const [aiResearch, setAiResearch] = useState<any>(null);
   const [isLoadingResearch, setIsLoadingResearch] = useState(false);
@@ -140,7 +136,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   const [showAISuggested, setShowAISuggested] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [selectedLookalikes, setSelectedLookalikes] = useState<any[]>([]);
-  const [selectAllLookalikes, setSelectAllLookalikes] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showAddressBookModal, setShowAddressBookModal] = useState(false);
   const [activeContactTab, setActiveContactTab] = useState<'addresses' | 'phones' | 'emails'>('addresses');
@@ -149,8 +144,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
   const [expandedCommittees, setExpandedCommittees] = useState<Set<string>>(new Set());
   const [showAllCommittees, setShowAllCommittees] = useState(false);
   const [committeeTransactionPages, setCommitteeTransactionPages] = useState<Record<string, number>>({});
-  const [fecInsightsGenerated, setFecInsightsGenerated] = useState(false);
-  const [activeFecView, setActiveFecView] = useState<'committees' | 'timeline'>('committees');
 
   // Gift modal state
   const [showGiftModal, setShowGiftModal] = useState(false);
@@ -207,10 +200,10 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
     }));
   };
 
-  const allLookalikes = useMemo(() => generateMockLookalikes(), []);
+  const allLookalikes = generateMockLookalikes();
 
-  // Filter lookalikes based on current filters - memoized to prevent re-sorting
-  const filteredLookalikes = useMemo(() => {
+  // Filter lookalikes based on current filters
+  const getFilteredLookalikes = () => {
     return allLookalikes.filter(lookalike => {
       if (lookalikeFilters.states.length > 0 && !lookalikeFilters.states.includes(lookalike.state)) return false;
       if (lookalikeFilters.counties.length > 0 && !lookalikeFilters.counties.includes(lookalike.county)) return false;
@@ -218,45 +211,10 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
       if (lookalikeFilters.engagementBehavior.length > 0 && !lookalikeFilters.engagementBehavior.includes(lookalike.engagementBehavior)) return false;
       return true;
     });
-  }, [allLookalikes, lookalikeFilters]);
-
-  const aiSuggestedLookalikes = useMemo(() => {
-    return allLookalikes.filter(l => l.similarityScore >= 85).slice(0, 25);
-  }, [allLookalikes]);
-
-  // Get current visible lookalikes based on filters and AI suggested state - memoized
-  const getCurrentLookalikes = useMemo(() => {
-    return showAISuggested ? aiSuggestedLookalikes : filteredLookalikes;
-  }, [showAISuggested, aiSuggestedLookalikes, filteredLookalikes]);
-
-  // Auto-select all visible donors when filters change or component loads
-  useEffect(() => {
-    if (selectAllLookalikes) {
-      const currentLookalikes = getCurrentLookalikes.slice(0, 15); // Only select visible ones
-      setSelectedLookalikes(currentLookalikes);
-    }
-  }, [lookalikeFilters, showAISuggested, selectAllLookalikes, getCurrentLookalikes]);
-
-  // Handle select all functionality
-  const handleSelectAll = () => {
-    const currentLookalikes = getCurrentLookalikes.slice(0, 15);
-    setSelectedLookalikes(currentLookalikes);
-    setSelectAllLookalikes(true);
   };
 
-  // Handle deselect all functionality
-  const handleDeselectAll = () => {
-    setSelectedLookalikes([]);
-    setSelectAllLookalikes(false);
-  };
-
-  // Check if all visible donors are selected
-  const areAllSelected = () => {
-    const currentLookalikes = getCurrentLookalikes.slice(0, 15);
-    return currentLookalikes.length > 0 && currentLookalikes.every(lookalike =>
-      selectedLookalikes.some(selected => selected.id === lookalike.id)
-    );
-  };
+  const filteredLookalikes = getFilteredLookalikes();
+  const aiSuggestedLookalikes = allLookalikes.filter(l => l.similarityScore >= 85).slice(0, 25);
 
   // Load AI research on component mount
   useEffect(() => {
@@ -297,80 +255,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
       return { type: 'under', message: 'Under-Performer: 40% below modeled capacity', color: 'bg-blue-100 text-blue-800 border-blue-200' };
     }
     return { type: 'normal', message: 'Performing within expected range', color: 'bg-green-100 text-green-800 border-green-200' };
-  };
-
-  // Gift readiness logic
-  const getGiftReadiness = () => {
-    // Joseph Banks specific - major donor with high engagement
-    if (donor.name === 'Joseph M. Banks' || donor.name.includes('Joseph')) {
-      return { window: 'Next 30 Days', color: 'text-green-600', days: '<30' };
-    }
-
-    // Mock logic based on donor characteristics - in real app this would be ML prediction
-    const engagementScore = donor.engagementScore || 50;
-    const daysSinceLastGift = Math.floor((Date.now() - new Date(donor.lastGiftDate || '2024-01-01').getTime()) / (1000 * 60 * 60 * 24));
-
-    // Higher engagement and recent gifts = sooner readiness
-    if (engagementScore > 80 && daysSinceLastGift < 60) {
-      return { window: 'Next 30 Days', color: 'text-green-600', days: '<30' };
-    } else if (engagementScore > 60 && daysSinceLastGift < 120) {
-      return { window: 'Next 60 Days', color: 'text-blue-600', days: '31-60' };
-    } else if (engagementScore > 40 && daysSinceLastGift < 180) {
-      return { window: 'Next 90 Days', color: 'text-gray-600', days: '61-90' };
-    } else {
-      return { window: 'Long-Term 90+ Days', color: 'text-gray-400', days: '90+' };
-    }
-  };
-
-  // Capacity messaging logic
-  const getCapacityMessage = () => {
-    const totalGiven = donor.givingOverview?.totalRaised || 0;
-    const potential = 24500; // Using the potential amount from the UI
-
-    // Handle edge case: no modeled capacity available
-    if (potential === 0) {
-      return {
-        message: "No modeled capacity available.",
-        textColor: "text-gray-600",
-        icon: "InformationCircleIcon"
-      };
-    }
-
-    // Calculate capacity percentage
-    const capacityPercentage = Math.round((totalGiven / potential) * 100);
-
-    // Apply thresholds and return appropriate message
-    if (capacityPercentage === 0) {
-      return {
-        message: "Giving at 0% of capacity — no gifts this cycle.",
-        textColor: "text-red-600",
-        icon: "ExclamationTriangleIcon"
-      };
-    } else if (capacityPercentage >= 1 && capacityPercentage <= 70) {
-      return {
-        message: `Donor below capacity at ${capacityPercentage}% — eligible for upgrade.`,
-        textColor: "text-orange-600",
-        icon: "ExclamationTriangleIcon"
-      };
-    } else if (capacityPercentage >= 71 && capacityPercentage <= 89) {
-      return {
-        message: `Donor nearing full capacity at ${capacityPercentage}%.`,
-        textColor: "text-gray-600",
-        icon: null
-      };
-    } else if (capacityPercentage >= 90 && capacityPercentage <= 99) {
-      return {
-        message: `Donor at high-capacity utilization at ${capacityPercentage}%.`,
-        textColor: "text-green-600",
-        icon: null
-      };
-    } else { // 100%+
-      return {
-        message: `Donor giving at or above capacity at ${Math.min(capacityPercentage, 100)}%.`,
-        textColor: "text-green-600",
-        icon: "CheckCircleIcon"
-      };
-    }
   };
 
   const getSmartSuggestions = () => {
@@ -654,11 +538,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
     return Math.ceil(totalItems / pageSize);
   };
 
-  const handleGenerateFecInsights = () => {
-    // Simulate FEC insights generation
-    setFecInsightsGenerated(true);
-  };
-
   return (
     <div className="space-y-6">
       {/* Redesigned Header with Unified Contact + AI Block */}
@@ -834,7 +713,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
           </div>
 
           {/* Activity Timeline - Middle Column */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col h-full max-h-96">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col h-full max-h-80">
             <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2 flex-shrink-0">
               <ClockIcon className="w-4 h-4" />
               Recent Activity
@@ -899,183 +778,81 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
 
           {/* Compact AI Insights */}
           <div className="lg:col-span-2">
-            <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4 flex flex-col h-full max-h-96">
-              {/* Tab Header - Tabs as Main Title */}
-              <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                {/* Tab Navigation as Main Header */}
-                <div className="flex bg-white rounded-lg p-1 border border-blue-200">
-                  <button
-                    onClick={() => setActiveAITab('insights')}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      activeAITab === 'insights'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    <SparklesIcon className="w-4 h-4" />
-                    AI Insights
-                  </button>
-                  <button
-                    onClick={() => setActiveAITab('bio')}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      activeAITab === 'bio'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    <SparklesIcon className="w-4 h-4" />
-                    AI Smart Bio
-                  </button>
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4 flex flex-col h-full max-h-80">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2 flex-shrink-0">
+                <SparklesIcon className="w-4 h-4" />
+                AI Insights
+              </h3>
+
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* Three-Column Metrics */}
+                <div className="grid grid-cols-3 gap-6 mb-4 flex-shrink-0">
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">Total Given:</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(donor.givingOverview?.totalRaised || 15200)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">Potential:</div>
+                  <div className="text-2xl font-bold text-gray-700">$24,500</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">Suggested Ask</div>
+                  <div className="text-2xl font-bold text-green-600">$1,000</div>
+                  <div className="text-sm text-green-600">+ 885 upgrade · 58%</div>
+                </div>
+              </div>
+
+                {/* Capacity Bar */}
+                <div className="mb-4 flex-shrink-0">
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div
+                      className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500"
+                      style={{ width: '60%' }}
+                    ></div>
+                  </div>
+                  <div className="text-sm text-gray-600">Giving at 60% of potential capacity</div>
                 </div>
 
-                {/* Smart Segment Badge - only show if donor is in a segment */}
-                {(donor.name === 'Joseph M. Banks' || donor.name.includes('Joseph')) && activeAITab === 'insights' && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+
+
+                {/* Status and Segment */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 flex-shrink-0">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 w-fit">
                     Level-Up List
                   </span>
-                )}
-              </div>
-
-              {/* Tab Content */}
-              <div className="flex-1 flex flex-col min-h-0">
-                {activeAITab === 'insights' ? (
-                  <>
-                    {/* Three-Column Metrics */}
-                    <div className="grid grid-cols-3 gap-6 mb-4 flex-shrink-0">
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">Total Given:</div>
-                        <div className="text-2xl font-bold text-gray-900">
-                          {formatCurrency(donor.givingOverview?.totalRaised || 15200)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">Potential:</div>
-                        <div className="text-2xl font-bold text-gray-700">$24,500</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">Suggested Ask</div>
-                        <div className="text-2xl font-bold text-green-600">$1,000</div>
-                      </div>
-                    </div>
-
-                    {/* Capacity Bar */}
-                    <div className="mb-4 flex-shrink-0">
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                        <div
-                          className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500"
-                          style={{ width: `${Math.min(Math.round(((donor.givingOverview?.totalRaised || 0) / 24500) * 100), 100)}%` }}
-                        ></div>
-                      </div>
-                      {(() => {
-                        const capacityInfo = getCapacityMessage();
-                        const IconComponent = capacityInfo.icon === "ExclamationTriangleIcon" ? ExclamationTriangleIcon :
-                                            capacityInfo.icon === "CheckCircleIcon" ? CheckCircleIcon :
-                                            capacityInfo.icon === "InformationCircleIcon" ? ClockIcon : null;
-
-                        return (
-                          <div className={`text-sm flex items-center gap-2 ${capacityInfo.textColor}`}>
-                            {IconComponent && <IconComponent className="w-4 h-4 flex-shrink-0" />}
-                            <span>{capacityInfo.message}</span>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Gift Readiness */}
-                    <div className="mb-4 flex-shrink-0">
-                      {(() => {
-                        const readiness = getGiftReadiness();
-                        return (
-                          <div className={`text-sm flex items-center gap-2 ${readiness.color}`}>
-                            <ClockIcon className="w-4 h-4 flex-shrink-0" />
-                            <span className="font-medium">Gift Readiness:</span>
-                            <span>{readiness.window}</span>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Recurring Readiness - Only show for relevant donors like Joseph Banks */}
-                    {(donor.name === 'Joseph M. Banks' || donor.name.includes('Joseph')) && (
-                      <div className="mb-4 flex-shrink-0">
-                        <div className="text-sm flex items-center gap-2 text-yellow-600">
-                          <BoltIcon className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-medium">Recurring Readiness:</span>
-                          <span className="font-bold">58%</span>
-                          <span className="text-gray-500 ml-2">• Suggested monthly: </span>
-                          <span className="font-bold text-green-600">$125</span>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  /* AI Smart Bio Tab Content - Using actual PerplexityBioGenerator */
-                  <div className="flex-1 overflow-y-auto min-h-0">
-                    <style>{`
-                      .perplexity-no-panel .bg-white.border.border-gray-200.rounded-lg.shadow-sm {
-                        background: transparent !important;
-                        border: none !important;
-                        box-shadow: none !important;
-                        border-radius: 0 !important;
-                      }
-                      .perplexity-no-panel .border-b.border-gray-100 {
-                        border-color: rgba(59, 130, 246, 0.3) !important;
-                      }
-                      .perplexity-no-panel .text-text-primary {
-                        color: rgb(30, 58, 138) !important;
-                      }
-                      .perplexity-no-panel .text-gray-900 {
-                        color: rgb(30, 58, 138) !important;
-                      }
-                      .perplexity-no-panel .text-gray-700 {
-                        color: rgb(55, 65, 81) !important;
-                      }
-                      .perplexity-no-panel .text-gray-600 {
-                        color: rgb(75, 85, 99) !important;
-                      }
-                      .perplexity-no-panel .text-gray-500 {
-                        color: rgb(107, 114, 128) !important;
-                      }
-                    `}</style>
-                    <div className="perplexity-no-panel">
-                      <PerplexityBioGenerator
-                        donor={{
-                          id: donor.id,
-                          name: donor.name,
-                          location: donor.address,
-                          totalLifetimeGiving: donor.totalLifetimeGiving
-                        }}
-                      />
-                    </div>
+                  <div className="flex items-center gap-2 text-sm text-orange-700">
+                    <ExclamationTriangleIcon className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">Donor below capacity — eligible for upgrade</span>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Action Buttons - Only show on AI Insights tab */}
-              {activeAITab === 'insights' && (
-                <div className="flex gap-3 pt-3 border-t border-blue-200 flex-shrink-0 mt-auto">
-                  <Button
-                    onClick={handleDialRClick}
-                    className="flex-1 justify-center text-sm py-2"
-                    variant="primary"
-                  >
-                    <PhoneIcon className="w-4 h-4 mr-2" />
-                    Send to DialR
-                  </Button>
-                  <Button
-                    onClick={handleTargetPathClick}
-                    className="flex-1 justify-center text-sm py-2"
-                    variant="primary"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2"/>
-                      <circle cx="12" cy="12" r="1"/>
-                    </svg>
-                    Send to TargetPath
-                  </Button>
-                </div>
-              )}
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-3 border-t border-blue-200 flex-shrink-0">
+                <Button
+                  onClick={handleDialRClick}
+                  className="flex-1 justify-center text-sm py-2"
+                  variant="primary"
+                >
+                  <PhoneIcon className="w-4 h-4 mr-2" />
+                  Send to DialR
+                </Button>
+                <Button
+                  onClick={handleTargetPathClick}
+                  className="flex-1 justify-center text-sm py-2"
+                  variant="primary"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="12" cy="12" r="1"/>
+                  </svg>
+                  Send to TargetPath
+                </Button>
+              </div>
+
 
             </div>
           </div>
@@ -1084,7 +861,51 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
         </div>
       </Card>
 
+      {/* Recurring Readiness - Separate Widget */}
+      {donor.recurringReadiness && (
+        <Card className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <BoltIcon className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-gray-700">Recurring Readiness</span>
+              </div>
 
+              <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-2 py-1">ML Model</Badge>
+
+              <div
+                className={`text-lg font-bold ${
+                  donor.recurringReadiness.bucket === 'HIGH' ? 'text-green-600' :
+                  donor.recurringReadiness.bucket === 'MED' ? 'text-yellow-600' :
+                  'text-gray-500'
+                }`}
+                title="Calculated by our Recurrence Probability model using giving history and look-alike donor patterns."
+              >
+                {Math.round(donor.recurringReadiness.probability * 100)}%
+              </div>
+
+              <div className="text-xs text-gray-600 bg-yellow-100 px-2 py-1 rounded">Medium</div>
+
+              <span className="text-sm text-gray-600">Modeled readiness to convert to a recurring gift.</span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {donor.recurringReadiness.recommendedMonthlyAmount && (
+                <div className="text-right">
+                  <span className="text-sm text-gray-600">Suggested monthly: </span>
+                  <span className="text-lg font-bold text-green-700">
+                    ${donor.recurringReadiness.recommendedMonthlyAmount}
+                  </span>
+                </div>
+              )}
+              <div className="text-xs text-gray-500">
+                Last updated {new Date(donor.recurringReadiness.lastScoredAt).toLocaleDateString()} • Confidence: {Math.round(donor.recurringReadiness.confidence * 100)}%
+              </div>
+              <button className="text-xs text-blue-600 hover:text-blue-800 underline">Refresh</button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Enhanced Tabbed Navigation */}
       <Card>
@@ -1092,9 +913,9 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
           <nav className="-mb-px flex space-x-8 overflow-x-auto">
             {[
               { id: 'overview', label: 'Overview', icon: SparklesIcon },
-              { id: 'intelligence', label: 'Contact Insights', icon: ChartBarIcon },
+              { id: 'intelligence', label: 'Intelligence', icon: ChartBarIcon },
+              { id: 'insights', label: 'Insights', icon: TrendingUpIcon },
               { id: 'enriched', label: 'Enhanced Data', icon: DocumentTextIcon },
-              { id: 'donor-discovery', label: 'Donor Discovery', icon: UserGroupIcon },
               { id: 'fec-insights', label: 'FEC Insights', icon: ShieldCheckIcon },
               { id: 'donations', label: 'Donations', icon: CurrencyDollarIcon },
               { id: 'actions', label: 'Actions', icon: BoltIcon },
@@ -1121,48 +942,52 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
           <div className="space-y-6">
             {/* Collapsible Giving Overview Section */}
             <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-xl text-white overflow-hidden">
-              {/* Minimized Header - Always Visible */}
+              {/* Compact Header - Always Visible */}
               <div
                 className="flex items-center justify-between p-4 cursor-pointer hover:bg-white hover:bg-opacity-5 transition-colors"
                 onClick={() => setIsGivingOverviewExpanded(!isGivingOverviewExpanded)}
               >
-                <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-4">
                   <div>
                     <div className="text-2xl font-bold">
                       ${donor.givingOverview?.totalRaised?.toLocaleString() || donor.totalLifetimeGiving.toLocaleString()}
                     </div>
                     <div className="text-crimson-accent-blue text-sm font-medium">
-                      CTD | {donor.givingOverview?.consecutiveGifts || donor.giftCount} Gifts
+                      Total Raised (CTD) | {donor.givingOverview?.consecutiveGifts || donor.giftCount} Gifts
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <div className="text-lg font-bold">$8,785.01</div>
-                      <div className="text-crimson-accent-blue text-sm">
-                        Spouse: {' '}
-                        <button
-                          className="text-white hover:text-crimson-accent-blue underline font-medium transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const spouseProfile = getDonorProfileByName(donor.relationshipMapping?.spouse || 'Ms. Ellen Banks');
-                            if (spouseProfile) {
-                              setSelectedSpouse(spouseProfile);
-                              setShowSpouseProfile(true);
-                            }
-                          }}
-                        >
-                          Ms. Ellen Banks
-                        </button>
+                  <div className="text-right">
+                    <div className="text-xl font-bold">$8,785.01</div>
+                    <div className="text-crimson-accent-blue text-xs">
+                      Spouse: {' '}
+                      <button
+                        className="text-white hover:text-crimson-accent-blue underline font-medium"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const spouseProfile = getDonorProfileByName(donor.relationshipMapping?.spouse || 'Ms. Ellen Banks');
+                          if (spouseProfile) {
+                            setSelectedSpouse(spouseProfile);
+                            setShowSpouseProfile(true);
+                          }
+                        }}
+                      >
+                        Ms. Ellen Banks
+                      </button>
+                    </div>
+                    {donor.relationshipMapping?.family && donor.relationshipMapping.family.length > 0 && (
+                      <div className="text-crimson-accent-blue text-xs mt-1">
+                        Family: {donor.relationshipMapping.family.slice(0, 2).join(', ')}
+                        {donor.relationshipMapping.family.length > 2 && ' +' + (donor.relationshipMapping.family.length - 2)}
                       </div>
-                    </div>
-
-                    <ChevronDownIcon
-                      className={`w-5 h-5 text-white transition-transform duration-200 ${
-                        isGivingOverviewExpanded ? 'rotate-180' : ''
-                      }`}
-                    />
+                    )}
                   </div>
+                </div>
+                <div className="flex items-center">
+                  <ChevronDownIcon
+                    className={`w-5 h-5 text-white transition-transform duration-200 ${
+                      isGivingOverviewExpanded ? 'rotate-180' : ''
+                    }`}
+                  />
                 </div>
               </div>
 
@@ -1246,16 +1071,12 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
               )}
             </div>
 
-            {/* Main Overview Layout - 3/4 left, 1/4 right */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Left Column - Donation Summary (3/4 width) */}
-              <div className="lg:col-span-3 space-y-6">
-                {/* Enhanced Giving Overview */}
-                <div>
-                  <h3 className="text-lg font-semibold text-text-primary mb-4">Donation Summary</h3>
-
-                  {/* Compact Metrics Row - All 6 Cards */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+            {/* Improved Overview Layout - Better proportions */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Left Column - Donation Summary (4/5 width) */}
+              <div className="lg:col-span-4 space-y-4">
+                {/* Compact Metrics Row - All 6 Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     {/* Total Raised Card - Clickable */}
                     <div
                       className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200 cursor-pointer hover:shadow-md transition-shadow text-center"
@@ -1322,18 +1143,63 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 </div>
               </div>
 
-              {/* Right Column - AI Snapshot (1/4 width) */}
+              {/* Right Column - AI Snapshot (1/5 width) */}
               <div className="lg:col-span-1">
-                <div className="sticky top-6">
-                  {/* AI Research with Perplexity Integration */}
-                  <PerplexityBioGenerator
-                    donor={{
-                      id: donor.id,
-                      name: donor.name,
-                      location: donor.address,
-                      totalLifetimeGiving: donor.totalLifetimeGiving
-                    }}
-                  />
+                <div className="sticky top-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BrainIcon className="w-4 h-4 text-purple-600" />
+                    <h3 className="text-base font-semibold text-text-primary">AI Research</h3>
+                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-xs">Live</Badge>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="bg-white p-2 rounded-full shadow-sm flex-shrink-0">
+                        <SparklesIcon className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {isLoadingResearch ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600"></div>
+                            <p className="text-gray-600 text-xs">Researching...</p>
+                          </div>
+                        ) : (
+                          <p className="text-gray-800 leading-relaxed text-sm">
+                            {aiResearch?.summary || donor.aiSnapshot || aiSnapshot}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-3 border-t border-purple-200">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-purple-700 font-medium">Confidence:</span>
+                        <span className="text-purple-900 font-semibold">{aiResearch?.confidence || 94}%</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-purple-700 font-medium">Updated:</span>
+                        <span className="text-purple-900">{new Date().toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        {!isLoadingResearch && (
+                          <button
+                            onClick={() => {
+                              setIsLoadingResearch(true);
+                              generateMockDonorResearch(donor).then(setAiResearch).finally(() => setIsLoadingResearch(false));
+                            }}
+                            className="text-xs text-purple-600 hover:text-purple-800 underline"
+                          >
+                            Refresh
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowSourcesModal(true)}
+                          className="text-xs text-purple-600 hover:text-purple-800 underline"
+                        >
+                          Sources ({aiResearch?.sources?.length || 5})
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
 
                 </div>
@@ -1342,355 +1208,395 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
           </div>
         )}
 
-        {/* Contact Insights Tab */}
+        {/* Intelligence Tab */}
         {activeTab === 'intelligence' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Side - Contact Intelligence */}
-            <div className="space-y-6">
-              {/* 1. Communication Intelligence Panel (Modern & Streamlined) */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <div className="p-1.5 bg-crimson-blue/10 rounded-lg">
-                      <ChatBubbleLeftRightIcon className="w-4 h-4 text-crimson-blue" />
-                    </div>
-                    Communication Intelligence
-                  </h4>
-                  <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                    Last 30 days
-                  </div>
+            {/* Contact Intelligence */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <PhoneIcon className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-text-primary">Contact Intelligence</h3>
                 </div>
-
-                {donor.contactIntelligence ? (
-                  <div className="space-y-4">
-                    {/* Channel Success Rates - Modern Cards */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-gradient-to-br from-crimson-blue/5 to-crimson-blue/10 border border-crimson-blue/20 rounded-lg p-3 text-center group hover:from-crimson-blue/10 hover:to-crimson-blue/15 transition-all duration-200">
-                        <div className="flex items-center justify-center gap-1.5 mb-2">
-                          <div className="p-1 bg-crimson-blue/20 rounded-md group-hover:bg-crimson-blue/30 transition-colors">
-                            <PhoneIcon className="w-3 h-3 text-crimson-blue" />
-                          </div>
-                          <span className="text-xs font-medium text-gray-700">Phone</span>
-                        </div>
-                        <div className="text-sm font-bold text-crimson-blue">85%</div>
-                        <div className="text-xs text-gray-500 mt-0.5">Success</div>
-                      </div>
-
-                      <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/80 border border-emerald-200 rounded-lg p-3 text-center group hover:from-emerald-100/80 hover:to-emerald-100 transition-all duration-200">
-                        <div className="flex items-center justify-center gap-1.5 mb-2">
-                          <div className="p-1 bg-emerald-200 rounded-md group-hover:bg-emerald-300 transition-colors">
-                            <EnvelopeIcon className="w-3 h-3 text-emerald-700" />
-                          </div>
-                          <span className="text-xs font-medium text-gray-700">Email</span>
-                        </div>
-                        <div className="text-sm font-bold text-emerald-700">72%</div>
-                        <div className="text-xs text-gray-500 mt-0.5">Open</div>
-                      </div>
-
-                      <div className="bg-gradient-to-br from-violet-50 to-violet-100/80 border border-violet-200 rounded-lg p-3 text-center group hover:from-violet-100/80 hover:to-violet-100 transition-all duration-200">
-                        <div className="flex items-center justify-center gap-1.5 mb-2">
-                          <div className="p-1 bg-violet-200 rounded-md group-hover:bg-violet-300 transition-colors">
-                            <ChatBubbleLeftRightIcon className="w-3 h-3 text-violet-700" />
-                          </div>
-                          <span className="text-xs font-medium text-gray-700">Text</span>
-                        </div>
-                        <div className="text-sm font-bold text-violet-700">95%</div>
-                        <div className="text-xs text-gray-500 mt-0.5">Read</div>
-                      </div>
-                    </div>
-
-                    {/* Preferences & Timing - Modern Layout */}
-                    <div className="bg-gray-50/80 border border-gray-100 rounded-lg p-4">
-                      <div className="grid grid-cols-2 gap-4 mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 font-medium">Preferred:</span>
-                          <div className="flex items-center gap-1.5 text-sm font-semibold">
-                            {donor.contactIntelligence.preferredContactMethod === 'phone' && (
-                              <>
-                                <div className="p-0.5 bg-crimson-blue/20 rounded">
-                                  <PhoneIcon className="w-3 h-3 text-crimson-blue" />
-                                </div>
-                                <span className="text-crimson-blue">Phone</span>
-                              </>
-                            )}
-                            {donor.contactIntelligence.preferredContactMethod === 'email' && (
-                              <>
-                                <div className="p-0.5 bg-emerald-200 rounded">
-                                  <EnvelopeIcon className="w-3 h-3 text-emerald-700" />
-                                </div>
-                                <span className="text-emerald-700">Email</span>
-                              </>
-                            )}
-                            {donor.contactIntelligence.preferredContactMethod === 'text' && (
-                              <>
-                                <div className="p-0.5 bg-violet-200 rounded">
-                                  <ChatBubbleLeftRightIcon className="w-3 h-3 text-violet-700" />
-                                </div>
-                                <span className="text-violet-700">Text</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 font-medium">Timezone:</span>
-                          <span className="text-sm font-semibold text-gray-700">{donor.contactIntelligence.timezone}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs text-gray-500 font-medium">Response:</span>
-                        <span className="text-sm font-semibold text-gray-700">{donor.contactIntelligence.responsePattern}</span>
-                      </div>
-
-                      <div>
-                        <span className="text-xs text-gray-500 font-medium block mb-2">Best Contact Times:</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {donor.contactIntelligence.bestContactTimes.map((time, index) => (
-                            <span key={index} className="text-xs font-medium text-crimson-blue bg-crimson-blue/10 border border-crimson-blue/20 px-2.5 py-1 rounded-full">
-                              {time}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-3">
-                      <ChatBubbleLeftRightIcon className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 text-sm font-medium">No communication data available</p>
-                    <p className="text-gray-400 text-xs mt-1">Data will populate as interactions are tracked</p>
-                  </div>
-                )}
-              </div>
-
-              {/* 2. DialR Insights Panel */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <div className="p-1.5 bg-crimson-blue/10 rounded-lg">
-                      <PhoneIcon className="w-4 h-4 text-crimson-blue" />
-                    </div>
-                    DialR Insights
-                  </h4>
-                  <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                    Recent calls
-                  </div>
-                </div>
-
-                {donor.contactIntelligence ? (
-                  <div className="space-y-4">
-                    {/* Most Recent Call */}
-                    <div className="bg-gradient-to-r from-blue-50 to-blue-50/50 border border-blue-200/60 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <span className="font-semibold text-gray-900 text-sm">Call - Soft Pledge</span>
-                          </div>
-                          <div className="text-xs text-gray-600">{formatLastContact(donor.contactIntelligence.lastContactDate)}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600">$1,000</div>
-                          <div className="text-xs text-gray-500">Pledged</div>
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-700 bg-white/60 rounded px-3 py-2">
-                        <strong>Result:</strong> {donor.contactIntelligence.lastContactOutcome}
-                      </div>
-                    </div>
-
-                    {/* View DialR Log Button */}
-                    <button
-                      onClick={() => setShowDialRLogModal(true)}
-                      className="w-full px-4 py-2.5 text-sm font-medium bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
-                    >
-                      <PhoneIcon className="w-4 h-4" />
-                      View Complete DialR Log
+                {donor.contactIntelligence && (
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors">
+                      DialR
                     </button>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-3">
-                      <PhoneIcon className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <p className="text-gray-500 text-sm font-medium mb-3">No DialR data available</p>
-                    <button className="px-4 py-2.5 text-sm font-medium bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-all duration-200 shadow-sm hover:shadow-md">
-                      Connect DialR Integration
+                    <button className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors">
+                      TargetPath
                     </button>
                   </div>
                 )}
               </div>
-
-              {/* 3. TargetPath Insights Panel */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <div className="p-1.5 bg-violet-100 rounded-lg">
-                      <svg className="w-4 h-4 text-violet-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                        <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2"/>
-                        <circle cx="12" cy="12" r="1"/>
-                      </svg>
-                    </div>
-                    TargetPath Insights
-                  </h4>
-                  <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                    Active campaigns
-                  </div>
-                </div>
-
+              <div className="space-y-4">
                 {donor.contactIntelligence ? (
-                  <div className="space-y-4">
-                    {/* Most Recent Campaign */}
-                    <div className="bg-gradient-to-r from-violet-50 to-violet-50/50 border border-violet-200/60 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></div>
-                            <span className="font-semibold text-gray-900 text-sm">Major Gift Follow-up</span>
-                          </div>
-                          <div className="text-xs text-gray-600">Due: Tomorrow at 2:00 PM</div>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xs bg-violet-100 text-violet-700 px-2.5 py-1 rounded-full font-semibold">
-                            In Progress
+                  <>
+                    {/* Communication Preferences */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-medium text-blue-900 mb-3">Communication Preferences</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600 block">Preferred Method:</span>
+                          <span className="font-medium capitalize flex items-center gap-1">
+                            {donor.contactIntelligence.preferredContactMethod === 'phone' && <PhoneIcon className="w-3 h-3" />}
+                            {donor.contactIntelligence.preferredContactMethod === 'email' && <EnvelopeIcon className="w-3 h-3" />}
+                            {donor.contactIntelligence.preferredContactMethod === 'text' && <ChatBubbleLeftRightIcon className="w-3 h-3" />}
+                            {donor.contactIntelligence.preferredContactMethod}
                           </span>
                         </div>
-                      </div>
-                      <div className="text-sm text-gray-700 bg-white/60 rounded px-3 py-2">
-                        3-touch sequence • Day 2 of 7
+                        <div>
+                          <span className="text-gray-600 block">Timezone:</span>
+                          <span className="font-medium">{donor.contactIntelligence.timezone}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-gray-600 block">Response Pattern:</span>
+                          <span className="font-medium">{donor.contactIntelligence.responsePattern}</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* View TargetPath Log Button */}
-                    <button
-                      onClick={() => setShowTargetPathLogModal(true)}
-                      className="w-full px-4 py-2.5 text-sm font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                      </svg>
-                      View Complete TargetPath Log
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-3">
-                      <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                      </svg>
+                    {/* Recent Activity & Call History */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-green-900">Recent Activity</h4>
+                        <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded">
+                          DialR Connected
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-2 bg-white rounded border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium">Call - Soft Pledge</span>
+                            <span className="text-xs text-gray-500">{formatLastContact(donor.contactIntelligence.lastContactDate)}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-semibold text-green-700">$1,000</div>
+                            <div className="text-xs text-gray-500">Pledged</div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-600 bg-white p-2 rounded border">
+                          <strong>Outcome:</strong> {donor.contactIntelligence.lastContactOutcome}
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-gray-500 text-sm font-medium mb-3">No TargetPath data available</p>
-                    <button className="px-4 py-2.5 text-sm font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-all duration-200 shadow-sm hover:shadow-md">
-                      Setup TargetPath Integration
-                    </button>
+
+                    {/* Best Contact Times */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <h4 className="font-medium text-amber-900 mb-2">Optimal Contact Windows</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {donor.contactIntelligence.bestContactTimes.map((time, index) => (
+                          <div key={index} className="text-sm text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-200">
+                            {time}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-2 text-xs text-amber-700">
+                        <ClockIcon className="w-3 h-3 inline mr-1" />
+                        Based on call success rates and response patterns
+                      </div>
+                    </div>
+
+                    {/* Multi-Channel Engagement */}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <h4 className="font-medium text-purple-900 mb-3">Multi-Channel Engagement</h4>
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="bg-white p-2 rounded border">
+                          <PhoneIcon className="w-4 h-4 mx-auto text-blue-600 mb-1" />
+                          <div className="text-xs font-medium">Calls</div>
+                          <div className="text-sm text-gray-600">85% Success</div>
+                        </div>
+                        <div className="bg-white p-2 rounded border">
+                          <EnvelopeIcon className="w-4 h-4 mx-auto text-green-600 mb-1" />
+                          <div className="text-xs font-medium">Email</div>
+                          <div className="text-sm text-gray-600">72% Open</div>
+                        </div>
+                        <div className="bg-white p-2 rounded border">
+                          <ChatBubbleLeftRightIcon className="w-4 h-4 mx-auto text-purple-600 mb-1" />
+                          <div className="text-xs font-medium">Text</div>
+                          <div className="text-sm text-gray-600">95% Read</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Active Campaigns */}
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-indigo-900">Active Campaigns</h4>
+                        <span className="text-xs text-indigo-700 bg-indigo-100 px-2 py-1 rounded">
+                          TargetPath
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2 bg-white rounded border">
+                          <div>
+                            <div className="text-sm font-medium">Major Gift Follow-up</div>
+                            <div className="text-xs text-gray-500">3-touch sequence • Day 2 of 7</div>
+                          </div>
+                          <div className="text-xs text-indigo-600 font-medium">In Progress</div>
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          Next: Personal call scheduled for tomorrow at 2:00 PM
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <div className="flex justify-center gap-4 mb-4">
+                      <PhoneIcon className="w-8 h-8 text-gray-400" />
+                      <EnvelopeIcon className="w-8 h-8 text-gray-400" />
+                      <ChatBubbleLeftRightIcon className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-600 text-sm mb-2">Contact intelligence data not available</p>
+                    <p className="text-gray-500 text-xs mb-4">Connect DialR and TargetPath to start collecting interaction data</p>
+                    <div className="flex justify-center gap-2">
+                      <button className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                        Connect DialR
+                      </button>
+                      <button className="px-4 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
+                        Setup TargetPath
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right Side - Giving Intelligence */}
-            <div className="space-y-6">
-              {/* Patterns & Triggers Panel */}
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <div className="p-1.5 bg-emerald-100 rounded-lg">
-                      <TrendingUpIcon className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    Patterns & Triggers
-                  </h4>
-                  <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                    AI Analysis
-                  </div>
-                </div>
-
+            {/* Giving Intelligence */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUpIcon className="w-5 h-5 text-green-600" />
+                <h3 className="text-lg font-semibold text-text-primary">Giving Intelligence</h3>
+              </div>
+              <div className="space-y-4">
                 {donor.givingIntelligence ? (
-                  <div className="space-y-5">
-                    {/* Seasonal Patterns */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-1 h-4 bg-emerald-500 rounded-full"></div>
-                        <span className="text-gray-700 text-sm font-semibold">Seasonal Patterns</span>
-                      </div>
-                      <div className="space-y-2">
-                        {donor.givingIntelligence.seasonalPatterns.map((pattern, index) => (
-                          <div key={index} className="bg-gradient-to-r from-emerald-50 to-emerald-50/50 border border-emerald-200/60 rounded-lg p-3 group hover:from-emerald-100/50 hover:to-emerald-50 transition-all duration-200">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-emerald-800 font-medium">{pattern.pattern}</span>
-                                {pattern.historicalData && (
-                                  <div className="p-0.5 bg-emerald-200 rounded-full">
-                                    <CheckCircleIcon className="w-3 h-3 text-emerald-700" title="Based on actual donor history" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-xs text-emerald-600 font-bold bg-emerald-100 px-2 py-1 rounded-full">
-                                {pattern.confidence}%
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  <>
+                    {/* Enhanced Capacity Analysis */}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <h4 className="font-medium text-purple-900 mb-3">Capacity Analysis</h4>
 
-                    {/* Trigger Events */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                        <span className="text-gray-700 text-sm font-semibold">Trigger Events</span>
-                      </div>
-                      <div className="space-y-2">
-                        {donor.givingIntelligence.triggerEvents.map((trigger, index) => (
-                          <div key={index} className="bg-gradient-to-r from-blue-50 to-blue-50/50 border border-blue-200/60 rounded-lg p-3 group hover:from-blue-100/50 hover:to-blue-50 transition-all duration-200">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-blue-800 font-medium">{trigger.trigger}</span>
-                                {trigger.historicalResponse && (
-                                  <div className="p-0.5 bg-blue-200 rounded-full">
-                                    <CheckCircleIcon className="w-3 h-3 text-blue-700" title="Donor has responded to this trigger before" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-xs text-blue-600 font-bold bg-blue-100 px-2 py-1 rounded-full">
-                                {trigger.likelihood}%
-                              </div>
-                            </div>
+                      {/* Score with Trend */}
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="text-center">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold text-purple-700">{donor.givingIntelligence.capacityScore}/100</span>
+                            {donor.givingIntelligence.capacityTrend === 'increasing' && (
+                              <ArrowTrendingUpIcon className="w-5 h-5 text-green-600" title="Improving vs last year" />
+                            )}
+                            {donor.givingIntelligence.capacityTrend === 'declining' && (
+                              <TrendingDownIcon className="w-5 h-5 text-red-600" title="Declining vs last year" />
+                            )}
+                            {donor.givingIntelligence.capacityTrend === 'stable' && (
+                              <span className="text-gray-500 text-sm">→</span>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Historical Response */}
-                    {donor.givingIntelligence.historicalTriggers && donor.givingIntelligence.historicalTriggers.length > 0 && (
-                      <div className="border-t border-gray-100 pt-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-1 h-4 bg-gray-500 rounded-full"></div>
-                          <span className="text-gray-700 text-sm font-semibold">Historical Response</span>
+                          <div className="text-xs text-purple-600">
+                            {donor.givingIntelligence.capacityTrend === 'increasing' && '↗ improving vs last year'}
+                            {donor.givingIntelligence.capacityTrend === 'declining' && '↘ declining vs last year'}
+                            {donor.givingIntelligence.capacityTrend === 'stable' && '→ stable vs last year'}
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {donor.givingIntelligence.historicalTriggers.map((trigger, index) => (
-                            <span key={index} className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full border border-gray-200 font-medium hover:bg-gray-200 transition-colors duration-200 flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                              {trigger}
+                        <div className="flex-1">
+                          <div className="w-full bg-purple-200 rounded-full h-3">
+                            <div
+                              className="bg-purple-600 h-3 rounded-full transition-all duration-300"
+                              style={{ width: `${donor.givingIntelligence.capacityScore}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Benchmark Comparison */}
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="bg-white p-3 rounded border">
+                          <div className="text-purple-700 font-medium">
+                            {donor.givingIntelligence.givingVsCapacity > 0 ? '+' : ''}{donor.givingIntelligence.givingVsCapacity}% vs modeled capacity
+                          </div>
+                          <div className="text-purple-600 text-xs mt-1">
+                            {donor.givingIntelligence.peerComparison}
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border">
+                          <div className="text-purple-700 font-medium">
+                            Top {100 - donor.givingIntelligence.demographicPercentile}% of peers
+                          </div>
+                          <div className="text-purple-600 text-xs mt-1">
+                            Demographic ranking
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Upgrade/Recovery Opportunity */}
+                    <div className={`rounded-lg p-4 ${
+                      donor.givingIntelligence.upgradeOpportunity.status === 'below-capacity'
+                        ? 'bg-blue-50 border border-blue-200'
+                        : donor.givingIntelligence.upgradeOpportunity.status === 'above-capacity'
+                        ? 'bg-orange-50 border border-orange-200'
+                        : 'bg-yellow-50 border border-yellow-200'
+                    }`}>
+                      <h4 className={`font-medium mb-3 ${
+                        donor.givingIntelligence.upgradeOpportunity.status === 'below-capacity'
+                          ? 'text-blue-900'
+                          : donor.givingIntelligence.upgradeOpportunity.status === 'above-capacity'
+                          ? 'text-orange-900'
+                          : 'text-yellow-900'
+                      }`}>
+                        {donor.givingIntelligence.upgradeOpportunity.type === 'upgrade' && 'Upgrade Opportunity'}
+                        {donor.givingIntelligence.upgradeOpportunity.type === 'recovery' && 'Recovery Opportunity'}
+                        {donor.givingIntelligence.upgradeOpportunity.type === 'monitor' && 'Capacity Monitoring'}
+                      </h4>
+
+                      {/* Unrealized Potential (for below capacity donors) */}
+                      {donor.givingIntelligence.upgradeOpportunity.unrealizedPotential && (
+                        <div className="bg-white p-3 rounded border mb-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-blue-700 font-medium">Unrealized Potential:</span>
+                            <span className="font-bold text-blue-800">
+                              ${donor.givingIntelligence.upgradeOpportunity.unrealizedPotential.toLocaleString()}
                             </span>
+                          </div>
+                          <div className="text-xs text-blue-600 mt-1">
+                            Amount below modeled capacity
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Key Metrics */}
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="bg-white p-3 rounded border">
+                          <div className={`font-bold text-lg ${
+                            donor.givingIntelligence.upgradeOpportunity.status === 'below-capacity'
+                              ? 'text-blue-800'
+                              : donor.givingIntelligence.upgradeOpportunity.status === 'above-capacity'
+                              ? 'text-orange-800'
+                              : 'text-yellow-800'
+                          }`}>
+                            ${donor.givingIntelligence.upgradeOpportunity.potential.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {donor.givingIntelligence.upgradeOpportunity.type === 'upgrade' ? 'Upgrade Potential' : 'Total Potential'}
+                          </div>
+                        </div>
+                        <div className="bg-white p-3 rounded border">
+                          <div className={`font-bold text-lg ${
+                            donor.givingIntelligence.upgradeOpportunity.status === 'below-capacity'
+                              ? 'text-blue-800'
+                              : donor.givingIntelligence.upgradeOpportunity.status === 'above-capacity'
+                              ? 'text-orange-800'
+                              : 'text-yellow-800'
+                          }`}>
+                            {donor.givingIntelligence.upgradeOpportunity.confidence}%
+                          </div>
+                          <div className="text-xs text-gray-600">Confidence</div>
+                        </div>
+                      </div>
+
+                      {/* Timing and Status */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white p-3 rounded border">
+                          <div className={`font-medium ${
+                            donor.givingIntelligence.upgradeOpportunity.status === 'below-capacity'
+                              ? 'text-blue-700'
+                              : donor.givingIntelligence.upgradeOpportunity.status === 'above-capacity'
+                              ? 'text-orange-700'
+                              : 'text-yellow-700'
+                          }`}>
+                            {donor.givingIntelligence.upgradeOpportunity.timing}
+                          </div>
+                          <div className="text-xs text-gray-600">Timing Window</div>
+                        </div>
+                        <div className="bg-white p-3 rounded border">
+                          <div className={`font-medium ${
+                            donor.givingIntelligence.upgradeOpportunity.status === 'below-capacity'
+                              ? 'text-blue-700'
+                              : donor.givingIntelligence.upgradeOpportunity.status === 'above-capacity'
+                              ? 'text-orange-700'
+                              : 'text-yellow-700'
+                          }`}>
+                            {donor.givingIntelligence.upgradeOpportunity.status === 'below-capacity' && 'Below capacity'}
+                            {donor.givingIntelligence.upgradeOpportunity.status === 'at-capacity' && 'At capacity'}
+                            {donor.givingIntelligence.upgradeOpportunity.status === 'above-capacity' && 'Above capacity'}
+                            {donor.givingIntelligence.upgradeOpportunity.status === 'fatigue-risk' && 'Fatigue risk'}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {donor.givingIntelligence.upgradeOpportunity.status === 'above-capacity' && 'Monitor for fatigue'}
+                            {donor.givingIntelligence.upgradeOpportunity.status === 'below-capacity' && 'Upgrade opportunity'}
+                            {donor.givingIntelligence.upgradeOpportunity.status === 'at-capacity' && 'Maintain engagement'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Patterns & Triggers */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="font-medium text-green-900 mb-3">Patterns & Triggers</h4>
+
+                      {/* Seasonal Patterns */}
+                      <div className="mb-4">
+                        <span className="text-green-700 text-sm font-medium">Seasonal Patterns:</span>
+                        <div className="space-y-2 mt-2">
+                          {donor.givingIntelligence.seasonalPatterns.map((pattern, index) => (
+                            <div key={index} className="bg-white p-2 rounded border flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-green-800">{pattern.pattern}</span>
+                                {pattern.historicalData && (
+                                  <CheckCircleIcon className="w-4 h-4 text-green-600" title="Based on actual donor history" />
+                                )}
+                              </div>
+                              <div className="text-xs text-green-600">
+                                {pattern.confidence}% confidence
+                              </div>
+                            </div>
                           ))}
                         </div>
-                        <div className="text-xs text-gray-500 mt-3 bg-gray-50 rounded-lg p-2">
-                          <strong>Note:</strong> Triggers this donor has actually responded to in the past
+                      </div>
+
+                      {/* Trigger Events */}
+                      <div className="mb-4">
+                        <span className="text-green-700 text-sm font-medium">Trigger Events:</span>
+                        <div className="space-y-2 mt-2">
+                          {donor.givingIntelligence.triggerEvents.map((trigger, index) => (
+                            <div key={index} className="bg-white p-2 rounded border flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-green-800">{trigger.trigger}</span>
+                                {trigger.historicalResponse && (
+                                  <CheckCircleIcon className="w-4 h-4 text-green-600" title="Donor has responded to this trigger before" />
+                                )}
+                              </div>
+                              <div className="text-xs text-green-600">
+                                {trigger.likelihood}% likelihood
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-3">
-                      <TrendingUpIcon className="w-6 h-6 text-gray-400" />
+
+                      {/* Historical Response */}
+                      {donor.givingIntelligence.historicalTriggers && donor.givingIntelligence.historicalTriggers.length > 0 && (
+                        <div>
+                          <span className="text-green-700 text-sm font-medium">Historical Response:</span>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {donor.givingIntelligence.historicalTriggers.map((trigger, index) => (
+                              <span key={index} className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded border border-green-300">
+                                ✓ {trigger}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="text-xs text-green-600 mt-1">
+                            Triggers this donor has actually responded to in the past
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-gray-500 text-sm font-medium">No giving patterns available</p>
-                    <p className="text-gray-400 text-xs mt-1">Data will be populated as giving patterns are analyzed</p>
+                  </>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                    <TrendingUpIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600 text-sm">Giving intelligence data not available</p>
+                    <p className="text-gray-500 text-xs mt-1">Data will be populated as giving patterns are analyzed</p>
                   </div>
                 )}
               </div>
@@ -1700,7 +1606,83 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
 
 
 
+        {/* Insights Tab */}
+        {activeTab === 'insights' && (
+          <div className="space-y-6">
 
+            {donor.predictiveInsights ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Next Best Action */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <BoltIcon className="w-5 h-5 text-yellow-600" />
+                  <h3 className="text-lg font-semibold text-text-primary">Next Best Action</h3>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <div className="font-medium text-yellow-900">Recommended Action</div>
+                      <div className="text-yellow-800 mt-1">{donor.predictiveInsights.nextBestAction.action}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-yellow-700">Confidence</div>
+                      <div className="text-lg font-bold text-yellow-800">{donor.predictiveInsights.nextBestAction.confidence}%</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-yellow-700">Timing</div>
+                      <div className="text-lg font-bold text-yellow-800">{donor.predictiveInsights.nextBestAction.timing}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-yellow-700">Expected Outcome</div>
+                    <div className="text-yellow-800 mt-1">{donor.predictiveInsights.nextBestAction.expectedOutcome}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Churn Risk */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-600" />
+                <h3 className="text-lg font-semibold text-text-primary">Churn Risk Analysis</h3>
+              </div>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold text-red-700">{donor.predictiveInsights.churnRisk.score}%</div>
+                  <div className="text-sm text-red-600">Churn Risk Score</div>
+                </div>
+                <div className="space-y-2">
+                  <div>
+                    <div className="text-sm font-medium text-red-700">Risk Factors:</div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {donor.predictiveInsights.churnRisk.factors.map((factor, index) => (
+                        <span key={index} className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded">
+                          {factor}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-red-700">Prevention Strategy:</div>
+                    <div className="text-red-800 text-sm mt-1">{donor.predictiveInsights.churnRisk.preventionStrategy}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                <LightBulbIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-medium text-gray-900 mb-2">Predictive Insights Coming Soon</h4>
+                <p className="text-gray-600 text-sm">
+                  Advanced AI-powered insights and recommendations will be available as more data is collected and analyzed.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Enriched Data Tab */}
         {activeTab === 'enriched' && (
@@ -1714,27 +1696,27 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 </div>
 
                 {/* AI Snapshot for Enhanced Data */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <SparklesIcon className="w-4 h-4 text-blue-600" />
-                    <h4 className="text-sm font-semibold text-blue-900">AI Snapshot</h4>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <SparklesIcon className="w-5 h-5 text-blue-600" />
+                    <h4 className="text-lg font-semibold text-blue-900">AI Snapshot</h4>
                     <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">Enhanced Analysis</Badge>
                   </div>
 
-                  <div className="prose prose-xs text-blue-800 leading-relaxed">
-                    <p className="mb-2 text-xs">
+                  <div className="prose prose-sm text-blue-800 leading-relaxed">
+                    <p className="mb-3">
                       <strong>{donor.name}</strong> is a {enrichedData.age}-year-old {enrichedData.gender?.toLowerCase()}
                       {enrichedData.homeowner ? ' homeowner' : ' renter'} with {enrichedData.education?.toLowerCase()} education
                       and an estimated household income of {enrichedData.householdIncome}.
                     </p>
 
-                    <p className="mb-2 text-xs">
+                    <p className="mb-3">
                       <strong>Political Profile:</strong> Registered {enrichedData.party} voter with {enrichedData.politicalEngagement}%
                       political engagement score. Shows {enrichedData.volunteerPropensity}% volunteer propensity and
                       {enrichedData.eventAttendancePropensity}% likelihood to attend events.
                     </p>
 
-                    <p className="mb-0 text-xs">
+                    <p className="mb-0">
                       <strong>Fundraising Insights:</strong> Classified as {enrichedData.givingCapacity} giving capacity.
                       {enrichedData.politicalEngagement && enrichedData.politicalEngagement > 70 ?
                         ' High political engagement suggests strong potential for political giving and advocacy involvement.' :
@@ -1747,7 +1729,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-blue-200">
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-blue-200">
                     <div className="text-xs text-blue-600">
                       Analysis generated from {enrichedData.dataSource} • Last updated {enrichedData.lastUpdated}
                     </div>
@@ -1841,155 +1823,63 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
               </div>
             )}
 
-
-          </div>
-        )}
-
-        {/* Donor Discovery Tab */}
-        {activeTab === 'donor-discovery' && (
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-2 mb-6">
-              <UserGroupIcon className="w-6 h-6 text-green-600" />
-              <h2 className="text-2xl font-bold text-gray-900">Donor Discovery</h2>
-              <Badge className="bg-green-100 text-green-800 border-green-200 text-sm">i360 Data</Badge>
-            </div>
-
-            {/* AI Snapshot for Donor Discovery */}
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <SparklesIcon className="w-4 h-4 text-green-600" />
-                <h4 className="text-sm font-semibold text-green-900">AI Donor Analysis</h4>
-                <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">Smart Discovery</Badge>
+            {/* Enhanced Lookalike Finder */}
+            <div className="mt-8">
+              <div className="flex items-center gap-2 mb-4">
+                <UserGroupIcon className="w-5 h-5 text-green-600" />
+                <h3 className="text-lg font-semibold text-text-primary">Lookalike Finder</h3>
+                <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">i360 Data</Badge>
               </div>
 
-              <div className="prose prose-xs text-green-800 leading-relaxed">
-                <p className="mb-2 text-xs">
-                  Based on <strong>{donor.name}'s</strong> profile, we've identified <strong>{allLookalikes.length.toLocaleString()}</strong> potential donors
-                  with similar demographics, giving patterns, and engagement behaviors. These donors are modeled using i360's comprehensive database
-                  and advanced similarity algorithms.
-                </p>
-
-                <p className="mb-2 text-xs">
-                  <strong>High-Value Donors:</strong> {aiSuggestedLookalikes.length} donors show 85%+ similarity scores and represent
-                  the highest-quality matches for targeted outreach and cultivation strategies.
-                </p>
-
-                <p className="mb-0 text-xs">
-                  <strong>Discovery Insights:</strong> These donors share key characteristics including geographic proximity,
-                  similar giving capacity levels, and comparable engagement behaviors. Perfect for expanding your donor base
-                  with qualified, high-potential supporters.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-green-200">
-                <div className="text-xs text-green-600">
-                  Analysis powered by i360 data • Updated daily with fresh donor intelligence
-                </div>
-                <button className="text-xs text-green-600 hover:text-green-800 underline">
-                  Refresh Analysis
-                </button>
-              </div>
-            </div>
-
-            {/* Enhanced Prospect Discovery Interface */}
-            <div className="bg-white border border-gray-200 rounded-lg">
               {!lookalikeExpanded ? (
-                // Collapsed State - Enhanced Discovery Overview
-                <div className="p-8 text-center">
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                    <UserGroupIcon className="w-10 h-10 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                    {allLookalikes.length.toLocaleString()} Qualified Donors Discovered
-                  </h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Advanced AI matching has identified high-quality donors with similar demographics,
-                    giving patterns, and engagement behaviors to your existing donor base.
-                  </p>
-
-                  <div className="flex items-center justify-center gap-4 mb-6">
-                    <Button onClick={() => setLookalikeExpanded(true)} size="lg">
-                      <EyeIcon className="w-5 h-5 mr-2" />
-                      Explore Donors
+                // Collapsed State
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
+                  <div className="text-center">
+                    <UserGroupIcon className="w-12 h-12 text-green-600 mx-auto mb-3" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      {allLookalikes.length.toLocaleString()} potential lookalike donors identified
+                    </h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Find donors with similar demographics, giving patterns, and engagement behavior using i360 data.
+                    </p>
+                    <Button onClick={() => setLookalikeExpanded(true)} className="mr-3">
+                      <EyeIcon className="w-4 h-4 mr-2" />
+                      View & Filter
                     </Button>
                     <Button
                       variant="secondary"
-                      size="lg"
                       onClick={() => {
                         setShowAISuggested(true);
                         setLookalikeExpanded(true);
                       }}
                     >
-                      <SparklesIcon className="w-5 h-5 mr-2" />
-                      AI Top Picks ({aiSuggestedLookalikes.length})
+                      <SparklesIcon className="w-4 h-4 mr-2" />
+                      AI Suggested List ({aiSuggestedLookalikes.length})
                     </Button>
-                  </div>
-
-                  <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                      <CheckCircleIcon className="w-3 h-3" />
-                      All visible donors pre-selected for easy export
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                    <div className="bg-white border border-green-200 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-green-600 mb-1">{aiSuggestedLookalikes.length}</div>
-                      <div className="text-sm text-gray-600">Premium Matches</div>
-                      <div className="text-xs text-gray-500 mt-1">85%+ similarity</div>
-                    </div>
-                    <div className="bg-white border border-blue-200 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">
-                        ${Math.round(allLookalikes.reduce((sum, l) => sum + l.modeledCapacity, 0) / allLookalikes.length).toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-600">Avg. Capacity</div>
-                      <div className="text-xs text-gray-500 mt-1">Modeled giving potential</div>
-                    </div>
-                    <div className="bg-white border border-purple-200 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-purple-600 mb-1">
-                        {Math.round(allLookalikes.reduce((sum, l) => sum + l.similarityScore, 0) / allLookalikes.length)}%
-                      </div>
-                      <div className="text-sm text-gray-600">Avg. Match</div>
-                      <div className="text-xs text-gray-500 mt-1">Similarity score</div>
-                    </div>
                   </div>
                 </div>
               ) : (
-                // Expanded State - Full Prospect Discovery Interface
-                <div>
-                  {/* Enhanced Filter Controls */}
-                  <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-green-50">
+                // Expanded State
+                <div className="bg-white border border-gray-200 rounded-lg">
+                  {/* Filter Controls */}
+                  <div className="p-4 border-b border-gray-200 bg-gray-50">
                     <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="text-lg font-semibold text-gray-900">Donor Discovery Filters</h4>
-                        <p className="text-sm text-gray-600">Refine your donor search with advanced targeting options</p>
-                      </div>
+                      <h4 className="font-semibold text-gray-900">Filter Lookalikes</h4>
                       <div className="flex items-center gap-3">
                         <Button
                           size="sm"
                           variant={showAISuggested ? "primary" : "secondary"}
-                          onClick={() => {
-                            setShowAISuggested(!showAISuggested);
-                            // Auto-select all when switching views if select all is enabled
-                            if (selectAllLookalikes) {
-                              setTimeout(() => {
-                                const newLookalikes = (!showAISuggested ? aiSuggestedLookalikes : filteredLookalikes).slice(0, 15);
-                                setSelectedLookalikes(newLookalikes);
-                              }, 0);
-                            }
-                          }}
+                          onClick={() => setShowAISuggested(!showAISuggested)}
                         >
                           <SparklesIcon className="w-4 h-4 mr-1" />
-                          AI Top Picks ({aiSuggestedLookalikes.length})
+                          AI Suggested ({aiSuggestedLookalikes.length})
                         </Button>
                         <Button
                           size="sm"
                           variant="secondary"
                           onClick={() => setLookalikeExpanded(false)}
                         >
-                          <ChevronDownIcon className="w-4 h-4 mr-1" />
-                          Collapse View
+                          Collapse
                         </Button>
                       </div>
                     </div>
@@ -1998,9 +1888,9 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {/* Geography Filters */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Geographic Targeting</label>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Geography</label>
                           <select
-                            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            className="w-full text-xs border border-gray-300 rounded px-2 py-1"
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value && !lookalikeFilters.states.includes(value)) {
@@ -2018,31 +1908,13 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                             <option value="NY">New York</option>
                             <option value="IL">Illinois</option>
                           </select>
-                          {lookalikeFilters.states.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {lookalikeFilters.states.map(state => (
-                                <span key={state} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                                  {state}
-                                  <button
-                                    onClick={() => setLookalikeFilters(prev => ({
-                                      ...prev,
-                                      states: prev.states.filter(s => s !== state)
-                                    }))}
-                                    className="ml-1 text-green-600 hover:text-green-800"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              ))}
-                            </div>
-                          )}
                         </div>
 
                         {/* Capacity Level */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Giving Capacity</label>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Capacity Level</label>
                           <select
-                            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            className="w-full text-xs border border-gray-300 rounded px-2 py-1"
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value && !lookalikeFilters.capacityLevel.includes(value)) {
@@ -2053,36 +1925,18 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                               }
                             }}
                           >
-                            <option value="">Select Capacity Range</option>
+                            <option value="">Select Capacity</option>
                             <option value="Low">Low ($100-500)</option>
                             <option value="Medium">Medium ($500-2000)</option>
                             <option value="High">High ($2000+)</option>
                           </select>
-                          {lookalikeFilters.capacityLevel.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {lookalikeFilters.capacityLevel.map(level => (
-                                <span key={level} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                  {level}
-                                  <button
-                                    onClick={() => setLookalikeFilters(prev => ({
-                                      ...prev,
-                                      capacityLevel: prev.capacityLevel.filter(l => l !== level)
-                                    }))}
-                                    className="ml-1 text-blue-600 hover:text-blue-800"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              ))}
-                            </div>
-                          )}
                         </div>
 
                         {/* Engagement Behavior */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Engagement Profile</label>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Engagement</label>
                           <select
-                            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            className="w-full text-xs border border-gray-300 rounded px-2 py-1"
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value && !lookalikeFilters.engagementBehavior.includes(value)) {
@@ -2093,34 +1947,16 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                               }
                             }}
                           >
-                            <option value="">Select Behavior Type</option>
+                            <option value="">Select Behavior</option>
                             <option value="Event Attendee">Event Attendee</option>
                             <option value="Volunteer">Volunteer</option>
                             <option value="Email Engaged">Email Engaged</option>
                             <option value="Social Media Active">Social Media Active</option>
                           </select>
-                          {lookalikeFilters.engagementBehavior.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {lookalikeFilters.engagementBehavior.map(behavior => (
-                                <span key={behavior} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
-                                  {behavior}
-                                  <button
-                                    onClick={() => setLookalikeFilters(prev => ({
-                                      ...prev,
-                                      engagementBehavior: prev.engagementBehavior.filter(b => b !== behavior)
-                                    }))}
-                                    className="ml-1 text-purple-600 hover:text-purple-800"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              ))}
-                            </div>
-                          )}
                         </div>
 
                         {/* Clear Filters */}
-                        <div className="flex flex-col justify-end">
+                        <div className="flex items-end">
                           <Button
                             size="sm"
                             variant="secondary"
@@ -2133,170 +1969,88 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                             })}
                             className="w-full"
                           >
-                            <XMarkIcon className="w-4 h-4 mr-1" />
-                            Clear All Filters
+                            Clear Filters
                           </Button>
                         </div>
                       </div>
                     )}
 
-                    {/* Enhanced Results Summary */}
-                    <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="text-sm text-gray-600">
-                            Showing <span className="font-bold text-gray-900">
-                              {showAISuggested ? aiSuggestedLookalikes.length : filteredLookalikes.length}
-                            </span> of <span className="font-bold text-gray-900">
-                              {allLookalikes.length.toLocaleString()}
-                            </span> qualified donors
-                          </div>
-                          {(showAISuggested || lookalikeFilters.states.length > 0 || lookalikeFilters.capacityLevel.length > 0 || lookalikeFilters.engagementBehavior.length > 0) && (
-                            <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
-                              {showAISuggested ? 'AI Filtered' : 'Custom Filtered'}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Avg. similarity: {Math.round((showAISuggested ? aiSuggestedLookalikes : filteredLookalikes).reduce((sum, l) => sum + l.similarityScore, 0) / (showAISuggested ? aiSuggestedLookalikes : filteredLookalikes).length)}%
-                        </div>
-                      </div>
+                    {/* Results Count */}
+                    <div className="mt-4 text-sm text-gray-600">
+                      Currently showing <span className="font-semibold text-gray-900">
+                        {showAISuggested ? aiSuggestedLookalikes.length : filteredLookalikes.length}
+                      </span> of <span className="font-semibold text-gray-900">
+                        {allLookalikes.length.toLocaleString()}
+                      </span> potential lookalikes.
                     </div>
                   </div>
 
-                  {/* Enhanced Prospect Table */}
-                  <div className="p-6">
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-gradient-to-r from-gray-50 to-green-50">
-                          <tr>
-                            <th className="text-left py-4 px-4 font-semibold text-gray-700">
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  className="rounded"
-                                  checked={areAllSelected()}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      handleSelectAll();
-                                    } else {
-                                      handleDeselectAll();
-                                    }
-                                  }}
-                                />
-                                <span>Donor Details</span>
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={handleSelectAll}
-                                    className="text-xs text-green-600 hover:text-green-800 underline"
-                                  >
-                                    All
-                                  </button>
-                                  <span className="text-xs text-gray-400">|</span>
-                                  <button
-                                    onClick={handleDeselectAll}
-                                    className="text-xs text-gray-600 hover:text-gray-800 underline"
-                                  >
-                                    None
-                                  </button>
-                                </div>
-                              </div>
+                  {/* Preview Table */}
+                  <div className="p-4">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-2 px-3 font-medium text-gray-700">
+                              <input type="checkbox" className="mr-2" />
+                              Name
                             </th>
-                            <th className="text-left py-4 px-4 font-semibold text-gray-700">Location & Demographics</th>
-                            <th className="text-left py-4 px-4 font-semibold text-gray-700">Giving Potential</th>
-                            <th className="text-left py-4 px-4 font-semibold text-gray-700">Match Quality</th>
-                            <th className="text-left py-4 px-4 font-semibold text-gray-700">Engagement Type</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-700">Location</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-700">Capacity</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-700">Similarity</th>
+                            <th className="text-left py-2 px-3 font-medium text-gray-700">Engagement</th>
                           </tr>
                         </thead>
                         <tbody>
                           {(showAISuggested ? aiSuggestedLookalikes : filteredLookalikes)
-                            .slice(0, 15)
+                            .slice(0, 10)
                             .map((lookalike, index) => (
-                            <tr key={lookalike.id} className="border-b border-gray-100 hover:bg-green-50 transition-colors">
-                              <td className="py-4 px-4">
+                            <tr key={lookalike.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-2 px-3">
                                 <div className="flex items-center">
                                   <input
                                     type="checkbox"
-                                    className="mr-3 rounded"
-                                    checked={selectedLookalikes.some(selected => selected.id === lookalike.id)}
+                                    className="mr-2"
                                     onChange={(e) => {
                                       if (e.target.checked) {
                                         setSelectedLookalikes(prev => [...prev, lookalike]);
                                       } else {
                                         setSelectedLookalikes(prev => prev.filter(l => l.id !== lookalike.id));
                                       }
-                                      // Update select all state based on current selection
-                                      const currentLookalikes = getCurrentLookalikes.slice(0, 15);
-                                      const newSelected = e.target.checked
-                                        ? [...selectedLookalikes, lookalike]
-                                        : selectedLookalikes.filter(l => l.id !== lookalike.id);
-
-                                      setSelectAllLookalikes(
-                                        currentLookalikes.every(l =>
-                                          newSelected.some(selected => selected.id === l.id)
-                                        )
-                                      );
                                     }}
                                   />
                                   <div>
-                                    <div className="font-semibold text-gray-900">{lookalike.name}</div>
-                                    <div className="text-sm text-gray-500">{lookalike.email}</div>
-                                    <div className="text-xs text-gray-400">{lookalike.phone}</div>
+                                    <div className="font-medium text-gray-900">{lookalike.name}</div>
+                                    <div className="text-xs text-gray-500">{lookalike.email}</div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-4 px-4">
-                                <div className="text-gray-900 font-medium">{lookalike.county}, {lookalike.state}</div>
-                                <div className="text-sm text-gray-600">ZIP: {lookalike.zipCode}</div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  <MapPinIcon className="w-3 h-3 inline mr-1" />
-                                  Regional match
-                                </div>
+                              <td className="py-2 px-3">
+                                <div className="text-gray-900">{lookalike.county}, {lookalike.state}</div>
+                                <div className="text-xs text-gray-500">{lookalike.zipCode}</div>
                               </td>
-                              <td className="py-4 px-4">
-                                <div className="font-bold text-green-600 text-lg">${lookalike.modeledCapacity.toLocaleString()}</div>
-                                <Badge
-                                  className={`text-xs mt-1 ${
-                                    lookalike.capacityLevel === 'High' ? 'bg-green-100 text-green-800' :
-                                    lookalike.capacityLevel === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}
-                                >
-                                  {lookalike.capacityLevel} Capacity
-                                </Badge>
+                              <td className="py-2 px-3">
+                                <div className="font-medium text-gray-900">${lookalike.modeledCapacity.toLocaleString()}</div>
+                                <div className="text-xs text-gray-500">{lookalike.capacityLevel}</div>
                               </td>
-                              <td className="py-4 px-4">
-                                <div className="flex items-center mb-2">
-                                  <div className="w-16 bg-gray-200 rounded-full h-2 mr-3">
+                              <td className="py-2 px-3">
+                                <div className="flex items-center">
+                                  <div className="w-12 bg-gray-200 rounded-full h-2 mr-2">
                                     <div
-                                      className={`h-2 rounded-full ${
-                                        lookalike.similarityScore >= 90 ? 'bg-green-500' :
-                                        lookalike.similarityScore >= 80 ? 'bg-blue-500' :
-                                        'bg-yellow-500'
-                                      }`}
+                                      className="bg-green-600 h-2 rounded-full"
                                       style={{ width: `${lookalike.similarityScore}%` }}
                                     ></div>
                                   </div>
-                                  <span className="text-sm font-bold text-gray-900">{lookalike.similarityScore}%</span>
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {lookalike.similarityScore >= 90 ? 'Excellent Match' :
-                                   lookalike.similarityScore >= 80 ? 'Strong Match' :
-                                   'Good Match'}
+                                  <span className="text-sm font-medium">{lookalike.similarityScore}%</span>
                                 </div>
                               </td>
-                              <td className="py-4 px-4">
+                              <td className="py-2 px-3">
                                 <Badge
-                                  className={`text-xs ${
-                                    lookalike.engagementBehavior === 'Volunteer' ? 'bg-purple-100 text-purple-800' :
-                                    lookalike.engagementBehavior === 'Event Attendee' ? 'bg-blue-100 text-blue-800' :
-                                    lookalike.engagementBehavior === 'Email Engaged' ? 'bg-green-100 text-green-800' :
-                                    'bg-orange-100 text-orange-800'
-                                  }`}
+                                  className="text-xs"
+                                  color={lookalike.engagementBehavior === 'Volunteer' ? 'green' : 'blue'}
                                 >
                                   {lookalike.engagementBehavior}
                                 </Badge>
-                                <div className="text-xs text-gray-500 mt-1">Active profile</div>
                               </td>
                             </tr>
                           ))}
@@ -2304,60 +2058,33 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                       </table>
                     </div>
 
-                    {/* Enhanced Action Bar */}
-                    <div className="flex items-center justify-between mt-6 p-4 bg-gradient-to-r from-gray-50 to-green-50 rounded-lg border border-gray-200">
-                      <div className="flex items-center gap-4">
-                        <div className="text-sm font-medium text-gray-700">
-                          <span className="text-green-600 font-bold">{selectedLookalikes.length}</span> donors selected
-                          {areAllSelected() && (
-                            <span className="text-xs text-green-600 ml-2">(All visible selected)</span>
-                          )}
-                        </div>
-                        {selectedLookalikes.length > 0 && (
-                          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
-                            Ready for export
-                          </Badge>
-                        )}
-                        {selectedLookalikes.length === 0 && (
-                          <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-xs">
-                            No donors selected
-                          </Badge>
-                        )}
+                    {/* Export and Action Buttons */}
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                      <div className="text-sm text-gray-600">
+                        {selectedLookalikes.length} selected
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex gap-2">
                         <Button size="sm" variant="secondary">
-                          <DocumentTextIcon className="w-4 h-4 mr-2" />
-                          Export to CSV
+                          <DocumentTextIcon className="w-4 h-4 mr-1" />
+                          Export CSV
                         </Button>
                         <Button size="sm" variant="secondary">
-                          <EnvelopeIcon className="w-4 h-4 mr-2" />
+                          <EnvelopeIcon className="w-4 h-4 mr-1" />
                           Push to MailChimp
                         </Button>
                         <Button size="sm" variant="secondary">
-                          <PhoneIcon className="w-4 h-4 mr-2" />
-                          Send to DialR
+                          <PhoneIcon className="w-4 h-4 mr-1" />
+                          Push to DialR
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => setShowConfirmationModal(true)}
                           disabled={selectedLookalikes.length === 0}
-                          className="bg-green-600 hover:bg-green-700"
                         >
-                          <UserGroupIcon className="w-4 h-4 mr-2" />
-                          Add to CRM ({selectedLookalikes.length})
+                          Next ({selectedLookalikes.length})
                         </Button>
                       </div>
                     </div>
-
-                    {/* Show More Button */}
-                    {(showAISuggested ? aiSuggestedLookalikes : filteredLookalikes).length > 15 && (
-                      <div className="text-center mt-4">
-                        <Button variant="secondary" size="sm">
-                          <EyeIcon className="w-4 h-4 mr-2" />
-                          Show More Donors ({(showAISuggested ? aiSuggestedLookalikes : filteredLookalikes).length - 15} remaining)
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -2367,49 +2094,48 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
 
         {/* FEC Insights Tab */}
         {activeTab === 'fec-insights' && (
-          <div className="space-y-4">
-
-            {(donor.fecInsights && fecInsightsGenerated) ? (
-              <>
-                {/* Compact Compliance Notice */}
-                <div className="bg-amber-50 border border-amber-200 rounded p-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    <ExclamationTriangleIcon className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span className="text-xs font-medium text-amber-900">FEC Data – Compliance Use Only</span>
-                      <span className="text-xs text-amber-800 ml-2">
-                        Public FEC data for compliance/vetting only. Not for solicitation (11 CFR §104.15).
-                      </span>
-                    </div>
-                    <a
-                      href="https://www.fec.gov/help-candidates-and-committees/filing-reports/contributor-information/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-amber-700 underline hover:text-amber-900 whitespace-nowrap"
-                    >
-                      Learn More
-                    </a>
-                  </div>
+          <div className="space-y-6">
+            {/* Compact Compliance Notice */}
+            <div className="bg-amber-50 border border-amber-200 rounded p-2 mb-4">
+              <div className="flex items-center gap-2">
+                <ExclamationTriangleIcon className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <span className="text-xs font-medium text-amber-900">FEC Data – Compliance Use Only</span>
+                  <span className="text-xs text-amber-800 ml-2">
+                    Public FEC data for compliance/vetting only. Not for solicitation (11 CFR §104.15).
+                  </span>
                 </div>
+                <a
+                  href="https://www.fec.gov/help-candidates-and-committees/filing-reports/contributor-information/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-amber-700 underline hover:text-amber-900 whitespace-nowrap"
+                >
+                  Learn More
+                </a>
+              </div>
+            </div>
 
-                {/* Compact AI Snapshot for FEC Data */}
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <SparklesIcon className="w-4 h-4 text-amber-600" />
-                    <h4 className="text-sm font-semibold text-amber-900">AI Snapshot</h4>
+            {donor.fecInsights ? (
+              <>
+                {/* AI Snapshot for FEC Data */}
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <SparklesIcon className="w-5 h-5 text-amber-600" />
+                    <h4 className="text-lg font-semibold text-amber-900">AI Snapshot</h4>
                     <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-xs">FEC Analysis</Badge>
                   </div>
 
-                  <div className="text-xs text-amber-800 leading-relaxed space-y-2">
-                    <p>
+                  <div className="prose prose-sm text-amber-800 leading-relaxed">
+                    <p className="mb-3">
                       <strong>{donor.name}</strong> has contributed <strong>${donor.fecInsights.contributionHistory.totalAmount.toLocaleString()}</strong>
                       across {donor.fecInsights.contributionHistory.totalContributions} federal contributions,
-                      supporting {donor.fecInsights.committeesSupported.length} committees
+                      supporting {donor.fecInsights.committeesSupported.length} different committees
                       from {new Date(donor.fecInsights.contributionHistory.firstContributionDate).getFullYear()}
                       to {new Date(donor.fecInsights.contributionHistory.lastContributionDate).getFullYear()}.
                     </p>
 
-                    <p>
+                    <p className="mb-3">
                       <strong>Recent Activity:</strong> In {donor.fecInsights.contributionHistory.yearToDate.year},
                       they've contributed ${donor.fecInsights.contributionHistory.yearToDate.amount.toLocaleString()}
                       ({donor.fecInsights.contributionHistory.yearToDate.contributionCount} contributions).
@@ -2439,7 +2165,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-amber-200">
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-amber-200">
                     <div className="text-xs text-amber-600">
                       Analysis based on public FEC filings • Last updated {new Date(donor.fecInsights.lastUpdated).toLocaleDateString()}
                     </div>
@@ -2449,212 +2175,211 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                   </div>
                 </div>
 
-                {/* Compact Contribution History Snapshot */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ShieldCheckIcon className="w-4 h-4 text-blue-600" />
-                    <h3 className="text-base font-semibold text-blue-900">Contribution History</h3>
+                {/* Contribution History Snapshot */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <ShieldCheckIcon className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-blue-900">Contribution History Snapshot</h3>
                   </div>
 
-                  {/* Compact Summary Metrics Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  {/* Summary Metrics Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     {/* Historical Totals */}
-                    <div className="bg-white p-3 rounded border border-blue-200">
-                      <div className="text-lg font-bold text-blue-800">
+                    <div className="bg-white p-4 rounded-lg border border-blue-200">
+                      <div className="text-2xl font-bold text-blue-800">
                         ${donor.fecInsights.contributionHistory.totalAmount.toLocaleString()}
                       </div>
-                      <div className="text-xs text-blue-600">Total Federal</div>
+                      <div className="text-sm text-blue-600">Total Federal Contributions</div>
                     </div>
-                    <div className="bg-white p-3 rounded border border-blue-200">
-                      <div className="text-lg font-bold text-blue-800">
+                    <div className="bg-white p-4 rounded-lg border border-blue-200">
+                      <div className="text-2xl font-bold text-blue-800">
                         {donor.fecInsights.contributionHistory.totalContributions}
                       </div>
-                      <div className="text-xs text-blue-600">Total Count</div>
+                      <div className="text-sm text-blue-600">Total Contributions</div>
                     </div>
 
                     {/* Current Activity - Combined YTD */}
-                    <div className="bg-white p-3 rounded border border-blue-200">
-                      <div className="text-lg font-bold text-blue-800">
+                    <div className="bg-white p-4 rounded-lg border border-blue-200">
+                      <div className="text-2xl font-bold text-blue-800">
                         ${donor.fecInsights.contributionHistory.yearToDate.amount.toLocaleString()}
                       </div>
-                      <div className="text-xs text-blue-600">
+                      <div className="text-sm text-blue-600">
                         YTD {donor.fecInsights.contributionHistory.yearToDate.year}
                         <span className="text-blue-500 ml-1">
-                          ({donor.fecInsights.contributionHistory.yearToDate.contributionCount})
+                          ({donor.fecInsights.contributionHistory.yearToDate.contributionCount} contributions)
                         </span>
                       </div>
                     </div>
 
                     {/* Cycle Activity - Combined */}
-                    <div className="bg-white p-3 rounded border border-blue-200">
-                      <div className="text-lg font-bold text-blue-800">
+                    <div className="bg-white p-4 rounded-lg border border-blue-200">
+                      <div className="text-2xl font-bold text-blue-800">
                         ${donor.fecInsights.contributionHistory.cycleToDate.amount.toLocaleString()}
                       </div>
-                      <div className="text-xs text-blue-600">
+                      <div className="text-sm text-blue-600">
                         {donor.fecInsights.contributionHistory.cycleToDate.cycle}
                         <span className="text-blue-500 ml-1">
-                          ({donor.fecInsights.contributionHistory.cycleToDate.contributionCount})
+                          ({donor.fecInsights.contributionHistory.cycleToDate.contributionCount} contributions)
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Compact Active Cycles and Period Info */}
-                  <div className="bg-white p-2 rounded border border-blue-200 mb-3">
-                    <div className="text-xs text-blue-700">
+                  {/* Active Cycles and Period Info */}
+                  <div className="bg-white p-3 rounded border border-blue-200 mb-4">
+                    <div className="text-sm text-blue-700">
                       <span className="font-medium">Active Cycles:</span> {donor.fecInsights.contributionHistory.activeCycles.join(', ')}
-                      <span className="text-blue-600 ml-3">
+                      <span className="text-blue-600 ml-4">
                         <span className="font-medium">Period:</span> {new Date(donor.fecInsights.contributionHistory.firstContributionDate).getFullYear()} - {new Date(donor.fecInsights.contributionHistory.lastContributionDate).getFullYear()}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Combined Committees & Timeline View */}
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                {/* Recent Activity Summary */}
+                {donor.fecInsights.recentActivity && (
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <ClockIcon className="w-5 h-5 text-indigo-600" />
+                      <h3 className="text-lg font-semibold text-indigo-900">Recent Federal Activity</h3>
+                      <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Last 5 Transactions</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {donor.fecInsights.recentActivity.map((transaction, index) => (
+                        <div key={index} className="bg-white p-3 rounded-lg border border-indigo-200 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="text-sm font-medium text-indigo-900">
+                              {new Date(transaction.date).toLocaleDateString()}
+                            </div>
+                            <div className="text-sm text-indigo-700">
+                              {transaction.committeeName}
+                            </div>
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              transaction.committeeType === 'candidate' ? 'bg-blue-100 text-blue-700' :
+                              transaction.committeeType === 'pac' ? 'bg-purple-100 text-purple-700' :
+                              transaction.committeeType === 'party' ? 'bg-green-100 text-green-700' :
+                              'bg-orange-100 text-orange-700'
+                            }`}>
+                              {transaction.committeeType.toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-indigo-800">${transaction.amount.toLocaleString()}</div>
+                            <div className="text-xs text-indigo-600">{transaction.reportPeriod}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Enhanced Committees Supported */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <UserGroupIcon className="w-5 h-5 text-green-600" />
-                      <h3 className="text-lg font-semibold text-green-900">Federal Activity</h3>
+                      <h3 className="text-lg font-semibold text-green-900">Committees Supported</h3>
                       <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                         {donor.fecInsights.committeesSupported.length} Committees
                       </span>
                     </div>
-
-                    {/* Toggle between Committees and Timeline */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex bg-white border border-green-200 rounded-lg p-1">
-                        <button
-                          onClick={() => setActiveFecView('committees')}
-                          className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                            activeFecView === 'committees'
-                              ? 'bg-green-600 text-white'
-                              : 'text-green-700 hover:text-green-900'
-                          }`}
-                        >
-                          Committees
-                        </button>
-                        <button
-                          onClick={() => setActiveFecView('timeline')}
-                          className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                            activeFecView === 'timeline'
-                              ? 'bg-green-600 text-white'
-                              : 'text-green-700 hover:text-green-900'
-                          }`}
-                        >
-                          Timeline
-                        </button>
-                      </div>
-
-                      {activeFecView === 'committees' && donor.fecInsights.committeesSupported.length > 5 && (
-                        <button
-                          onClick={() => setShowAllCommittees(!showAllCommittees)}
-                          className="text-sm text-green-600 hover:text-green-800 underline"
-                        >
-                          {showAllCommittees ? 'Show Top 5' : 'View All'}
-                        </button>
-                      )}
-                    </div>
+                    {donor.fecInsights.committeesSupported.length > 5 && (
+                      <button
+                        onClick={() => setShowAllCommittees(!showAllCommittees)}
+                        className="text-sm text-green-600 hover:text-green-800 underline"
+                      >
+                        {showAllCommittees ? 'Show Top 5' : 'View All'}
+                      </button>
+                    )}
                   </div>
 
-                  {/* Committees View */}
-                  {activeFecView === 'committees' && (
-                    <div className="space-y-3">
-                      {(showAllCommittees ? donor.fecInsights.committeesSupported : donor.fecInsights.committeesSupported.slice(0, 5))
-                        .map((committee, index) => (
-                        <div key={index} className="bg-white rounded-lg border border-green-200 overflow-hidden">
-                          {/* Committee Summary */}
-                          <div className="p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-green-900">{committee.committeeName}</span>
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  committee.committeeType === 'candidate' ? 'bg-blue-100 text-blue-700' :
-                                  committee.committeeType === 'pac' ? 'bg-purple-100 text-purple-700' :
-                                  committee.committeeType === 'party' ? 'bg-green-100 text-green-700' :
-                                  'bg-orange-100 text-orange-700'
-                                }`}>
-                                  {committee.committeeType.toUpperCase()}
-                                </span>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-bold text-green-800">${committee.totalAmount.toLocaleString()}</div>
-                                <div className="text-xs text-green-600">{committee.contributionCount} contributions</div>
-                              </div>
+                  <div className="space-y-3">
+                    {(showAllCommittees ? donor.fecInsights.committeesSupported : donor.fecInsights.committeesSupported.slice(0, 5))
+                      .map((committee, index) => (
+                      <div key={index} className="bg-white rounded-lg border border-green-200 overflow-hidden">
+                        {/* Committee Summary */}
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-green-900">{committee.committeeName}</span>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                committee.committeeType === 'candidate' ? 'bg-blue-100 text-blue-700' :
+                                committee.committeeType === 'pac' ? 'bg-purple-100 text-purple-700' :
+                                committee.committeeType === 'party' ? 'bg-green-100 text-green-700' :
+                                'bg-orange-100 text-orange-700'
+                              }`}>
+                                {committee.committeeType.toUpperCase()}
+                              </span>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm text-green-700">
-                                Last contribution: {new Date(committee.lastContribution).toLocaleDateString()}
-                              </div>
-                              <button
-                                onClick={() => toggleCommitteeExpansion(committee.committeeName)}
-                                className="text-sm text-green-600 hover:text-green-800 underline flex items-center gap-1"
-                              >
-                                {expandedCommittees.has(committee.committeeName) ? 'Hide' : 'View'} Transactions
-                                <ChevronDownIcon className={`w-4 h-4 transition-transform ${
-                                  expandedCommittees.has(committee.committeeName) ? 'rotate-180' : ''
-                                }`} />
-                              </button>
+                            <div className="text-right">
+                              <div className="font-bold text-green-800">${committee.totalAmount.toLocaleString()}</div>
+                              <div className="text-xs text-green-600">{committee.contributionCount} contributions</div>
                             </div>
                           </div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-green-700">
+                              Last contribution: {new Date(committee.lastContribution).toLocaleDateString()}
+                            </div>
+                            <button
+                              onClick={() => toggleCommitteeExpansion(committee.committeeName)}
+                              className="text-sm text-green-600 hover:text-green-800 underline flex items-center gap-1"
+                            >
+                              {expandedCommittees.has(committee.committeeName) ? 'Hide' : 'View'} Transactions
+                              <ChevronDownIcon className={`w-4 h-4 transition-transform ${
+                                expandedCommittees.has(committee.committeeName) ? 'rotate-180' : ''
+                              }`} />
+                            </button>
+                          </div>
+                        </div>
 
-                        {/* Compact Transaction Details with Table Format */}
+                        {/* Expanded Transaction Details with Pagination */}
                         {expandedCommittees.has(committee.committeeName) && committee.transactions && (
                           <div className="border-t border-green-200 bg-green-25">
-                            <div className="p-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-xs font-medium text-green-800">Individual Transactions</h4>
+                            <div className="p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-sm font-medium text-green-800">Individual Transactions</h4>
                                 <div className="text-xs text-green-600">
-                                  {committee.transactions.length} of {committee.contributionCount} total
+                                  {committee.transactions.length} of {committee.contributionCount} total transactions
                                 </div>
                               </div>
 
-                              {/* Compact Table Format */}
-                              <div className="bg-white rounded border border-green-200 overflow-hidden">
-                                <table className="w-full text-xs">
-                                  <thead className="bg-green-50">
-                                    <tr>
-                                      <th className="text-left p-2 font-medium text-green-800">Amount</th>
-                                      <th className="text-left p-2 font-medium text-green-800">Date</th>
-                                      <th className="text-left p-2 font-medium text-green-800">Period</th>
-                                      <th className="text-left p-2 font-medium text-green-800">Filed</th>
-                                      <th className="text-left p-2 font-medium text-green-800">ID</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {getPagedTransactions(
-                                      committee.transactions,
-                                      getTransactionPage(committee.committeeName)
-                                    ).map((transaction, txIndex) => (
-                                      <tr key={txIndex} className="border-t border-green-100">
-                                        <td className="p-2 font-medium text-green-900">
+                              {/* Compact Paginated Transaction List */}
+                              <div className="space-y-1">
+                                {getPagedTransactions(
+                                  committee.transactions,
+                                  getTransactionPage(committee.committeeName)
+                                ).map((transaction, txIndex) => (
+                                  <div key={txIndex} className="bg-white p-2 rounded border border-green-100 text-xs">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center">
+                                        <div className="font-medium text-green-900 w-16 text-right">
                                           ${transaction.amount.toLocaleString()}
-                                        </td>
-                                        <td className="p-2 text-green-700">
+                                        </div>
+                                        <div className="text-green-700 w-24 text-center ml-4">
                                           {new Date(transaction.date).toLocaleDateString()}
-                                        </td>
-                                        <td className="p-2 text-green-600">
+                                        </div>
+                                        <div className="text-green-600 w-20 text-center ml-4">
                                           {transaction.reportPeriod}
-                                        </td>
-                                        <td className="p-2 text-green-600">
-                                          {new Date(transaction.filingDate).toLocaleDateString()}
-                                        </td>
-                                        <td className="p-2 text-gray-500">
-                                          {transaction.transactionId}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                        </div>
+                                      </div>
+                                      <div className="text-right text-green-600">
+                                        <div>Filed: {new Date(transaction.filingDate).toLocaleDateString()}</div>
+                                        <div className="text-gray-500">ID: {transaction.transactionId}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
 
-                              {/* Compact Pagination Controls */}
+                              {/* Pagination Controls */}
                               {committee.transactions.length > 5 && (
-                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-green-200">
+                                <div className="flex items-center justify-between mt-4 pt-3 border-t border-green-200">
                                   <div className="text-xs text-green-600">
                                     Page {getTransactionPage(committee.committeeName)} of {getTotalPages(committee.transactions.length)}
+                                    {' '}• Showing {getPagedTransactions(committee.transactions, getTransactionPage(committee.committeeName)).length} of {committee.transactions.length} transactions
                                   </div>
-                                  <div className="flex items-center gap-1">
+                                  <div className="flex items-center gap-2">
                                     <button
                                       onClick={() => setTransactionPage(
                                         committee.committeeName,
@@ -2663,12 +2388,36 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                                       disabled={getTransactionPage(committee.committeeName) === 1}
                                       className="px-2 py-1 text-xs bg-white border border-green-300 rounded text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                      ‹
+                                      Previous
                                     </button>
 
-                                    <span className="text-xs text-green-600 px-2">
-                                      {getTransactionPage(committee.committeeName)} / {getTotalPages(committee.transactions.length)}
-                                    </span>
+                                    {/* Page Numbers */}
+                                    <div className="flex items-center gap-1">
+                                      {Array.from({ length: getTotalPages(committee.transactions.length) }, (_, i) => i + 1)
+                                        .filter(page => {
+                                          const currentPage = getTransactionPage(committee.committeeName);
+                                          return page === 1 || page === getTotalPages(committee.transactions.length) ||
+                                                 Math.abs(page - currentPage) <= 1;
+                                        })
+                                        .map((page, index, array) => (
+                                          <React.Fragment key={page}>
+                                            {index > 0 && array[index - 1] !== page - 1 && (
+                                              <span className="text-xs text-green-500">...</span>
+                                            )}
+                                            <button
+                                              onClick={() => setTransactionPage(committee.committeeName, page)}
+                                              className={`px-2 py-1 text-xs rounded ${
+                                                getTransactionPage(committee.committeeName) === page
+                                                  ? 'bg-green-600 text-white'
+                                                  : 'bg-white border border-green-300 text-green-700 hover:bg-green-50'
+                                              }`}
+                                            >
+                                              {page}
+                                            </button>
+                                          </React.Fragment>
+                                        ))
+                                      }
+                                    </div>
 
                                     <button
                                       onClick={() => setTransactionPage(
@@ -2678,7 +2427,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                                       disabled={getTransactionPage(committee.committeeName) === getTotalPages(committee.transactions.length)}
                                       className="px-2 py-1 text-xs bg-white border border-green-300 rounded text-green-700 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                      ›
+                                      Next
                                     </button>
                                   </div>
                                 </div>
@@ -2689,95 +2438,51 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                       </div>
                     ))}
                   </div>
-                )}
-
-                  {/* Timeline View */}
-                  {activeFecView === 'timeline' && donor.fecInsights.recentActivity && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <ClockIcon className="w-4 h-4 text-green-600" />
-                          <span className="text-sm font-medium text-green-800">Recent Federal Activity</span>
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Last 5 Transactions</span>
-                        </div>
-                        <button className="text-sm text-green-600 hover:text-green-800 underline">
-                          View All Activity
-                        </button>
-                      </div>
-
-                      <div className="space-y-2">
-                        {donor.fecInsights.recentActivity.map((transaction, index) => (
-                          <div key={index} className="bg-white p-2 rounded border border-green-200 flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                              <div className="text-xs font-medium text-green-900">
-                                {new Date(transaction.date).toLocaleDateString()}
-                              </div>
-                              <div className="text-xs text-green-700">
-                                {transaction.committeeName}
-                              </div>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                transaction.committeeType === 'candidate' ? 'bg-blue-100 text-blue-700' :
-                                transaction.committeeType === 'pac' ? 'bg-purple-100 text-purple-700' :
-                                transaction.committeeType === 'party' ? 'bg-green-100 text-green-700' :
-                                'bg-orange-100 text-orange-700'
-                              }`}>
-                                {transaction.committeeType.toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-bold text-green-800 text-sm">${transaction.amount.toLocaleString()}</div>
-                              <div className="text-xs text-green-600">{transaction.reportPeriod}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                {/* Compact Giving Categories & Exclusivity */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Compact Giving Categories */}
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <ChartBarIcon className="w-4 h-4 text-purple-600" />
-                      <h3 className="text-base font-semibold text-purple-900">Giving Categories</h3>
+                {/* Giving Categories & Exclusivity */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Giving Categories */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <ChartBarIcon className="w-5 h-5 text-purple-600" />
+                      <h3 className="text-lg font-semibold text-purple-900">Giving Categories</h3>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center p-2 bg-white rounded border border-purple-200 text-sm">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 bg-white rounded border border-purple-200">
                         <span className="text-purple-700">Federal Candidates</span>
                         <span className="font-bold text-purple-800">${donor.fecInsights.givingCategories.federalCandidates.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between items-center p-2 bg-white rounded border border-purple-200 text-sm">
+                      <div className="flex justify-between items-center p-3 bg-white rounded border border-purple-200">
                         <span className="text-purple-700">PACs</span>
                         <span className="font-bold text-purple-800">${donor.fecInsights.givingCategories.pacs.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between items-center p-2 bg-white rounded border border-purple-200 text-sm">
+                      <div className="flex justify-between items-center p-3 bg-white rounded border border-purple-200">
                         <span className="text-purple-700">Party Committees</span>
                         <span className="font-bold text-purple-800">${donor.fecInsights.givingCategories.partyCommittees.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between items-center p-2 bg-white rounded border border-purple-200 text-sm">
+                      <div className="flex justify-between items-center p-3 bg-white rounded border border-purple-200">
                         <span className="text-purple-700">Super PACs</span>
                         <span className="font-bold text-purple-800">${donor.fecInsights.givingCategories.superPacs.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Compact Exclusivity Metrics */}
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <FlagIcon className="w-4 h-4 text-orange-600" />
-                      <h3 className="text-base font-semibold text-orange-900">Exclusivity Analysis</h3>
+                  {/* Exclusivity Metrics */}
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FlagIcon className="w-5 h-5 text-orange-600" />
+                      <h3 className="text-lg font-semibold text-orange-900">Exclusivity Analysis</h3>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="bg-white p-3 rounded border border-orange-200">
+                    <div className="space-y-4">
+                      <div className="bg-white p-4 rounded border border-orange-200">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-orange-800 mb-1">
+                          <div className="text-3xl font-bold text-orange-800 mb-1">
                             {donor.fecInsights.exclusivityMetrics.exclusivityPercentage}%
                           </div>
-                          <div className="text-xs text-orange-600">
+                          <div className="text-sm text-orange-600">
                             {donor.fecInsights.exclusivityMetrics.partyExclusivity === 'exclusive-democrat' ? 'Democratic' :
                              donor.fecInsights.exclusivityMetrics.partyExclusivity === 'exclusive-republican' ? 'Republican' :
                              'Bipartisan'} Giving
@@ -2785,91 +2490,72 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                         </div>
                       </div>
 
-                      <div className="bg-white p-2 rounded border border-orange-200">
-                        <div className="text-xs text-orange-700">
-                          <span className="font-medium">Party:</span> {
+                      <div className="bg-white p-3 rounded border border-orange-200">
+                        <div className="text-sm text-orange-700">
+                          <span className="font-medium">Party Exclusivity:</span> {
                             donor.fecInsights.exclusivityMetrics.partyExclusivity === 'exclusive-democrat' ? 'Exclusively Democratic' :
                             donor.fecInsights.exclusivityMetrics.partyExclusivity === 'exclusive-republican' ? 'Exclusively Republican' :
-                            'Bipartisan'
+                            'Bipartisan Contributor'
                           }
                         </div>
                       </div>
 
-                      <div className="bg-white p-2 rounded border border-orange-200">
-                        <div className="text-xs text-orange-700">
-                          <span className="font-medium">Crossover:</span> {donor.fecInsights.exclusivityMetrics.crossoverContributions}
+                      <div className="bg-white p-3 rounded border border-orange-200">
+                        <div className="text-sm text-orange-700">
+                          <span className="font-medium">Crossover Contributions:</span> {donor.fecInsights.exclusivityMetrics.crossoverContributions}
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Compact Aggregate Benchmarks */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <TrophyIcon className="w-4 h-4 text-yellow-600" />
-                    <h3 className="text-base font-semibold text-yellow-900">Benchmarks</h3>
+                {/* Aggregate Benchmarks */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrophyIcon className="w-5 h-5 text-yellow-600" />
+                    <h3 className="text-lg font-semibold text-yellow-900">Aggregate Benchmarks</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="bg-white p-3 rounded border border-yellow-200 text-center">
-                      <div className="text-lg font-bold text-yellow-800 mb-1">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white p-4 rounded-lg border border-yellow-200 text-center">
+                      <div className="text-2xl font-bold text-yellow-800 mb-1">
                         Top {100 - donor.fecInsights.benchmarks.nationalPercentile}%
                       </div>
-                      <div className="text-xs text-yellow-600">National</div>
+                      <div className="text-sm text-yellow-600">National Ranking</div>
                     </div>
-                    <div className="bg-white p-3 rounded border border-yellow-200 text-center">
-                      <div className="text-base font-bold text-yellow-800 mb-1">
+                    <div className="bg-white p-4 rounded-lg border border-yellow-200 text-center">
+                      <div className="text-lg font-bold text-yellow-800 mb-1">
                         {donor.fecInsights.benchmarks.categoryRanking}
                       </div>
-                      <div className="text-xs text-yellow-600">Category</div>
+                      <div className="text-sm text-yellow-600">Category Ranking</div>
                     </div>
-                    <div className="bg-white p-3 rounded border border-yellow-200 text-center">
-                      <div className="text-base font-bold text-yellow-800 mb-1">
-                        Above Avg
+                    <div className="bg-white p-4 rounded-lg border border-yellow-200 text-center">
+                      <div className="text-lg font-bold text-yellow-800 mb-1">
+                        Above Average
                       </div>
-                      <div className="text-xs text-yellow-600">Cycle</div>
+                      <div className="text-sm text-yellow-600">Cycle Comparison</div>
                     </div>
                   </div>
 
-                  <div className="mt-3 bg-white p-2 rounded border border-yellow-200">
-                    <div className="text-xs text-yellow-700">
-                      <span className="font-medium">Analysis:</span> {donor.fecInsights.benchmarks.cycleComparison}
+                  <div className="mt-4 bg-white p-3 rounded border border-yellow-200">
+                    <div className="text-sm text-yellow-700">
+                      <span className="font-medium">Cycle Analysis:</span> {donor.fecInsights.benchmarks.cycleComparison}
                     </div>
                   </div>
                 </div>
 
-                {/* Compact Data Source & Compliance */}
-                <div className="bg-gray-50 border border-gray-200 rounded p-3">
-                  <div className="flex items-center justify-between text-xs text-gray-600">
+                {/* Data Source & Compliance */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between text-sm text-gray-600">
                     <div>
-                      <span className="font-medium">Source:</span> {donor.fecInsights.dataSource}
+                      <span className="font-medium">Data Source:</span> {donor.fecInsights.dataSource}
                     </div>
                     <div>
-                      <span className="font-medium">Updated:</span> {new Date(donor.fecInsights.lastUpdated).toLocaleDateString()}
+                      <span className="font-medium">Last Updated:</span> {new Date(donor.fecInsights.lastUpdated).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
               </>
-            ) : !fecInsightsGenerated ? (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-8 text-center">
-                <SparklesIcon className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-blue-900 mb-3">Generate FEC Insights</h3>
-                <p className="text-blue-700 mb-6 max-w-md mx-auto">
-                  Analyze this donor's federal political contribution history using public FEC data to uncover giving patterns, committee preferences, and engagement opportunities.
-                </p>
-                <button
-                  onClick={handleGenerateFecInsights}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2 mx-auto"
-                  title="FEC data is for compliance/vetting only, not for solicitation (11 CFR §104.15)"
-                >
-                  <SparklesIcon className="w-5 h-5" />
-                  Generate FEC Analysis
-                </button>
-                <div className="mt-4 text-xs text-blue-600">
-                  Analysis includes contribution history, committee relationships, giving patterns, and compliance insights
-                </div>
-              </div>
             ) : (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
                 <ShieldCheckIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -3564,7 +3250,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Donor Import</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Lookalike Import</h3>
 
               <div className="space-y-4 mb-6">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -3593,7 +3279,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                     <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 mt-0.5 mr-2" />
                     <div className="text-sm text-yellow-800">
                       <p className="font-medium mb-1">Important Notice</p>
-                      <p>Donor data is modeled by i360 and may require additional validation. These records represent potential donors with similar characteristics to your existing donor base.</p>
+                      <p>Lookalike data is modeled by i360 and may require additional validation. These records represent potential donors with similar characteristics to your existing donor base.</p>
                     </div>
                   </div>
                 </div>
@@ -3607,7 +3293,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                     className="mt-1 mr-3"
                   />
                   <label htmlFor="terms-agreement" className="text-sm text-gray-700">
-                    I confirm these records are modeled donor records provided by i360 and may require further validation. I agree to the{' '}
+                    I confirm these records are modeled donor lookalikes provided by i360 and may require further validation. I agree to the{' '}
                     <a href="#" className="text-blue-600 hover:text-blue-800 underline">
                       terms and conditions
                     </a>.
@@ -3629,7 +3315,7 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
                 <Button
                   onClick={() => {
                     // Handle the import logic here
-                    alert(`Successfully added ${selectedLookalikes.length} donors to your CRM database!`);
+                    alert(`Successfully added ${selectedLookalikes.length} lookalike donors to your CRM database!`);
                     setShowConfirmationModal(false);
                     setSelectedLookalikes([]);
                     setTermsAccepted(false);
@@ -4184,311 +3870,6 @@ const DonorProfile: React.FC<DonorProfileProps> = ({ donor }) => {
         gift={selectedGift}
         mode={giftModalMode}
       />
-
-      {/* DialR Log Modal */}
-      {showDialRLogModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <PhoneIcon className="w-6 h-6 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-900">DialR Call History</h2>
-                <span className="text-sm text-gray-500">({donor.name})</span>
-              </div>
-              <button
-                onClick={() => setShowDialRLogModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <div className="space-y-4">
-                {/* Mock DialR History */}
-                {[
-                  {
-                    id: 1,
-                    date: '2024-01-15',
-                    time: '2:30 PM',
-                    type: 'Outbound Call',
-                    duration: '8:45',
-                    result: 'Soft Pledge',
-                    amount: 1000,
-                    notes: 'Donor expressed strong interest in campaign priorities. Committed to $1,000 pledge for Q1. Follow up in 2 weeks.',
-                    status: 'success'
-                  },
-                  {
-                    id: 2,
-                    date: '2024-01-08',
-                    time: '11:15 AM',
-                    type: 'Outbound Call',
-                    duration: '3:22',
-                    result: 'Left Voicemail',
-                    amount: null,
-                    notes: 'Left detailed voicemail about upcoming policy briefing. Mentioned previous support and invited to call back.',
-                    status: 'pending'
-                  },
-                  {
-                    id: 3,
-                    date: '2023-12-20',
-                    time: '4:45 PM',
-                    type: 'Inbound Call',
-                    duration: '12:18',
-                    result: 'Information Request',
-                    amount: null,
-                    notes: 'Donor called with questions about campaign finance transparency. Provided detailed explanation and sent follow-up materials.',
-                    status: 'completed'
-                  },
-                  {
-                    id: 4,
-                    date: '2023-12-10',
-                    time: '9:30 AM',
-                    type: 'Outbound Call',
-                    duration: '6:12',
-                    result: 'Gift Commitment',
-                    amount: 2500,
-                    notes: 'Successful ask for year-end giving. Donor committed to $2,500 and expressed interest in hosting house party.',
-                    status: 'success'
-                  },
-                  {
-                    id: 5,
-                    date: '2023-11-28',
-                    time: '1:20 PM',
-                    type: 'Outbound Call',
-                    duration: '2:45',
-                    result: 'No Answer',
-                    amount: null,
-                    notes: 'No answer, no voicemail option available. Will try again tomorrow.',
-                    status: 'failed'
-                  }
-                ].map((call) => (
-                  <div key={call.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${
-                          call.status === 'success' ? 'bg-green-500' :
-                          call.status === 'pending' ? 'bg-yellow-500' :
-                          call.status === 'completed' ? 'bg-blue-500' :
-                          'bg-gray-400'
-                        }`}></div>
-                        <div>
-                          <div className="font-medium text-gray-900">{call.type}</div>
-                          <div className="text-sm text-gray-600">{call.date} at {call.time}</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-medium text-gray-900">{call.result}</div>
-                        <div className="text-sm text-gray-600">Duration: {call.duration}</div>
-                      </div>
-                    </div>
-
-                    {call.amount && (
-                      <div className="mb-3">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                          ${call.amount.toLocaleString()} Pledged
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="text-sm text-gray-700 bg-white p-3 rounded border">
-                      <strong>Notes:</strong> {call.notes}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-600">
-                Total calls: 5 • Success rate: 60% • Total pledged: $3,500
-              </div>
-              <button
-                onClick={() => setShowDialRLogModal(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TargetPath Log Modal */}
-      {showTargetPathLogModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                  <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2"/>
-                  <circle cx="12" cy="12" r="1"/>
-                </svg>
-                <h2 className="text-xl font-semibold text-gray-900">TargetPath Campaign History</h2>
-                <span className="text-sm text-gray-500">({donor.name})</span>
-              </div>
-              <button
-                onClick={() => setShowTargetPathLogModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <XMarkIcon className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <div className="space-y-4">
-                {/* Mock TargetPath History */}
-                {[
-                  {
-                    id: 1,
-                    name: 'Major Gift Follow-up',
-                    type: '3-touch sequence',
-                    status: 'In Progress',
-                    startDate: '2024-01-10',
-                    dueDate: '2024-01-17',
-                    progress: 'Day 2 of 7',
-                    channels: ['Email', 'Direct Mail', 'Phone'],
-                    nextAction: 'Personal call scheduled for tomorrow at 2:00 PM',
-                    results: {
-                      emailOpens: 2,
-                      clicks: 1,
-                      responses: 0
-                    }
-                  },
-                  {
-                    id: 2,
-                    name: 'Year-End Appeal',
-                    type: '5-touch sequence',
-                    status: 'Completed',
-                    startDate: '2023-11-15',
-                    dueDate: '2023-12-31',
-                    progress: 'Completed',
-                    channels: ['Email', 'Direct Mail', 'Digital Ads'],
-                    nextAction: null,
-                    results: {
-                      emailOpens: 8,
-                      clicks: 3,
-                      responses: 1,
-                      conversion: '$2,500 gift'
-                    }
-                  },
-                  {
-                    id: 3,
-                    name: 'Policy Briefing Invitation',
-                    type: '2-touch sequence',
-                    status: 'Completed',
-                    startDate: '2023-10-05',
-                    dueDate: '2023-10-20',
-                    progress: 'Completed',
-                    channels: ['Email', 'Phone'],
-                    nextAction: null,
-                    results: {
-                      emailOpens: 3,
-                      clicks: 2,
-                      responses: 1,
-                      conversion: 'Event attendance'
-                    }
-                  },
-                  {
-                    id: 4,
-                    name: 'Welcome Series',
-                    type: '7-touch sequence',
-                    status: 'Completed',
-                    startDate: '2023-08-12',
-                    dueDate: '2023-08-25',
-                    progress: 'Completed',
-                    channels: ['Email', 'Text', 'Direct Mail'],
-                    nextAction: null,
-                    results: {
-                      emailOpens: 12,
-                      clicks: 6,
-                      responses: 2,
-                      conversion: '$500 second gift'
-                    }
-                  }
-                ].map((campaign) => (
-                  <div key={campaign.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="font-medium text-gray-900 mb-1">{campaign.name}</div>
-                        <div className="text-sm text-gray-600">{campaign.type}</div>
-                        <div className="text-sm text-gray-600">
-                          {campaign.startDate} - {campaign.dueDate}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                          campaign.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                          campaign.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {campaign.status}
-                        </span>
-                        <div className="text-sm text-gray-600 mt-1">{campaign.progress}</div>
-                      </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <div className="text-sm text-gray-600 mb-2">Channels:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {campaign.channels.map((channel, index) => (
-                          <span key={index} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                            {channel}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {campaign.nextAction && (
-                      <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                        <div className="text-sm font-medium text-blue-900">Next Action:</div>
-                        <div className="text-sm text-blue-800">{campaign.nextAction}</div>
-                      </div>
-                    )}
-
-                    <div className="bg-white p-3 rounded border">
-                      <div className="text-sm font-medium text-gray-900 mb-2">Results:</div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        <div>
-                          <div className="text-gray-600">Email Opens:</div>
-                          <div className="font-medium">{campaign.results.emailOpens}</div>
-                        </div>
-                        <div>
-                          <div className="text-gray-600">Clicks:</div>
-                          <div className="font-medium">{campaign.results.clicks}</div>
-                        </div>
-                        <div>
-                          <div className="text-gray-600">Responses:</div>
-                          <div className="font-medium">{campaign.results.responses}</div>
-                        </div>
-                        {campaign.results.conversion && (
-                          <div>
-                            <div className="text-gray-600">Conversion:</div>
-                            <div className="font-medium text-green-600">{campaign.results.conversion}</div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
-              <div className="text-sm text-gray-600">
-                Total campaigns: 4 • Success rate: 75% • Total conversions: $3,000 + 1 event
-              </div>
-              <button
-                onClick={() => setShowTargetPathLogModal(false)}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

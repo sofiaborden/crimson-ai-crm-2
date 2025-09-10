@@ -52,6 +52,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
   const systemNavItems: NavItem[] = [
     { id: 'search-demo', label: 'Search Demo', icon: <MagnifyingGlassIcon className="w-5 h-5" /> },
     { id: 'donor-profile-demo', label: 'Enhanced Profiles', icon: <SparklesIcon className="w-5 h-5" /> },
+    { id: 'layout-test', label: '🧪 Layout Test', icon: <SparklesIcon className="w-5 h-5" /> },
+    { id: 'layout-test-2', label: '🧪 Layout Test 2', icon: <SparklesIcon className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <SettingsIcon className="w-5 h-5" /> },
     { id: 'system', label: 'System', icon: <SystemIcon className="w-5 h-5" /> },
   ];

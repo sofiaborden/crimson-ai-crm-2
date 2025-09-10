@@ -9,6 +9,8 @@ import FundraisingDashboard from './components/dashboard/FundraisingDashboard';
 import PeopleDashboard from './components/dashboard/PeopleDashboard';
 import SearchDemo from './pages/SearchDemo';
 import DonorProfileDemo from './pages/DonorProfileDemo';
+import LayoutTestPage from './pages/layout-test';
+import LayoutTest2Page from './pages/layout-test-2';
 import { View, Donor } from './types';
 import { mockDonorProfiles } from './utils/mockDonorProfiles';
 
@@ -16,11 +18,12 @@ import { mockDonorProfiles } from './utils/mockDonorProfiles';
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('home');
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [segmentId, setSegmentId] = useState<string | null>(null);
 
   const renderView = () => {
     switch (currentView) {
       case 'home':
-        return <HomeDashboard setView={setCurrentView} setProfileId={setProfileId} />;
+        return <HomeDashboard setView={setCurrentView} setProfileId={setProfileId} setSegmentId={setSegmentId} />;
       case 'profile':
         if (profileId && mockDonorProfiles[profileId]) {
           return <DonorProfile donor={mockDonorProfiles[profileId]} />;
@@ -30,13 +33,17 @@ const App: React.FC = () => {
       case 'compliance':
         return <ComplianceDashboard />;
       case 'fundraising':
-        return <FundraisingDashboard />;
+        return <FundraisingDashboard segmentId={segmentId} />;
       case 'people':
         return <PeopleDashboard setView={setCurrentView} setProfileId={setProfileId} />;
       case 'search-demo':
         return <SearchDemo />;
       case 'donor-profile-demo':
         return <DonorProfileDemo />;
+      case 'layout-test':
+        return <LayoutTestPage />;
+      case 'layout-test-2':
+        return <LayoutTest2Page />;
       default:
         return (
             <div className="flex items-center justify-center h-full">

@@ -5,7 +5,10 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { SparklesIcon, LightBulbIcon, CheckCircleIcon, ArrowTrendingUpIcon, UsersIcon, PuzzlePieceIcon, ArrowPathIcon, MapPinIcon, TrendingUpIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, HeartIcon, CalendarIcon, ChartBarIcon, CurrencyDollarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, BookmarkIcon, DocumentTextIcon, XMarkIcon } from '../../constants';
 import RealTimeDonationTracker from './RealTimeDonationTracker';
+import LiveActionsTracker from './LiveActionsTracker';
 import SmartActionCenter from './SmartActionCenter';
+import SmartSegmentsWidget from './SmartSegmentsWidget';
+import DailySummary from './DailySummary';
 import SearchModal from '../search/SearchModal';
 import { useSearch } from '../../hooks/useSearch';
 
@@ -13,6 +16,7 @@ import { useSearch } from '../../hooks/useSearch';
 interface HomeDashboardProps {
   setView: (view: View) => void;
   setProfileId: (id: string) => void;
+  setSegmentId?: (id: string) => void;
 }
 
 const ActionTile: React.FC<{ title: string; subtitle: ReactNode; cta: string; icon: ReactNode; onClick?: () => void; }> = ({ title, subtitle, cta, icon, onClick }) => (
@@ -67,7 +71,7 @@ const QuickStat: React.FC<{
     </div>
 );
 
-const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId }) => {
+const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, setSegmentId }) => {
   const { isSearchOpen, searchConfig, closeSearch, searchFromCard } = useSearch();
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showSearchesModal, setShowSearchesModal] = useState(false);
@@ -153,13 +157,26 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId }) 
           </div>
         </div>
 
-        {/* Top Row - Compact Smart Actions and Live Donation Tracker */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="lg:col-span-1">
+        {/* Top Row - Smart Actions, Live Donation Tracker, and Live Actions Tracker */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+          <div className="h-[28rem] md:h-96 lg:h-[28rem]">
             <SmartActionCenter setView={setView} setProfileId={setProfileId} />
           </div>
-          <div className="lg:col-span-1">
+          <div className="h-[28rem] md:h-96 lg:h-[28rem]">
             <RealTimeDonationTracker showPopoutButton={true} />
+          </div>
+          <div className="h-[28rem] md:h-96 lg:h-[28rem] md:col-span-2 lg:col-span-1">
+            <LiveActionsTracker showPopoutButton={true} />
+          </div>
+        </div>
+
+        {/* Second Row - Smart Segments and Daily Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
+          <div className="h-[28rem] md:h-96 lg:h-[28rem]">
+            <SmartSegmentsWidget setView={setView} setSegmentId={setSegmentId} />
+          </div>
+          <div className="h-[28rem] md:h-96 lg:h-[28rem]">
+            <DailySummary />
           </div>
         </div>
       </div>

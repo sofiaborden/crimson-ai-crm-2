@@ -968,7 +968,7 @@ export const mockDonorProfiles: Record<string, Donor> = {
     id: 'margaret-banks',
     pid: 'MB-2024-001',
     name: 'Margaret Banks',
-    photoUrl: 'https://i.pravatar.cc/150?u=margaret-banks',
+    photoUrl: 'https://i.pravatar.cc/150?u=margaret-banks&gender=female',
     email: 'margaret.banks@email.com',
     phone: '(555) 678-9014',
     address: '456 Elm Street, Springfield, IL 62701',
@@ -1040,6 +1040,386 @@ export const mockDonorProfiles: Record<string, Donor> = {
       eventAttendance: 'Selective - education focused',
       volunteerHistory: 'Active in school committees'
     }
+  },
+
+  'sofia-borden': {
+    id: 'sofia-borden',
+    pid: 'SB-2024-001',
+    name: 'Sofia Borden',
+    photoUrl: 'https://i.pravatar.cc/150?u=sofia-borden&gender=female',
+    email: 'sofia.amaya87@gmail.com',
+    phone: '(407) 555-0123',
+    address: '9330 Oglethorpe Drive, Groveland, FL 34736',
+    primaryAddress: {
+      street: '9330 Oglethorpe Drive',
+      city: 'Groveland',
+      state: 'FL',
+      zip: '34736',
+      country: 'USA'
+    },
+    contactInfo: {
+      home: '(407) 555-0123',
+      work: '(407) 555-0124',
+      email: 'sofia.amaya87@gmail.com',
+      website: 'linkedin.com/in/sofiaborden'
+    },
+    aiBadges: ['Executive Leader', 'Tech Professional', 'Strategic Donor'],
+    predictiveAsk: 2500,
+    recurrencePrediction: 'Very Likely (88%)',
+    suggestedAction: 'Schedule executive briefing on policy initiatives',
+    givingOverview: {
+      totalRaised: 7500,
+      consecutiveGifts: 6,
+      tier: 'Gold Supporter',
+      topGifts: [
+        { name: 'Q1 2024', value: 2000 },
+        { name: 'Q4 2023', value: 1500 },
+        { name: 'Q3 2023', value: 1250 },
+        { name: 'Q2 2023', value: 1000 },
+        { name: 'Q1 2023', value: 1750 }
+      ]
+    },
+    aiSnapshot: 'Sofia is a dynamic CXO at CMDI with strong leadership experience in technology and business strategy. Based in Florida, she brings valuable executive perspective to policy discussions. Her giving pattern shows strategic, substantial contributions with strong growth potential. She prefers direct communication and responds well to high-level policy briefings.',
+
+    recurringReadiness: {
+      probability: 0.88,
+      confidence: 0.91,
+      lastScoredAt: '2024-03-01T10:00:00Z',
+      recommendedMonthlyAmount: 200,
+      bucket: 'HIGH'
+    },
+
+    totalLifetimeGiving: 7500,
+    lastGiftAmount: 2000,
+    lastGiftDate: '2024-03-10',
+    giftCount: 6,
+    engagementScore: 85,
+    urgencyIndicators: {
+      isHotLead: true,
+      hasRecentActivity: true,
+      needsAttention: false
+    },
+    relationshipMapping: {
+      family: [],
+      professionalConnections: ['CMDI', 'Florida Tech Executive Network'],
+      mutualConnections: ['Rachel Gideon', 'Jeff Wernsing', 'Jack Simms', 'Tom Newhouse'],
+      influenceNetwork: ['Tech Leadership Council', 'Florida Business Leaders'],
+      employerMatching: true
+    },
+    givingIntelligence: {
+      capacityScore: 92,
+      engagementLevel: 'High',
+      preferredContactMethod: 'Email',
+      bestContactTime: 'Business hours',
+      givingMotivation: 'Strategic policy impact',
+      responseToAsk: 'Quick decision maker',
+      eventAttendance: 'Executive briefings preferred',
+      volunteerHistory: 'Board service and strategic advisory'
+    }
+  },
+
+  'rachel-gideon': {
+    id: 'rachel-gideon',
+    pid: 'RG-2024-001',
+    name: 'Rachel Gideon',
+    photoUrl: 'https://i.pravatar.cc/150?u=rachel-gideon&gender=female',
+    email: 'rachel.gideon@cmdi.com',
+    phone: '(202) 555-0125',
+    address: 'Washington, DC 20001',
+    primaryAddress: {
+      street: '1234 K Street NW',
+      city: 'Washington',
+      state: 'DC',
+      zip: '20001',
+      country: 'USA'
+    },
+    contactInfo: {
+      home: '(202) 555-0125',
+      work: '(202) 555-0126',
+      email: 'rachel.gideon@cmdi.com',
+      website: 'linkedin.com/in/rachelgideon'
+    },
+    aiBadges: ['Client Relations Expert', 'DC Professional', 'Relationship Builder'],
+    predictiveAsk: 1500,
+    recurrencePrediction: 'Likely (75%)',
+    suggestedAction: 'Invite to DC networking event',
+    givingOverview: {
+      totalRaised: 4200,
+      consecutiveGifts: 5,
+      tier: 'Silver Supporter',
+      topGifts: [
+        { name: 'Q1 2024', value: 1000 },
+        { name: 'Q4 2023', value: 800 },
+        { name: 'Q3 2023', value: 900 },
+        { name: 'Q2 2023', value: 750 },
+        { name: 'Q1 2023', value: 750 }
+      ]
+    },
+    aiSnapshot: 'Rachel is a skilled Director of Client Relations at CMDI, based in Washington DC. Her professional focus on relationship building translates well to political engagement. She has strong connections in the DC professional network and shows consistent giving patterns. She prefers in-person events and networking opportunities.',
+
+    recurringReadiness: {
+      probability: 0.75,
+      confidence: 0.82,
+      lastScoredAt: '2024-03-01T10:00:00Z',
+      recommendedMonthlyAmount: 125,
+      bucket: 'MED'
+    },
+
+    totalLifetimeGiving: 4200,
+    lastGiftAmount: 1000,
+    lastGiftDate: '2024-03-08',
+    giftCount: 5,
+    engagementScore: 78,
+    urgencyIndicators: {
+      isHotLead: false,
+      hasRecentActivity: true,
+      needsAttention: false
+    },
+    relationshipMapping: {
+      family: [],
+      professionalConnections: ['CMDI', 'DC Professional Network'],
+      mutualConnections: ['Sofia Borden', 'Jeff Wernsing', 'Jack Simms', 'Tom Newhouse'],
+      influenceNetwork: ['DC Business Council', 'Client Relations Association'],
+      employerMatching: true
+    },
+    givingIntelligence: {
+      capacityScore: 78,
+      engagementLevel: 'High',
+      preferredContactMethod: 'Phone',
+      bestContactTime: 'Weekday afternoons',
+      givingMotivation: 'Professional network influence',
+      responseToAsk: 'Relationship-driven decisions',
+      eventAttendance: 'Networking events preferred',
+      volunteerHistory: 'Professional association leadership'
+    }
+  },
+
+  'jeff-wernsing': {
+    id: 'jeff-wernsing',
+    pid: 'JW-2024-001',
+    name: 'Jeff Wernsing',
+    photoUrl: 'https://i.pravatar.cc/150?u=jeff-wernsing',
+    email: 'jeff.wernsing@cmdi.com',
+    phone: '(703) 555-0127',
+    address: 'Arlington, VA 22201',
+    primaryAddress: {
+      street: '5678 Wilson Blvd',
+      city: 'Arlington',
+      state: 'VA',
+      zip: '22201',
+      country: 'USA'
+    },
+    contactInfo: {
+      home: '(703) 555-0127',
+      work: '(703) 555-0128',
+      email: 'jeff.wernsing@cmdi.com',
+      website: 'linkedin.com/in/jeffwernsing'
+    },
+    aiBadges: ['Compliance Expert', 'Senior Executive', 'Policy Advocate'],
+    predictiveAsk: 3000,
+    recurrencePrediction: 'Very Likely (85%)',
+    suggestedAction: 'Invite to compliance policy roundtable',
+    givingOverview: {
+      totalRaised: 9200,
+      consecutiveGifts: 7,
+      tier: 'Gold Supporter',
+      topGifts: [
+        { name: 'Q1 2024', value: 2500 },
+        { name: 'Q4 2023', value: 1800 },
+        { name: 'Q3 2023', value: 1500 },
+        { name: 'Q2 2023', value: 1200 },
+        { name: 'Q1 2023', value: 2200 }
+      ]
+    },
+    aiSnapshot: 'Jeff is a Senior Vice President of Compliance Services at CMDI, bringing deep expertise in regulatory matters and policy implementation. Based in Arlington, VA, he has strong connections in the DC metro compliance community. His giving pattern reflects strategic, substantial contributions with focus on governance and regulatory policy initiatives.',
+
+    recurringReadiness: {
+      probability: 0.85,
+      confidence: 0.89,
+      lastScoredAt: '2024-03-01T10:00:00Z',
+      recommendedMonthlyAmount: 250,
+      bucket: 'HIGH'
+    },
+
+    totalLifetimeGiving: 9200,
+    lastGiftAmount: 2500,
+    lastGiftDate: '2024-03-12',
+    giftCount: 7,
+    engagementScore: 88,
+    urgencyIndicators: {
+      isHotLead: true,
+      hasRecentActivity: true,
+      needsAttention: false
+    },
+    relationshipMapping: {
+      family: [],
+      professionalConnections: ['CMDI', 'DC Metro Compliance Network', 'Regulatory Affairs Association'],
+      mutualConnections: ['Sofia Borden', 'Rachel Gideon', 'Jack Simms', 'Tom Newhouse'],
+      influenceNetwork: ['Compliance Officers Network', 'Policy Implementation Council'],
+      employerMatching: true
+    },
+    givingIntelligence: {
+      capacityScore: 89,
+      engagementLevel: 'Very High',
+      preferredContactMethod: 'Email',
+      bestContactTime: 'Business hours',
+      givingMotivation: 'Regulatory policy and governance',
+      responseToAsk: 'Analytical and thorough',
+      eventAttendance: 'Policy-focused events',
+      volunteerHistory: 'Regulatory advisory committees'
+    }
+  },
+
+  'jack-simms': {
+    id: 'jack-simms',
+    pid: 'JS-2024-001',
+    name: 'Jack Simms',
+    photoUrl: 'https://i.pravatar.cc/150?u=jack-simms',
+    email: 'jack.simms@cmdi.com',
+    phone: '(555) 555-0129',
+    address: 'McLean, VA 22102',
+    primaryAddress: {
+      street: '9876 Executive Drive',
+      city: 'McLean',
+      state: 'VA',
+      zip: '22102',
+      country: 'USA'
+    },
+    contactInfo: {
+      home: '(555) 555-0129',
+      work: '(555) 555-0130',
+      email: 'jack.simms@cmdi.com',
+      website: 'linkedin.com/in/jacksimms'
+    },
+    aiBadges: ['President', 'Executive Leader', 'Major Donor'],
+    predictiveAsk: 5000,
+    recurrencePrediction: 'Very Likely (95%)',
+    suggestedAction: 'Schedule presidential briefing meeting',
+    givingOverview: {
+      totalRaised: 18500,
+      consecutiveGifts: 10,
+      tier: 'Diamond Supporter',
+      topGifts: [
+        { name: 'Q1 2024', value: 5000 },
+        { name: 'Q4 2023', value: 3500 },
+        { name: 'Q3 2023', value: 3000 },
+        { name: 'Q2 2023', value: 2500 },
+        { name: 'Q1 2023', value: 4500 }
+      ]
+    },
+    aiSnapshot: 'Jack is the President of CMDI, providing executive leadership and strategic vision for the organization. His substantial giving history and consistent support demonstrate strong commitment to policy initiatives. As a senior executive, he brings valuable leadership perspective and has significant influence within professional networks.',
+
+    recurringReadiness: {
+      probability: 0.95,
+      confidence: 0.96,
+      lastScoredAt: '2024-03-01T10:00:00Z',
+      recommendedMonthlyAmount: 500,
+      bucket: 'HIGH'
+    },
+
+    totalLifetimeGiving: 18500,
+    lastGiftAmount: 5000,
+    lastGiftDate: '2024-03-15',
+    giftCount: 10,
+    engagementScore: 95,
+    urgencyIndicators: {
+      isHotLead: true,
+      hasRecentActivity: true,
+      needsAttention: false
+    },
+    relationshipMapping: {
+      family: [],
+      professionalConnections: ['CMDI', 'Executive Leadership Council', 'Business Roundtable'],
+      mutualConnections: ['Sofia Borden', 'Rachel Gideon', 'Jeff Wernsing', 'Tom Newhouse'],
+      influenceNetwork: ['CEO Network', 'Policy Leadership Forum'],
+      employerMatching: true
+    },
+    givingIntelligence: {
+      capacityScore: 98,
+      engagementLevel: 'Exceptional',
+      preferredContactMethod: 'Direct meeting',
+      bestContactTime: 'Executive calendar',
+      givingMotivation: 'Strategic policy leadership',
+      responseToAsk: 'Executive decision maker',
+      eventAttendance: 'High-level briefings and galas',
+      volunteerHistory: 'Board leadership and strategic advisory'
+    }
+  },
+
+  'tom-newhouse': {
+    id: 'tom-newhouse',
+    pid: 'TN-2024-001',
+    name: 'Tom Newhouse',
+    photoUrl: 'https://i.pravatar.cc/150?u=tom-newhouse',
+    email: 'tom.newhouse@cmdi.com',
+    phone: '(555) 555-0131',
+    address: 'Reston, VA 20190',
+    primaryAddress: {
+      street: '1357 Technology Way',
+      city: 'Reston',
+      state: 'VA',
+      zip: '20190',
+      country: 'USA'
+    },
+    contactInfo: {
+      home: '(555) 555-0131',
+      work: '(555) 555-0132',
+      email: 'tom.newhouse@cmdi.com',
+      website: 'linkedin.com/in/tomnewhouse'
+    },
+    aiBadges: ['Vice President', 'Digital Innovation', 'Data Expert'],
+    predictiveAsk: 3500,
+    recurrencePrediction: 'Very Likely (90%)',
+    suggestedAction: 'Invite to digital strategy briefing',
+    givingOverview: {
+      totalRaised: 12800,
+      consecutiveGifts: 8,
+      tier: 'Platinum Supporter',
+      topGifts: [
+        { name: 'Q1 2024', value: 3000 },
+        { name: 'Q4 2023', value: 2500 },
+        { name: 'Q3 2023', value: 2200 },
+        { name: 'Q2 2023', value: 1800 },
+        { name: 'Q1 2023', value: 3300 }
+      ]
+    },
+    aiSnapshot: 'Tom is the Vice President of Digital & Data Products at CMDI, bringing cutting-edge expertise in digital transformation and data analytics. His role in digital innovation makes him particularly valuable for understanding modern campaign technologies and data-driven policy initiatives. Strong consistent giving pattern with growth trajectory.',
+
+    recurringReadiness: {
+      probability: 0.90,
+      confidence: 0.93,
+      lastScoredAt: '2024-03-01T10:00:00Z',
+      recommendedMonthlyAmount: 350,
+      bucket: 'HIGH'
+    },
+
+    totalLifetimeGiving: 12800,
+    lastGiftAmount: 3000,
+    lastGiftDate: '2024-03-14',
+    giftCount: 8,
+    engagementScore: 92,
+    urgencyIndicators: {
+      isHotLead: true,
+      hasRecentActivity: true,
+      needsAttention: false
+    },
+    relationshipMapping: {
+      family: [],
+      professionalConnections: ['CMDI', 'Digital Innovation Council', 'Data Analytics Association'],
+      mutualConnections: ['Sofia Borden', 'Rachel Gideon', 'Jeff Wernsing', 'Jack Simms'],
+      influenceNetwork: ['Tech VP Network', 'Digital Strategy Forum'],
+      employerMatching: true
+    },
+    givingIntelligence: {
+      capacityScore: 91,
+      engagementLevel: 'Very High',
+      preferredContactMethod: 'Email',
+      bestContactTime: 'Flexible - tech-savvy',
+      givingMotivation: 'Digital innovation and data policy',
+      responseToAsk: 'Data-driven decision maker',
+      eventAttendance: 'Tech and innovation focused',
+      volunteerHistory: 'Digital strategy advisory'
+    }
   }
 };
 
@@ -1060,7 +1440,14 @@ export const getDonorProfileByName = (name: string): Donor | null => {
     'Joseph M. Banks': 'joseph-banks',
     'Joseph Banks': 'joseph-banks',
     'Margaret Banks': 'margaret-banks',
-    'Margaret M. Banks': 'margaret-banks'
+    'Margaret M. Banks': 'margaret-banks',
+    'Ellen Banks': 'margaret-banks',
+    'Ms. Ellen Banks': 'margaret-banks',
+    'Sofia Borden': 'sofia-borden',
+    'Rachel Gideon': 'rachel-gideon',
+    'Jeff Wernsing': 'jeff-wernsing',
+    'Jack Simms': 'jack-simms',
+    'Tom Newhouse': 'tom-newhouse'
   };
 
   const profileKey = nameMapping[name];
