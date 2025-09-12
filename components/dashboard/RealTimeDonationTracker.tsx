@@ -174,7 +174,7 @@ const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showP
         </div>
       )}
 
-      <Card className="h-full bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-green-200 hover:shadow-lg transition-all duration-300">
+      <Card className="h-full hover:shadow-lg transition-all duration-300">
         <div className="p-4 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -206,10 +206,7 @@ const RealTimeDonationTracker: React.FC<RealTimeDonationTrackerProps> = ({ showP
 
           {/* Recent Donations Feed */}
           <div className="flex-1 min-h-0">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-2 text-sm">
-              <SparklesIcon className="w-4 h-4 text-green-500" />
-              Recent Donations
-            </h3>
+
             <div className="bg-white rounded-lg border border-green-100 h-full overflow-y-auto">
               {recentDonations.map((donation, index) => (
                 <div

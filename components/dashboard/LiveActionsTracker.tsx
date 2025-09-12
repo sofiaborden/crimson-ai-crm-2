@@ -216,7 +216,7 @@ const LiveActionsTracker: React.FC<LiveActionsTrackerProps> = ({ showPopoutButto
         </div>
       )}
 
-      <Card className="h-full bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 border-blue-200 hover:shadow-lg transition-all duration-300">
+      <Card className="h-full hover:shadow-lg transition-all duration-300">
         <div className="p-4 h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -251,10 +251,7 @@ const LiveActionsTracker: React.FC<LiveActionsTrackerProps> = ({ showPopoutButto
 
         {/* Recent Actions Feed */}
         <div className="flex-1 min-h-0">
-          <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-2 text-sm">
-            <ClockIcon className="w-4 h-4 text-blue-500" />
-            Recent Actions
-          </h4>
+
           <div className="bg-white rounded-lg border border-blue-100 h-full overflow-y-auto">
             {recentActions.map((action, index) => (
               <div

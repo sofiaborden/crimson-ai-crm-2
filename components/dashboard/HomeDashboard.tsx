@@ -4,8 +4,7 @@ import { View } from '../../types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { SparklesIcon, LightBulbIcon, CheckCircleIcon, ArrowTrendingUpIcon, UsersIcon, PuzzlePieceIcon, ArrowPathIcon, MapPinIcon, TrendingUpIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, HeartIcon, CalendarIcon, ChartBarIcon, CurrencyDollarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, BookmarkIcon, DocumentTextIcon, XMarkIcon } from '../../constants';
-import RealTimeDonationTracker from './RealTimeDonationTracker';
-import LiveActionsTracker from './LiveActionsTracker';
+import LiveTracker from './LiveTracker';
 import SmartActionCenter from './SmartActionCenter';
 import SmartSegmentsWidget from './SmartSegmentsWidget';
 import DailySummary from './DailySummary';
@@ -157,16 +156,13 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, se
           </div>
         </div>
 
-        {/* Top Row - Smart Actions, Live Donation Tracker, and Live Actions Tracker */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
-          <div className="h-[28rem] md:h-96 lg:h-[28rem]">
+        {/* Top Row - Smart Actions (wider) and Live Tracker (combined donations/actions) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+          <div className="h-[28rem] md:h-96 lg:h-[28rem] lg:col-span-2">
             <SmartActionCenter setView={setView} setProfileId={setProfileId} />
           </div>
           <div className="h-[28rem] md:h-96 lg:h-[28rem]">
-            <RealTimeDonationTracker showPopoutButton={true} />
-          </div>
-          <div className="h-[28rem] md:h-96 lg:h-[28rem] md:col-span-2 lg:col-span-1">
-            <LiveActionsTracker showPopoutButton={true} />
+            <LiveTracker showPopoutButton={true} />
           </div>
         </div>
 

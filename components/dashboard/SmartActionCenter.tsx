@@ -165,7 +165,7 @@ const SmartActionCenter: React.FC<SmartActionCenterProps> = ({ setView, setProfi
   };
 
   return (
-    <Card className="h-full bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-50 border-violet-200 hover:shadow-lg transition-all duration-300">
+    <Card className="h-full hover:shadow-lg transition-all duration-300">
       <div className="p-4 h-full flex flex-col">
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1.5 bg-violet-100 rounded-lg">
