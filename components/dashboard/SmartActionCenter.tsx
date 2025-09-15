@@ -4,6 +4,7 @@ import {
   SparklesIcon,
   PhoneIcon,
   MailIcon,
+  EnvelopeIcon,
   UserIcon,
   ClockIcon,
   HeartIcon,
@@ -13,6 +14,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   UserGroupIcon,
+  MagnifyingGlassIcon,
   XMarkIcon
 } from '../../constants';
 
@@ -131,7 +133,7 @@ const SmartActionCenter: React.FC<SmartActionCenterProps> = ({ setView, setProfi
     switch (type) {
       case 'call': return <PhoneIcon className="w-4 h-4 text-green-600" />;
       case 'email': return <MailIcon className="w-4 h-4 text-blue-600" />;
-      case 'review': return <UserIcon className="w-4 h-4 text-purple-600" />;
+      case 'review': return <UserIcon className="w-4 h-4 text-blue-600" />;
       case 'follow-up': return <ClockIcon className="w-4 h-4 text-orange-600" />;
       case 'discovery': return <UserGroupIcon className="w-4 h-4 text-indigo-600" />;
       default: return <SparklesIcon className="w-4 h-4 text-gray-600" />;
@@ -168,8 +170,8 @@ const SmartActionCenter: React.FC<SmartActionCenterProps> = ({ setView, setProfi
     <Card className="h-full hover:shadow-lg transition-all duration-300">
       <div className="p-4 h-full flex flex-col">
         <div className="flex items-center gap-2 mb-4">
-          <div className="p-1.5 bg-violet-100 rounded-lg">
-            <SparklesIcon className="w-4 h-4 text-violet-600" />
+          <div className="p-1.5 bg-blue-100 rounded-lg">
+            <SparklesIcon className="w-4 h-4 text-blue-600" />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-semibold text-gray-900">Smart Actions</h3>
@@ -198,30 +200,30 @@ const SmartActionCenter: React.FC<SmartActionCenterProps> = ({ setView, setProfi
         </div>
 
         {/* Smart Actions */}
-        <div className="bg-white rounded-lg border border-violet-100 flex-1 min-h-0 overflow-hidden relative">
+        <div className="bg-white rounded-lg border border-blue-100 flex-1 min-h-0 overflow-hidden relative">
           {/* Fixed Navigation Arrows - Positioned Lower */}
           {availableActions.length > 1 && (
             <>
               <button
                 onClick={handlePrevious}
-                className="absolute left-3 top-16 p-1.5 bg-white/95 border border-violet-200 rounded-full shadow-sm hover:shadow-md transition-all z-20 backdrop-blur-sm"
+                className="absolute left-3 top-16 p-1.5 bg-white/95 border border-blue-200 rounded-full shadow-sm hover:shadow-md transition-all z-20 backdrop-blur-sm"
               >
-                <ChevronLeftIcon className="w-3 h-3 text-violet-600" />
+                <ChevronLeftIcon className="w-3 h-3 text-blue-600" />
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-3 top-16 p-1.5 bg-white/95 border border-violet-200 rounded-full shadow-sm hover:shadow-md transition-all z-20 backdrop-blur-sm"
+                className="absolute right-3 top-16 p-1.5 bg-white/95 border border-blue-200 rounded-full shadow-sm hover:shadow-md transition-all z-20 backdrop-blur-sm"
               >
-                <ChevronRightIcon className="w-3 h-3 text-violet-600" />
+                <ChevronRightIcon className="w-3 h-3 text-blue-600" />
               </button>
             </>
           )}
 
           {currentAction && (
-            <div className="h-full">
-              <div className="p-4 h-full overflow-y-auto">
+            <div className="h-full flex flex-col">
+              <div className="p-4 flex-1 overflow-y-auto pb-2">
                 <div className="flex items-start gap-3 mb-3">
-                  <div className="p-2 bg-gradient-to-br from-violet-100 to-purple-100 rounded-lg flex-shrink-0">
+                  <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex-shrink-0">
                     {getTypeIcon(currentAction.type)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -230,14 +232,14 @@ const SmartActionCenter: React.FC<SmartActionCenterProps> = ({ setView, setProfi
                         {currentAction.type === 'discovery' ? (
                           <button
                             onClick={() => handleDiscoveryClick(currentAction.segment!, currentAction.count!)}
-                            className="text-violet-600 hover:text-violet-800 underline-offset-2 hover:underline transition-colors text-left"
+                            className="text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline transition-colors text-left"
                           >
                             {currentAction.title}
                           </button>
                         ) : currentAction.contactInfo ? (
                           <button
                             onClick={() => handleDonorClick(currentAction.contactInfo!.name)}
-                            className="text-violet-600 hover:text-violet-800 underline-offset-2 hover:underline transition-colors text-left"
+                            className="text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline transition-colors text-left"
                           >
                             {currentAction.title}
                           </button>
@@ -274,31 +276,59 @@ const SmartActionCenter: React.FC<SmartActionCenterProps> = ({ setView, setProfi
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {currentAction.count && (
-                      <span className="text-xs font-medium text-violet-600 bg-violet-100 px-2 py-1 rounded-full">
+                      <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
                         {currentAction.count} prospects
                       </span>
                     )}
+                    {/* Pagination Indicator - moved here to save space */}
+                    {availableActions.length > 1 && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        {currentActionIndex + 1} of {availableActions.length}
+                      </span>
+                    )}
                   </div>
-                  {currentAction.contactInfo?.phone && (
-                    <button
-                      onClick={() => window.open(`tel:${currentAction.contactInfo!.phone}`, '_self')}
-                      className="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-violet-700 hover:to-purple-700 transition-all shadow-sm flex items-center gap-2"
-                      title={`Call ${currentAction.contactInfo!.phone}`}
-                    >
-                      <PhoneIcon className="w-4 h-4" />
-                      Call Now
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {/* Action buttons for all action types */}
+                    {currentAction.type === 'call' && currentAction.contactInfo?.phone && (
+                      <button
+                        onClick={() => window.open(`tel:${currentAction.contactInfo!.phone}`, '_self')}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm flex items-center gap-2"
+                        title={`Call ${currentAction.contactInfo!.phone}`}
+                      >
+                        <PhoneIcon className="w-4 h-4" />
+                        Call Now
+                      </button>
+                    )}
+                    {currentAction.type === 'email' && currentAction.contactInfo?.email && (
+                      <button
+                        onClick={() => window.open(`mailto:${currentAction.contactInfo!.email}`, '_self')}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm flex items-center gap-2"
+                        title={`Email ${currentAction.contactInfo!.email}`}
+                      >
+                        <EnvelopeIcon className="w-4 h-4" />
+                        Send Email
+                      </button>
+                    )}
+                    {currentAction.type === 'discovery' && (
+                      <button
+                        onClick={() => handleDiscoveryClick(currentAction.segment!, currentAction.count!)}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm flex items-center gap-2"
+                      >
+                        <MagnifyingGlassIcon className="w-4 h-4" />
+                        View Prospects
+                      </button>
+                    )}
+                    {(currentAction.type === 'review' || currentAction.type === 'follow-up') && (
+                      <button
+                        onClick={() => handleDonorClick(currentAction.contactInfo?.name || currentAction.title)}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm flex items-center gap-2"
+                      >
+                        <CheckCircleIcon className="w-4 h-4" />
+                        Take Action
+                      </button>
+                    )}
+                  </div>
                 </div>
-
-                {/* Pagination Indicator */}
-                {availableActions.length > 1 && (
-                  <div className="text-center mt-4 pt-3 border-t border-gray-100">
-                    <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                      {currentActionIndex + 1} of {availableActions.length}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           )}

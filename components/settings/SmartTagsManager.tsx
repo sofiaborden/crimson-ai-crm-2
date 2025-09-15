@@ -140,11 +140,13 @@ const SmartTagsManager: React.FC = () => {
       </div>
 
       {/* CrimsonGPT Prompt Box */}
-      <div className="bg-gradient-to-r from-crimson-accent-blue bg-opacity-5 to-crimson-blue bg-opacity-5 border border-crimson-accent-blue border-opacity-30 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <ChatBubbleLeftRightIcon className="w-5 h-5 text-crimson-blue" />
-          <h4 className="font-medium text-crimson-blue">CrimsonGPT Smart Tag Creator</h4>
-          <SparklesIcon className="w-4 h-4 text-crimson-accent-blue" />
+      <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-lg p-6 shadow-lg">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+            <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
+          </div>
+          <h4 className="font-semibold text-white text-lg">CrimsonGPT Smart Tag Creator</h4>
+          <SparklesIcon className="w-5 h-5 text-crimson-accent-blue" />
         </div>
         <div className="flex gap-3">
           <input
@@ -152,13 +154,13 @@ const SmartTagsManager: React.FC = () => {
             value={crimsonGPTPrompt}
             onChange={(e) => setCrimsonGPTPrompt(e.target.value)}
             placeholder="Describe your ideal tag: 'Find all donors under 35 who gave more than $100 last year and live in Miami'"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
+            className="flex-1 px-4 py-3 bg-white bg-opacity-95 border-0 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:outline-none shadow-sm"
             onKeyDown={(e) => e.key === 'Enter' && handleCrimsonGPTPrompt()}
           />
-          <Button 
+          <Button
             onClick={handleCrimsonGPTPrompt}
             disabled={!crimsonGPTPrompt.trim() || isProcessingPrompt}
-            className="bg-crimson-blue hover:bg-crimson-dark-blue"
+            className="bg-white bg-opacity-20 hover:bg-white hover:bg-opacity-30 text-white border border-white border-opacity-30 hover:border-opacity-50 font-medium px-6 py-3 transition-all duration-200 backdrop-blur-sm"
           >
             {isProcessingPrompt ? (
               <div className="flex items-center gap-2">
@@ -173,7 +175,7 @@ const SmartTagsManager: React.FC = () => {
             )}
           </Button>
         </div>
-        <p className="text-xs text-gray-600 mt-2">
+        <p className="text-sm text-white text-opacity-90 mt-3 leading-relaxed">
           CrimsonGPT will convert your description into smart filters and suggest a tag name and emoji.
         </p>
       </div>
@@ -205,7 +207,7 @@ const SmartTagsManager: React.FC = () => {
                         {tag.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                       <span className="text-sm text-gray-500">
-                        {tag.count.toLocaleString()} contacts
+                        {tag.count.toLocaleString()} contacts • ${((tag.count * 150) / 1000).toFixed(0)}K potential
                       </span>
                     </div>
                     <p className="text-sm text-gray-600">{tag.description}</p>
@@ -216,6 +218,18 @@ const SmartTagsManager: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      // TODO: Implement view records functionality
+                      console.log(`Viewing records for tag: ${tag.name}`);
+                    }}
+                    className="text-xs bg-crimson-blue text-white hover:bg-crimson-dark-blue"
+                  >
+                    <EyeIcon className="w-4 h-4 mr-1" />
+                    View Records
+                  </Button>
                   <Button
                     size="sm"
                     variant="secondary"

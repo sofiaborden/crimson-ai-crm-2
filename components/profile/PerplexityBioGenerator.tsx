@@ -26,46 +26,146 @@ const PerplexityBioGenerator: React.FC<PerplexityBioGeneratorProps> = ({ donor }
   const [error, setError] = useState<string>('');
 
   // Perplexity API integration with structured output
+  // Process structured JSON response (improved approach based on ChatGPT suggestions)
+  const processStructuredResponse = (content: string, donor: any): BioResponse => {
+    try {
+      // Extract JSON from response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log('Parsed structured response:', parsed);
+
+      // Handle different status types
+      if (parsed.status !== 'ok') {
+        if (parsed.status === 'no_match') {
+          return {
+            bio: 'No confident public match found. Try adding employer or city.',
+            givingSummary: 'No public giving data available',
+            confidence: 'Low',
+            sources: []
+          };
+        }
+        if (parsed.status === 'disambiguation') {
+          return {
+            bio: 'Multiple people found. Please provide more specific information.',
+            givingSummary: 'No public giving data available',
+            confidence: 'Low',
+            sources: []
+          };
+        }
+        throw new Error(`API returned status: ${parsed.status}`);
+      }
+
+      // Process successful response
+      const bio = Array.isArray(parsed.bio_sentences)
+        ? parsed.bio_sentences.filter(s => s.trim()).slice(0, 3).join(' ')
+        : `${donor.name} is a political donor with available public records.`;
+
+      const givingSummary = parsed.giving_summary || 'No public giving data available';
+
+      // Map confidence levels
+      const confidenceMap = {
+        'high': 'High',
+        'medium': 'Medium',
+        'low': 'Low'
+      };
+      const confidence = confidenceMap[parsed.confidence?.toLowerCase()] || 'Medium';
+
+      // Extract source URLs from citations
+      const sources = Array.isArray(parsed.citations)
+        ? parsed.citations.map(c => c.url).filter(Boolean)
+        : ['Public Records'];
+
+      return {
+        bio: bio.length > 280 ? bio.substring(0, 277) + '...' : bio,
+        givingSummary: givingSummary.length > 100 ? givingSummary.substring(0, 97) + '...' : givingSummary,
+        confidence,
+        sources
+      };
+
+    } catch (error) {
+      console.error('Error processing structured response:', error);
+      console.error('Raw content:', content);
+
+      // Fallback to basic processing
+      return {
+        bio: `${donor.name} is a political donor. Research data temporarily unavailable.`,
+        givingSummary: 'No public giving data available',
+        confidence: 'Low',
+        sources: ['Public Records']
+      };
+    }
+  };
+
   const generateDonorBio = async () => {
     setIsGeneratingBio(true);
     setError('');
 
     try {
-      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      // Use the existing Perplexity API configuration
+      const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
+      const PERPLEXITY_API_KEY = import.meta.env.VITE_PERPLEXITY_API_KEY || process.env.NEXT_PUBLIC_PERPLEXITY_API_KEY || '';
+
+      if (!PERPLEXITY_API_KEY) {
+        throw new Error('Perplexity API key not configured. Please set VITE_PERPLEXITY_API_KEY in your environment.');
+      }
+
+      const response = await fetch(PERPLEXITY_API_URL, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY || 'your-api-key-here'}`,
+          'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'sonar',
+          model: 'sonar-pro', // Current valid advanced search model
+          temperature: 0.1, // Keep deterministic
+          max_tokens: 800,
+          top_p: 0.9,
+          return_citations: true,
           messages: [
             {
               role: 'system',
-              content: `You are a professional fundraising researcher. Return ONLY valid JSON with no additional text, explanations, or formatting.
-
-Required JSON format:
-{
-  "bio": "Brief professional background (MAX 200 chars)",
-  "givingSummary": "Giving capacity or FEC data (MAX 100 chars)",
-  "confidence": "High",
-  "sources": ["url1", "url2"]
-}
-
-CRITICAL RULES:
-- Bio: MAXIMUM 200 characters, professional background only
-- GivingSummary: MAXIMUM 100 characters, use "No public giving data available" if none found
-- Confidence: Must be exactly "High", "Medium", or "Low"
-- Sources: Array of 1-3 actual URLs you used for research
-- Return ONLY the JSON object, no other text`
+              content: 'You are a research assistant that writes short, factual, citation-backed donor bios for U.S. political fundraising CRMs. You must only state facts you can cite with reputable URLs. If uncertain, omit. Output JSON exactly in the requested schema. Do not include commentary.'
             },
             {
               role: 'user',
-              content: `Research ${donor.name}${donor.location ? ` in ${donor.location}` : ''}. Find: 1) Professional background/career 2) FEC giving records. Return JSON only.`
+              content: `Task: Produce a concise factual bio for a U.S. donor and a one-line giving summary if confidently found in FEC or equivalent sources.
+
+Donor query:
+- Name: ${donor.name}
+- City/State: ${donor.location || 'Unknown location'}
+- Employer (opt): ${donor.contactInfo?.work || 'Unknown'}
+- Occupation (opt): ${donor.occupation || 'Unknown'}
+
+Rules:
+- Bio = 2–3 sentences, neutral tone, no opinions.
+- Include current role/employer (if citable), industry/field, and one notable public fact (e.g., board role, published piece, award) only if citable.
+- Add 0–2 brief recent-news bullets **only if** clearly about this person and reputable (major news, employer press, .gov, .edu).
+- Giving summary one-liner from FEC or OpenSecrets (federal) if confident; otherwise leave empty.
+- No speculation. If multiple people match, return disambiguation state.
+- Use only reputable sources: FEC, major news outlets, employer/official sites, .gov/.edu. Exclude low-credibility sites.
+- Output JSON strictly in this schema:
+
+{
+  "status": "ok",
+  "bio_sentences": ["", "", ""],
+  "giving_summary": "Federal contributions since YYYY: $X across Y committees.",
+  "news_bullets": ["", ""],
+  "citations": [
+    {"id": 1, "title": "", "publisher": "", "url": "", "date": "YYYY-MM-DD"}
+  ],
+  "attribution": [
+    {"claim": "exact phrase from bio or bullet", "citation_ids": [1]}
+  ],
+  "confidence": "high",
+  "matching_notes": "brief string",
+  "candidates": []
+}`
             }
-          ],
-          max_tokens: 400,
-          temperature: 0.1
+          ]
         })
       });
 
@@ -78,62 +178,29 @@ CRITICAL RULES:
       const data = await response.json();
       const rawContent = data.choices?.[0]?.message?.content || '';
 
-      console.log('Raw API Response:', rawContent);
+      console.log('Structured API Response:', rawContent);
 
-      // Parse and validate JSON response
-      try {
-        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          console.error('No JSON found in response. Raw content:', rawContent);
-          throw new Error('No JSON found in response');
-        }
-
-        console.log('Extracted JSON:', jsonMatch[0]);
-        const parsedData = JSON.parse(jsonMatch[0]) as BioResponse;
-        console.log('Parsed data:', parsedData);
-
-        // Server-side enforcement with better logging
-        if (!parsedData.bio) {
-          console.error('Bio is missing from response');
-          throw new Error('Bio is missing from response');
-        }
-
-        if (parsedData.bio.length > 280) {
-          console.error(`Bio too long: ${parsedData.bio.length} characters. Bio:`, parsedData.bio);
-          // Instead of rejecting, let's truncate and warn
-          parsedData.bio = parsedData.bio.substring(0, 277) + '...';
-          console.warn('Bio truncated to 280 characters');
-        }
-
-        if (!parsedData.givingSummary) {
-          parsedData.givingSummary = 'No public giving data available';
-        }
-
-        if (!['High', 'Medium', 'Low'].includes(parsedData.confidence)) {
-          parsedData.confidence = 'Low';
-        }
-
-        if (!Array.isArray(parsedData.sources)) {
-          parsedData.sources = [];
-        }
-
-        console.log('Final validated data:', parsedData);
-        setBioData(parsedData);
-
-      } catch (parseError) {
-        console.error('Failed to parse bio response:', parseError);
-        console.error('Raw content that failed to parse:', rawContent);
-        throw new Error(`Invalid response format from API: ${parseError.message}`);
-      }
+      // Process structured JSON response (improved approach)
+      const bioData = processStructuredResponse(rawContent, donor);
+      console.log('Processed bio data:', bioData);
+      setBioData(bioData);
 
     } catch (error) {
       console.error('Failed to generate bio:', error);
-      setError(error instanceof Error ? error.message : 'Failed to generate bio. Please try again.');
+
+      // If it's a CORS error, provide helpful guidance
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        setError('CORS error: Direct API calls are blocked by the browser. This feature requires a backend proxy server to work properly.');
+      } else {
+        setError(error instanceof Error ? error.message : 'Failed to generate bio. Please try again.');
+      }
     } finally {
       setIsGeneratingBio(false);
       setShowBioConfirmModal(false);
     }
   };
+
+
 
   return (
     <>

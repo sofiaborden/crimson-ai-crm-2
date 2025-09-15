@@ -69,7 +69,11 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   });
 
   const addFilter = () => {
-    if (!newFilter.field || !newFilter.value) return;
+    if (!newFilter.field || !newFilter.operator) return;
+
+    // Check if value is required for this operator
+    const needsValue = !['isEmpty', 'isNotEmpty'].includes(newFilter.operator);
+    if (needsValue && !newFilter.value) return;
 
     const fieldLabel = filterFields.find(f => f.value === newFilter.field)?.label || newFilter.field;
     const operatorLabel = operators.find(o => o.value === newFilter.operator)?.label || newFilter.operator;
@@ -79,7 +83,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
       field: newFilter.field,
       operator: newFilter.operator,
       value: newFilter.value,
-      label: `${fieldLabel} ${operatorLabel} ${newFilter.value}`
+      label: needsValue ? `${fieldLabel} ${operatorLabel} ${newFilter.value}` : `${fieldLabel} ${operatorLabel}`
     };
 
     onFiltersChange([...filters, filter]);
@@ -201,7 +205,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
             <div className="flex items-end">
               <button
                 onClick={addFilter}
-                disabled={!newFilter.field || !newFilter.value}
+                disabled={!newFilter.field || !newFilter.operator || (!newFilter.value && !['isEmpty', 'isNotEmpty'].includes(newFilter.operator))}
                 className="w-full px-4 py-2 bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm font-medium"
               >
                 <PlusIcon className="w-4 h-4 inline mr-1" />

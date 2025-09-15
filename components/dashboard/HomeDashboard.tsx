@@ -7,7 +7,9 @@ import { SparklesIcon, LightBulbIcon, CheckCircleIcon, ArrowTrendingUpIcon, User
 import LiveTracker from './LiveTracker';
 import SmartActionCenter from './SmartActionCenter';
 import SmartSegmentsWidget from './SmartSegmentsWidget';
+import SmartTagsWidget from './SmartTagsWidget';
 import DailySummary from './DailySummary';
+import SettingsModal from '../settings/SettingsModal';
 import SearchModal from '../search/SearchModal';
 import { useSearch } from '../../hooks/useSearch';
 
@@ -74,6 +76,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, se
   const { isSearchOpen, searchConfig, closeSearch, searchFromCard } = useSearch();
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showSearchesModal, setShowSearchesModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const handleViewProfile = () => {
     setProfileId('joseph-banks');
@@ -158,21 +161,27 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, se
 
         {/* Top Row - Smart Actions (wider) and Live Tracker (combined donations/actions) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
-          <div className="h-[28rem] md:h-96 lg:h-[28rem] lg:col-span-2">
+          <div className="h-[32rem] md:h-[30rem] lg:h-[32rem] lg:col-span-2">
             <SmartActionCenter setView={setView} setProfileId={setProfileId} />
           </div>
-          <div className="h-[28rem] md:h-96 lg:h-[28rem]">
+          <div className="h-[32rem] md:h-[30rem] lg:h-[32rem]">
             <LiveTracker showPopoutButton={true} />
           </div>
         </div>
 
-        {/* Second Row - Smart Segments and Daily Summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
-          <div className="h-[28rem] md:h-96 lg:h-[28rem]">
+        {/* Second Row - Smart Segments, Yesterday's Performance, and Smart Tags */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+          <div className="h-[32rem] md:h-[30rem] lg:h-[32rem]">
             <SmartSegmentsWidget setView={setView} setSegmentId={setSegmentId} />
           </div>
-          <div className="h-[28rem] md:h-96 lg:h-[28rem]">
+          <div className="h-[32rem] md:h-[30rem] lg:h-[32rem]">
             <DailySummary />
+          </div>
+          <div className="h-[32rem] md:h-[30rem] lg:h-[32rem] md:col-span-2 lg:col-span-1">
+            <SmartTagsWidget
+              setView={setView}
+              onViewSettings={() => setShowSettingsModal(true)}
+            />
           </div>
         </div>
       </div>
@@ -575,6 +584,14 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, se
           </div>
         </div>
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        initialSection="people-codes"
+        initialSubSection="smart-tags"
+      />
     </div>
   );
 };

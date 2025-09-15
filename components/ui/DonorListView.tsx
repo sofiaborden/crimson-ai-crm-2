@@ -369,12 +369,13 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
   const [columns, setColumns] = useState([
     { id: 'name', label: 'Name', enabled: true, category: 'Basic Info' },
     { id: 'contact', label: 'Contact', enabled: true, category: 'Basic Info' },
-    { id: 'lastGiftAmount', label: 'Last Gift', enabled: true, category: 'Giving History' },
-    { id: 'totalLifetimeGiving', label: 'Total($)', enabled: true, category: 'Giving History' },
+    { id: 'lastGiftAmount', label: 'Potential', enabled: true, category: 'Giving History' },
+    { id: 'totalLifetimeGiving', label: 'CTD', enabled: true, category: 'Giving History' },
     { id: 'giftCount', label: '#Gifts', enabled: true, category: 'Giving History' },
     { id: 'suggestedAskAmount', label: 'Suggested Ask', enabled: true, category: 'Giving History' },
     { id: 'actions', label: 'Actions', enabled: true, category: 'Basic Info' },
     // Additional columns
+    { id: 'smartTags', label: 'Smart Tags', enabled: false, category: 'Basic Info' },
     { id: 'firstGiftDate', label: 'First Gift Date', enabled: false, category: 'Giving History' },
     { id: 'highestGift', label: 'Highest $', enabled: false, category: 'Giving History' },
     { id: 'highestGiftDate', label: 'Highest $ Date', enabled: false, category: 'Giving History' },
@@ -564,60 +565,60 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-gray-200">
+        <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-gray-200">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Donor List: {segmentName}</h2>
-            <p className="text-gray-600">{totalCount.toLocaleString()} donors found</p>
+            <h2 className="text-xl font-bold text-gray-900">Donor List: {segmentName}</h2>
+            <p className="text-sm text-gray-600">{totalCount.toLocaleString()} donors found</p>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <XMarkIcon className="w-6 h-6 text-gray-500" />
+            <XMarkIcon className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
         {/* Progress Summary Section */}
         {segmentData && (
-          <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-green-50">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <div className="flex-shrink-0 p-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-green-50">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-1">
+                <div className="text-lg font-bold text-blue-600 mb-0.5">
                   ${segmentData.potentialRevenue.toLocaleString()}
                 </div>
-                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
-                  <CurrencyDollarIcon className="w-4 h-4" />
+                <div className="text-xs text-gray-600 flex items-center justify-center gap-1">
+                  <CurrencyDollarIcon className="w-3 h-3" />
                   Potential Revenue
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600 mb-1">
+                <div className="text-lg font-bold text-orange-600 mb-0.5">
                   ${segmentData.inProgressRevenue.toLocaleString()}
                 </div>
-                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
-                  <ClockIcon className="w-4 h-4" />
+                <div className="text-xs text-gray-600 flex items-center justify-center gap-1">
+                  <ClockIcon className="w-3 h-3" />
                   In Progress
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600 mb-1 flex items-center justify-center gap-2">
+                <div className="text-lg font-bold text-green-600 mb-0.5 flex items-center justify-center gap-2">
                   ${segmentData.realizedRevenue.toLocaleString()}
                   {segmentData.trend && (
-                    <span className={`text-sm ${segmentData.trend === 'up' ? 'text-green-500' : segmentData.trend === 'down' ? 'text-red-500' : 'text-gray-500'}`}>
-                      {segmentData.trend === 'up' ? '↗️' : segmentData.trend === 'down' ? '↘️' : '➡️'}
+                    <span className={`text-xs ${segmentData.trend === 'up' ? 'text-green-500' : segmentData.trend === 'down' ? 'text-red-500' : 'text-gray-500'}`}>
+                      {segmentData.trend === 'up' ? '↗' : segmentData.trend === 'down' ? '↘' : '→'}
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-gray-600 flex items-center justify-center gap-1">
-                  <CheckCircleIcon className="w-4 h-4" />
+                <div className="text-xs text-gray-600 flex items-center justify-center gap-1">
+                  <CheckCircleIcon className="w-3 h-3" />
                   Realized Revenue
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600 mb-1">
+                <div className="text-lg font-bold text-purple-600 mb-0.5">
                   {Math.round((segmentData.realizedRevenue / segmentData.potentialRevenue) * 100)}%
                 </div>
-                <div className="text-sm text-gray-600">Conversion Rate</div>
+                <div className="text-xs text-gray-600">Conversion Rate</div>
               </div>
             </div>
 
@@ -649,19 +650,7 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
               </div>
             )}
 
-            {/* Suggested Action */}
-            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-start gap-3">
-                <SparklesIcon className="w-5 h-5 text-crimson-blue mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 mb-2">Recommended Action for This Segment</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">{segmentData.suggestedAction}</p>
-                  {segmentData.lastUpdated && (
-                    <p className="text-xs text-gray-500 mt-2">Last updated: {segmentData.lastUpdated}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Removed Recommended Action section */}
           </div>
         )}
 
@@ -896,7 +885,7 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 {columns.filter(col => col.enabled).map(column => (
-                  <th key={column.id} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th key={column.id} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {column.id === 'actions' ? (
                       column.label
                     ) : (
@@ -916,7 +905,7 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
               {filteredAndSortedDonors.map((donor) => (
                 <tr key={donor.id} className="hover:bg-gray-50">
                   {columns.filter(col => col.enabled).map(column => (
-                    <td key={column.id} className="px-3 py-3">
+                    <td key={column.id} className="px-3 py-2">
                       {column.id === 'name' && (
                         <div>
                           <button
@@ -925,18 +914,6 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
                           >
                             {donor.name}
                           </button>
-                          <div className="flex flex-wrap gap-0.5 mt-0.5">
-                            {donor.smartTags?.slice(0, 2).map((tag, i) => (
-                              <SmartTag
-                                key={i}
-                                name={tag.name}
-                                emoji={tag.emoji}
-                                color={tag.color}
-                                size="xs"
-                                showAI={false}
-                              />
-                            ))}
-                          </div>
                           <div className="text-xs text-gray-500 truncate">{donor.city}, {donor.state}</div>
                         </div>
                       )}
@@ -960,8 +937,8 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
                       )}
                       {column.id === 'lastGiftAmount' && (
                         <div>
-                          <div className="text-sm font-medium text-gray-900">${donor.lastGiftAmount.toLocaleString()}</div>
-                          <div className="text-xs text-gray-500">{new Date(donor.lastGiftDate).toLocaleDateString()}</div>
+                          <div className="text-sm font-bold text-purple-600">{donor.predictedPotential}%</div>
+                          <div className="text-xs text-gray-500">potential</div>
                         </div>
                       )}
                       {column.id === 'totalLifetimeGiving' && (
@@ -980,6 +957,20 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
                         </div>
                       )}
                       {/* Additional columns */}
+                      {column.id === 'smartTags' && (
+                        <div className="flex flex-wrap gap-0.5">
+                          {donor.smartTags?.slice(0, 3).map((tag, i) => (
+                            <SmartTag
+                              key={i}
+                              name={tag.name}
+                              emoji={tag.emoji}
+                              color={tag.color}
+                              size="xs"
+                              showAI={false}
+                            />
+                          ))}
+                        </div>
+                      )}
                       {column.id === 'firstGiftDate' && (
                         <div className="text-sm text-gray-900">{donor.firstGiftDate ? new Date(donor.firstGiftDate).toLocaleDateString() : '—'}</div>
                       )}
@@ -1089,7 +1080,7 @@ const DonorListView: React.FC<DonorListViewProps> = ({ segmentId, segmentName, i
           </div>
         </div>
 
-        <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-gray-50 overflow-visible">
+        <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-gray-50 overflow-visible">
           <div className="flex justify-between items-center overflow-visible">
             <div className="text-sm text-gray-600">
               <div>Total Lifetime Value: <span className="font-semibold">${filteredAndSortedDonors.reduce((sum, donor) => sum + donor.totalLifetimeGiving, 0).toLocaleString()}</span></div>

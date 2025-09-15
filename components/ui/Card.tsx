@@ -14,6 +14,7 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({ children, className = '', title, titleClassName, onClick, headerActions }) => {
   const hasOverflowVisible = className.includes('overflow-visible');
   const overflowClass = hasOverflowVisible ? 'overflow-visible' : 'overflow-hidden';
+  const hasFullHeight = className.includes('h-full');
   const cardClasses = `bg-base-100 rounded-xl shadow-md ${overflowClass} transition-all duration-300 ${onClick ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer' : ''} ${className}`;
 
   return (
@@ -24,7 +25,7 @@ const Card: React.FC<CardProps> = ({ children, className = '', title, titleClass
           {headerActions}
         </div>
       )}
-      <div className="p-4 sm:p-5">
+      <div className={hasFullHeight ? "p-3 sm:p-4 h-full" : "p-4 sm:p-5"}>
         {children}
       </div>
     </div>

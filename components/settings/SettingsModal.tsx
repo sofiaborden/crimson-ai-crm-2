@@ -8,11 +8,18 @@ import FundraisingCodesManager from './FundraisingCodesManager';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialSection?: 'people-codes' | 'fundraising-codes';
+  initialSubSection?: 'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes';
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
-  const [activeSection, setActiveSection] = useState<'people-codes' | 'fundraising-codes'>('people-codes');
-  const [activeSubSection, setActiveSubSection] = useState<'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes'>('smart-tags');
+const SettingsModal: React.FC<SettingsModalProps> = ({
+  isOpen,
+  onClose,
+  initialSection = 'people-codes',
+  initialSubSection = 'smart-tags'
+}) => {
+  const [activeSection, setActiveSection] = useState<'people-codes' | 'fundraising-codes'>(initialSection);
+  const [activeSubSection, setActiveSubSection] = useState<'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes'>(initialSubSection);
 
   if (!isOpen) return null;
 

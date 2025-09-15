@@ -28,7 +28,7 @@ const PeopleSearchFilters: React.FC<FilterProps> = ({
 
   useEffect(() => {
     onFiltersChange(filters);
-  }, [filters, onFiltersChange]);
+  }, [filters]); // Removed onFiltersChange from dependencies to prevent infinite loop
 
   const handleFilterChange = (category: string, field: string, value: any) => {
     setFilters(prev => ({

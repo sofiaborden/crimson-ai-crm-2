@@ -15,6 +15,7 @@ interface Alert {
 }
 
 const SmartAlerts: React.FC = () => {
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
   const [alerts, setAlerts] = useState<Alert[]>([
     {
       id: '1',
@@ -28,16 +29,36 @@ const SmartAlerts: React.FC = () => {
     },
     {
       id: '2',
+      type: 'fatigue_risk',
+      title: '⚠️ Monitor Fatigue',
+      message: '234 Over Performers giving 40% above capacity - monitor for donor fatigue',
+      priority: 'medium',
+      timestamp: new Date(Date.now() - 2 * 60000),
+      actionLabel: 'Monitor Fatigue',
+      actionCallback: () => console.log('Monitor fatigue for over performers')
+    },
+    {
+      id: '3',
+      type: 'expansion_ready',
+      title: '📈 Ready to Upgrade',
+      message: '86 donors ready for expansion with $121K potential - upgrade ask strategy',
+      priority: 'medium',
+      timestamp: new Date(Date.now() - 5 * 60000),
+      actionLabel: 'Monitor Fatigue',
+      actionCallback: () => console.log('Monitor fatigue for expansion candidates')
+    },
+    {
+      id: '4',
       type: 'optimal_timing',
       title: '⏰ Optimal Timing',
       message: 'Tuesday 10 AM is the best time to contact Comeback Crew (40% higher response)',
       priority: 'medium',
-      timestamp: new Date(Date.now() - 5 * 60000),
+      timestamp: new Date(Date.now() - 10 * 60000),
       actionLabel: 'Schedule',
       actionCallback: () => console.log('Schedule campaign')
     },
     {
-      id: '3',
+      id: '5',
       type: 'follow_up',
       title: '📞 Follow-up Reminder',
       message: '12 donors from Level-Up List need follow-up calls this week',
@@ -47,7 +68,7 @@ const SmartAlerts: React.FC = () => {
       actionCallback: () => console.log('View follow-up list')
     },
     {
-      id: '4',
+      id: '6',
       type: 'milestone',
       title: '🎉 Milestone Reached',
       message: 'Neighborhood MVPs segment generated $15,000 this month!',
@@ -164,12 +185,69 @@ const SmartAlerts: React.FC = () => {
             variant="secondary"
             size="sm"
             className="w-full"
-            onClick={() => console.log('View all alerts')}
+            onClick={() => setShowAllAlerts(true)}
           >
             View All Alerts
           </Button>
         </div>
       </Card>
+
+      {/* All Alerts Modal */}
+      {showAllAlerts && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">All Smart Alerts</h2>
+              <button
+                onClick={() => setShowAllAlerts(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-3">
+                {alerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className={`p-4 rounded-lg border ${getPriorityColor(alert.priority)}`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className={`font-semibold ${getPriorityTextColor(alert.priority)}`}>
+                        {alert.title}
+                      </h4>
+                      <span className="text-xs text-gray-500">
+                        {alert.timestamp.toLocaleString()}
+                      </span>
+                    </div>
+                    <p className={`text-sm ${getPriorityTextColor(alert.priority)} mb-3`}>
+                      {alert.message}
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        alert.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        alert.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {alert.priority.charAt(0).toUpperCase() + alert.priority.slice(1)} Priority
+                      </span>
+                      {alert.actionLabel && alert.actionCallback && (
+                        <Button
+                          size="sm"
+                          onClick={alert.actionCallback}
+                          className="text-sm"
+                        >
+                          {alert.actionLabel}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

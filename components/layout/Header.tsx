@@ -16,15 +16,15 @@ const Header: React.FC = () => {
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      // Search for the actual query entered by the user
+      // Search using fuzzy matching
       const donor = getDonorProfileByName(query.trim());
       if (donor) {
         setSelectedDonor(donor);
         setShowDonorProfile(true);
         setSearchQuery(''); // Clear search after opening profile
       } else {
-        // If no exact match found, show an alert or could implement fuzzy search
-        alert(`No donor profile found for "${query.trim()}". Try: Sofia Borden, Rachel Gideon, Jeff Wernsing, Jack Simms, Tom Newhouse, or Joseph Banks.`);
+        // Provide helpful suggestions for available profiles
+        alert(`No donor profile found for "${query.trim()}". \n\nTry searching for:\n• Sofia Borden\n• Rachel Gideon\n• Jeff Wernsing (or Jeffrey)\n• Jack Simms\n• Tom Newhouse (or Thomas)\n• Joseph Banks (or Joe)\n\nFuzzy search supports partial names and nicknames!`);
       }
     }
   };

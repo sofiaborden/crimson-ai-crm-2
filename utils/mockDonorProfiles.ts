@@ -1424,32 +1424,113 @@ export const mockDonorProfiles: Record<string, Donor> = {
 };
 
 // Helper function to get donor profile by name
-export const getDonorProfileByName = (name: string): Donor | null => {
+// Fuzzy search function to calculate similarity between strings
+const calculateSimilarity = (str1: string, str2: string): number => {
   // Create a mapping of display names to profile keys
-  const nameMapping: Record<string, string> = {
-    'Sarah J.': 'sarah-j',
-    'Sarah Johnson': 'sarah-j',
-    'Michael R.': 'michael-r',
-    'Michael Rodriguez': 'michael-r',
-    'Jennifer L.': 'jennifer-l',
-    'Jennifer Liu': 'jennifer-l',
-    'David K.': 'david-k',
-    'David Kim': 'david-k',
-    'Lisa M.': 'lisa-m',
-    'Lisa Martinez': 'lisa-m',
-    'Joseph M. Banks': 'joseph-banks',
-    'Joseph Banks': 'joseph-banks',
-    'Margaret Banks': 'margaret-banks',
-    'Margaret M. Banks': 'margaret-banks',
-    'Ellen Banks': 'margaret-banks',
-    'Ms. Ellen Banks': 'margaret-banks',
-    'Sofia Borden': 'sofia-borden',
-    'Rachel Gideon': 'rachel-gideon',
-    'Jeff Wernsing': 'jeff-wernsing',
-    'Jack Simms': 'jack-simms',
-    'Tom Newhouse': 'tom-newhouse'
-  };
+  const s1 = str1.toLowerCase().trim().replace(/[.,]/g, ''); // Remove punctuation
+  const s2 = str2.toLowerCase().trim().replace(/[.,]/g, '');
 
-  const profileKey = nameMapping[name];
-  return profileKey ? mockDonorProfiles[profileKey] : null;
+  // Exact match
+  if (s1 === s2) return 1.0;
+
+  // Check if one string contains the other
+  if (s1.includes(s2) || s2.includes(s1)) return 0.9;
+
+  // Check for word matches (for names like "Jeff" matching "Jeffrey")
+  const words1 = s1.split(/\s+/).filter(w => w.length > 0);
+  const words2 = s2.split(/\s+/).filter(w => w.length > 0);
+
+  if (words1.length === 0 || words2.length === 0) return 0;
+
+  let matchingWords = 0;
+  let totalWords = Math.max(words1.length, words2.length);
+
+  for (const word1 of words1) {
+    let bestWordMatch = 0;
+    for (const word2 of words2) {
+      // Exact word match
+      if (word1 === word2) {
+        bestWordMatch = 1;
+        break;
+      }
+      // Partial word match (for nicknames like "Jeff" vs "Jeffrey")
+      if (word1.length >= 2 && word2.length >= 2) {
+        if (word1.startsWith(word2) || word2.startsWith(word1)) {
+          bestWordMatch = Math.max(bestWordMatch, 0.8);
+        }
+        // Handle common nickname patterns
+        else if ((word1 === 'jeff' && word2 === 'jeffrey') || (word1 === 'jeffrey' && word2 === 'jeff')) {
+          bestWordMatch = Math.max(bestWordMatch, 0.9);
+        }
+        else if ((word1 === 'tom' && word2 === 'thomas') || (word1 === 'thomas' && word2 === 'tom')) {
+          bestWordMatch = Math.max(bestWordMatch, 0.9);
+        }
+        else if ((word1 === 'joe' && word2 === 'joseph') || (word1 === 'joseph' && word2 === 'joe')) {
+          bestWordMatch = Math.max(bestWordMatch, 0.9);
+        }
+      }
+    }
+    matchingWords += bestWordMatch;
+  }
+
+  return matchingWords / totalWords;
+};
+
+export const getDonorProfileByName = (name: string): Donor | null => {
+  // Enhanced name mapping with fuzzy search support
+  const searchableNames = [
+    // Sofia Borden variations
+    { names: ['Sofia Borden', 'sofia borden', 'Sofia B', 'sofia b', 'Sofia', 'sofia'], key: 'sofia-borden' },
+
+    // Rachel Gideon variations
+    { names: ['Rachel Gideon', 'rachel gideon', 'Rachel G', 'rachel g', 'Rachel', 'rachel'], key: 'rachel-gideon' },
+
+    // Jeff Wernsing variations
+    { names: ['Jeff Wernsing', 'jeff wernsing', 'Jeffrey Wernsing', 'jeffrey wernsing', 'Jeff W', 'jeff w', 'Jeffrey', 'jeffrey', 'Jeff', 'jeff'], key: 'jeff-wernsing' },
+
+    // Jack Simms variations
+    { names: ['Jack Simms', 'jack simms', 'Jack S', 'jack s', 'Jack', 'jack'], key: 'jack-simms' },
+
+    // Tom Newhouse variations
+    { names: ['Tom Newhouse', 'tom newhouse', 'Thomas Newhouse', 'thomas newhouse', 'Tom N', 'tom n', 'Thomas', 'thomas', 'Tom', 'tom'], key: 'tom-newhouse' },
+
+    // Joseph Banks variations
+    { names: ['Joseph Banks', 'joseph banks', 'Joseph M. Banks', 'joseph m. banks', 'Joseph M Banks', 'joseph m banks', 'Joe Banks', 'joe banks', 'Joseph', 'joseph', 'Joe', 'joe'], key: 'joseph-banks' },
+
+    // Legacy names for backward compatibility
+    { names: ['Sarah J.', 'Sarah Johnson'], key: 'sarah-j' },
+    { names: ['Michael R.', 'Michael Rodriguez'], key: 'michael-r' },
+    { names: ['Jennifer L.', 'Jennifer Liu'], key: 'jennifer-l' },
+    { names: ['David K.', 'David Kim'], key: 'david-k' },
+    { names: ['Lisa M.', 'Lisa Martinez'], key: 'lisa-m' },
+    { names: ['Margaret Banks', 'Margaret M. Banks', 'Ellen Banks', 'Ms. Ellen Banks'], key: 'margaret-banks' }
+  ];
+
+  const searchTerm = name.trim();
+  let bestMatch: { key: string; score: number } | null = null;
+
+  // First, try exact matches
+  for (const entry of searchableNames) {
+    for (const searchName of entry.names) {
+      if (searchName.toLowerCase() === searchTerm.toLowerCase()) {
+        return mockDonorProfiles[entry.key] || null;
+      }
+    }
+  }
+
+  // Then try fuzzy matching
+  for (const entry of searchableNames) {
+    for (const searchName of entry.names) {
+      const similarity = calculateSimilarity(searchTerm, searchName);
+
+      // Consider it a match if similarity is above 0.6 (60%)
+      if (similarity >= 0.6) {
+        if (!bestMatch || similarity > bestMatch.score) {
+          bestMatch = { key: entry.key, score: similarity };
+        }
+      }
+    }
+  }
+
+  return bestMatch ? mockDonorProfiles[bestMatch.key] || null : null;
 };

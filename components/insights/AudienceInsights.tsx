@@ -438,10 +438,6 @@ const AudienceInsights: React.FC<AudienceInsightsProps> = ({ onSegmentClick }) =
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-base font-semibold text-gray-900">Revenue Pipeline</h3>
-                <button className="bg-crimson-blue hover:bg-crimson-dark-blue text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                  <SparklesIcon className="w-3 h-3" />
-                  Start Campaign
-                </button>
               </div>
 
               <div className="grid grid-cols-3 gap-4 mb-3">
@@ -464,81 +460,24 @@ const AudienceInsights: React.FC<AudienceInsightsProps> = ({ onSegmentClick }) =
               </div>
             </div>
 
-            {/* Quick Insights Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {/* Over-Performers */}
-              <div
-                className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:shadow-md hover:bg-green-50 hover:border-green-300 transition-all"
-                onClick={() => onSegmentClick?.('over-performers')}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <FireIcon className="w-4 h-4 text-green-500" />
-                  <h3 className="text-sm font-semibold text-gray-900">Over-Performers</h3>
-                </div>
-                <div className="text-lg font-bold text-gray-900">234</div>
-                <div className="text-xs text-gray-600">40% above capacity</div>
-                <div className="text-xs text-orange-600 mt-1">⚠️ Monitor fatigue</div>
-              </div>
-
-              {/* Expansion Opportunities */}
-              <div
-                className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:shadow-md hover:bg-blue-50 hover:border-blue-300 transition-all"
-                onClick={() => onSegmentClick?.('expansion-opportunities')}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUpIcon className="w-4 h-4 text-blue-500" />
-                  <h3 className="text-sm font-semibold text-gray-900">Expansion</h3>
-                </div>
-                <div className="text-lg font-bold text-gray-900">86</div>
-                <div className="text-xs text-gray-600">$121K potential</div>
-                <div className="text-xs text-blue-600 mt-1">📈 Ready to upgrade</div>
-              </div>
-
-              {/* Under-Performers - Untapped Potential */}
-              <div
-                className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-all"
-                onClick={() => onSegmentClick?.('under-performers')}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
-                    <h3 className="text-sm font-semibold text-gray-900">Under-Performers</h3>
-                  </div>
-                  <div className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
-                    High Risk
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">1,876 donors</div>
-                <div className="text-sm text-gray-600 mb-2">Giving 60% below capacity — $245K untapped potential</div>
-                <div className="text-xs text-gray-500">Diagnostic campaign needed</div>
-              </div>
-
-              {/* Audience Insights */}
-              <div
-                className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:shadow-md hover:bg-gray-50 transition-all"
-                onClick={() => onSegmentClick?.('audience-insights')}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <ChartBarIcon className="w-5 h-5 text-purple-500" />
-                    <h3 className="text-sm font-semibold text-gray-900">Audience Insights</h3>
-                  </div>
-                  <button className="text-purple-600 text-xs font-medium hover:text-purple-800">
-                    View Details →
-                  </button>
-                </div>
-                <div className="space-y-2 text-xs text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="w-3 h-3" />
-                    <span>Peak engagement: November & December</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <PhoneIcon className="w-3 h-3" />
-                    <span>Preferred channel: Phone (65%)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPinIcon className="w-3 h-3" />
-                    <span>Top states: TX, IL, FL</span>
+            {/* Audience Insights - Single Line */}
+            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ChartBarIcon className="w-4 h-4 text-purple-500" />
+                  <div className="flex items-center gap-4 text-xs text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <CalendarIcon className="w-3 h-3" />
+                      <span>Peak: Nov & Dec</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <PhoneIcon className="w-3 h-3" />
+                      <span>Phone (65%)</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MapPinIcon className="w-3 h-3" />
+                      <span>TX, IL, FL</span>
+                    </div>
                   </div>
                 </div>
               </div>

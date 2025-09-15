@@ -306,11 +306,11 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ showPopoutButton = true }) =>
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 min-h-0">
-            <div className="bg-white rounded-lg border border-gray-200 h-full overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="bg-white rounded-lg border border-gray-200 h-full overflow-y-auto max-h-full">
               {activeTab === 'donations' ? (
                 // Donations Feed
-                <div className="space-y-0">
+                <div className="space-y-0 pb-4 h-full overflow-y-auto">
                   {recentDonations.map((donation, index) => (
                     <div
                       key={donation.id}
@@ -354,7 +354,7 @@ const LiveTracker: React.FC<LiveTrackerProps> = ({ showPopoutButton = true }) =>
                 </div>
               ) : (
                 // Actions Feed
-                <div className="space-y-0">
+                <div className="space-y-0 pb-4 h-full overflow-y-auto">
                   {recentActions.map((action, index) => (
                     <div
                       key={action.id}

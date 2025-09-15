@@ -11,6 +11,7 @@ import SmartListBuilder from '../ui/SmartListBuilder';
 import CampaignBuilder from '../ui/CampaignBuilder';
 import AudienceInsights from '../insights/AudienceInsights';
 
+
 import {
   ArrowPathIcon,
   LightBulbIcon,
@@ -51,7 +52,6 @@ interface Segment {
   potentialRevenue: number;
   inProgressRevenue: number;
   realizedRevenue: number;
-  suggestedAction: string;
   icon: React.ReactElement;
   lastUpdated?: string;
   trend?: 'up' | 'down' | 'stable';
@@ -68,7 +68,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 113000,
     inProgressRevenue: 18500, // 247 donors in DialR campaigns
     realizedRevenue: 4200, // 58 donors converted so far
-    suggestedAction: 'Launch call/text reactivation campaign targeting $72 avg gift. Add to DialR for personalized outreach or push to MailChimp for win-back series.',
     icon: <ArrowPathIcon className="w-5 h-5" />,
     lastUpdated: '2 hours ago',
     trend: 'up',
@@ -83,7 +82,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 21300,
     inProgressRevenue: 8900, // 89 donors in active campaigns
     realizedRevenue: 2100, // 12 donors upgraded
-    suggestedAction: 'Send upgrade ask emails & calls targeting $250+ gifts (current avg: $180). Push to MailChimp for A/B testing different ask amounts.',
     icon: <TrendingUpIcon className="w-5 h-5" />,
     lastUpdated: '4 hours ago',
     trend: 'up',
@@ -98,7 +96,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 9200,
     inProgressRevenue: 1800, // 72 donors in monthly giving signup flow
     realizedRevenue: 650, // 26 donors converted to monthly
-    suggestedAction: 'Invite to monthly giving program with $25/month ask (based on $27 avg gift). Create targeted segment for sustained giving conversion.',
     icon: <HeartIcon className="w-5 h-5" />,
     lastUpdated: '1 day ago',
     trend: 'stable',
@@ -113,7 +110,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 6500,
     inProgressRevenue: 2200, // 62 donors in welcome sequence
     realizedRevenue: 1100, // 31 donors made 2nd gift
-    suggestedAction: 'Send welcome series + 2nd gift ask within 7 days (optimal conversion window). Push to MailChimp for automated welcome sequence.',
     icon: <StarIcon className="w-5 h-5" />,
     lastUpdated: '6 hours ago',
     trend: 'up',
@@ -128,7 +124,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 104000,
     inProgressRevenue: 15200, // 38 donors with scheduled meetings
     realizedRevenue: 8900, // 18 donors made major gifts
-    suggestedAction: 'Schedule major donor calls/events targeting $500+ gifts (capacity analysis shows $343 avg potential). Add to DialR for gift officer assignment.',
     icon: <MapPinIcon className="w-5 h-5" />,
     lastUpdated: '3 hours ago',
     trend: 'up',
@@ -143,7 +138,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 5900,
     inProgressRevenue: 1200, // 37 donors in thank you sequence
     realizedRevenue: 800, // 24 donors made 2nd gift
-    suggestedAction: 'Send thank you + 2nd ask appeal within 48 hours (highest conversion rate). Push to MailChimp for automated stewardship sequence.',
     icon: <UserIcon className="w-5 h-5" />,
     lastUpdated: '5 hours ago',
     trend: 'up',
@@ -158,7 +152,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 6000,
     inProgressRevenue: 3400, // 4 donors assigned to gift officers
     realizedRevenue: 1700, // 2 donors made major gifts
-    suggestedAction: 'Assign to gift officer for personalized outreach targeting $857 avg capacity. Create high-priority segment for immediate follow-up.',
     icon: <TrophyIcon className="w-5 h-5" />,
     lastUpdated: '1 day ago',
     trend: 'up',
@@ -173,7 +166,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 14800,
     inProgressRevenue: 4200, // 218 donors in renewal campaigns
     realizedRevenue: 2800, // 145 donors renewed
-    suggestedAction: 'Send renewal reminders + stewardship calls within next 30 days (predicted giving window). Add to DialR for systematic outreach.',
     icon: <BookmarkIcon className="w-5 h-5" />,
     lastUpdated: '8 hours ago',
     trend: 'stable',
@@ -188,7 +180,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 89000,
     inProgressRevenue: 22500, // 45 donors in major gift cultivation
     realizedRevenue: 12300, // 21 donors upgraded
-    suggestedAction: 'Upgrade ask strategy targeting $500+ gifts (current avg: $285). Create VIP segment for exclusive stewardship and major gift cultivation.',
     icon: <SparklesIcon className="w-5 h-5" />,
     lastUpdated: '2 hours ago',
     trend: 'up',
@@ -203,7 +194,6 @@ const initialSegments: Segment[] = [
     potentialRevenue: 156000,
     inProgressRevenue: 18700, // 225 donors in diagnostic campaigns
     realizedRevenue: 5200, // 62 donors re-engaged
-    suggestedAction: 'Diagnostic campaign to identify barriers. A/B test messaging approaches and create re-engagement segment for targeted outreach.',
     icon: <UserGroupIcon className="w-5 h-5" />,
     lastUpdated: '12 hours ago',
     trend: 'down',
@@ -225,7 +215,7 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
   const [showCampaignBuilder, setShowCampaignBuilder] = useState(false);
 
   // Sorting state
-  const [sortField, setSortField] = useState<'name' | 'count' | 'revenue' | null>(null);
+  const [sortField, setSortField] = useState<'name' | 'description' | 'count' | 'potentialRevenue' | 'inProgressRevenue' | 'realizedRevenue' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Load custom segments on mount and listen for new ones
@@ -241,7 +231,6 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
         potentialRevenue: Math.round(seg.count * 75),
         inProgressRevenue: 0,
         realizedRevenue: 0,
-        suggestedAction: `Custom segment: ${seg.description || 'Manual segment created from search results'}`,
         icon: <UserGroupIcon className="w-5 h-5" />,
         lastUpdated: 'Just now',
         trend: 'stable' as const,
@@ -302,7 +291,6 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
       potentialRevenue: Math.round(segmentData.count * 75), // Estimate $75 avg potential
       inProgressRevenue: 0,
       realizedRevenue: 0,
-      suggestedAction: `Custom segment: ${segmentData.description || 'Manual segment created from search results'}`,
       icon: <UserGroupIcon className="w-5 h-5" />,
       lastUpdated: 'Just now',
       trend: 'stable' as const,
@@ -312,7 +300,7 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
     setSegments(prev => [newSegment, ...prev]);
   };
 
-  const handleSort = (field: 'name' | 'count' | 'revenue') => {
+  const handleSort = (field: 'name' | 'description' | 'count' | 'potentialRevenue' | 'inProgressRevenue' | 'realizedRevenue') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -331,13 +319,25 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
         aValue = a.funName.toLowerCase();
         bValue = b.funName.toLowerCase();
         break;
+      case 'description':
+        aValue = a.originalName.toLowerCase();
+        bValue = b.originalName.toLowerCase();
+        break;
       case 'count':
         aValue = a.count;
         bValue = b.count;
         break;
-      case 'revenue':
+      case 'potentialRevenue':
         aValue = a.potentialRevenue;
         bValue = b.potentialRevenue;
+        break;
+      case 'inProgressRevenue':
+        aValue = a.inProgressRevenue;
+        bValue = b.inProgressRevenue;
+        break;
+      case 'realizedRevenue':
+        aValue = a.realizedRevenue;
+        bValue = b.realizedRevenue;
         break;
       default:
         return 0;
@@ -355,7 +355,7 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
       {/* Smart Alerts */}
       <SmartAlerts />
 
-      {/* Segment Performance - Top Priority */}
+      {/* Segment Performance Summary - Keep the useful summary */}
       <div>
         <AudienceInsights onSegmentClick={handleSegmentClick} />
       </div>
@@ -366,60 +366,22 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
 
 
 
-      {/* Quick Actions Bar */}
-      <Card className="bg-gradient-to-r from-crimson-blue to-crimson-red text-white">
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          <div>
-            <h3 className="font-bold text-lg flex items-center gap-2">
-              <SparklesIcon className="w-5 h-5" />
-              Quick Actions
-            </h3>
-            <p className="text-sm opacity-90">Take immediate action on your highest-value segments</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <ActionButton
-              type="call"
-              phoneNumber="+15551234567"
-              className="bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 font-medium shadow-sm"
-              size="sm"
-            >
-              <PhoneIcon className="w-4 h-4 mr-1" />
-              Call Top 10 Major Donors
-            </ActionButton>
-            <ActionButton
-              type="email"
-              email="comeback-crew@campaign.com"
-              subject="We Miss You! Come Back to Our Campaign"
-              body="Hi there! We noticed you haven't been active lately and wanted to reach out..."
-              className="bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 font-medium shadow-sm"
-              size="sm"
-            >
-              <EnvelopeIcon className="w-4 h-4 mr-1" />
-              Email Comeback Crew (1,571)
-            </ActionButton>
-            <Button
-              className="bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 font-medium shadow-sm"
-              size="sm"
-              onClick={() => setShowPredictiveScoring(!showPredictiveScoring)}
-            >
-              <CurrencyDollarIcon className="w-4 h-4 mr-1" />
-              Generate Ask Amounts
-            </Button>
-            <ActionButton
-              type="export"
-              className="bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 font-medium shadow-sm"
-              size="sm"
-            >
-              <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
-              Export All Segments
-            </ActionButton>
-          </div>
-        </div>
-      </Card>
+      {/* Removed Quick Actions section */}
 
 
 
       <Card>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Smart Segments</h3>
+          <ActionButton
+            type="export"
+            className="bg-crimson-blue text-white hover:bg-crimson-dark-blue border border-crimson-blue font-medium shadow-sm"
+            size="sm"
+          >
+            <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
+            Export All Segments
+          </ActionButton>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -437,7 +399,19 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
                     )}
                   </div>
                 </th>
-                <th className="text-left py-3 px-4 font-semibold text-text-primary">Description</th>
+                <th
+                  className="text-left py-3 px-4 font-semibold text-text-primary cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleSort('description')}
+                >
+                  <div className="flex items-center gap-1">
+                    Description
+                    {sortField === 'description' && (
+                      <span className="text-crimson-blue">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
+                </th>
                 <th
                   className="text-center py-3 px-4 font-semibold text-text-primary cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => handleSort('count')}
@@ -451,25 +425,48 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
                     )}
                   </div>
                 </th>
-                <th className="text-center py-3 px-4 font-semibold text-text-primary">
+                <th
+                  className="text-center py-3 px-4 font-semibold text-text-primary cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleSort('potentialRevenue')}
+                >
                   <div className="flex items-center justify-center gap-1">
                     <CurrencyDollarIcon className="w-4 h-4" />
                     Potential
+                    {sortField === 'potentialRevenue' && (
+                      <span className="text-crimson-blue">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
                   </div>
                 </th>
-                <th className="text-center py-3 px-4 font-semibold text-text-primary">
+                <th
+                  className="text-center py-3 px-4 font-semibold text-text-primary cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleSort('inProgressRevenue')}
+                >
                   <div className="flex items-center justify-center gap-1">
                     <ClockIcon className="w-4 h-4" />
                     In Progress
+                    {sortField === 'inProgressRevenue' && (
+                      <span className="text-crimson-blue">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
                   </div>
                 </th>
-                <th className="text-center py-3 px-4 font-semibold text-text-primary">
+                <th
+                  className="text-center py-3 px-4 font-semibold text-text-primary cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleSort('realizedRevenue')}
+                >
                   <div className="flex items-center justify-center gap-1">
                     <CheckCircleIcon className="w-4 h-4" />
                     Realized
+                    {sortField === 'realizedRevenue' && (
+                      <span className="text-crimson-blue">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
                   </div>
                 </th>
-                <th className="text-left py-3 px-4 font-semibold text-text-primary">Suggested Action</th>
                 <th className="text-center py-3 px-4 font-semibold text-text-primary">Actions</th>
               </tr>
             </thead>
@@ -525,7 +522,7 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
                   </td>
                   <td className="py-4 px-4 text-center">
                     <div className="group relative">
-                      <span className="font-bold text-lg text-blue-600 cursor-help">
+                      <span className="font-bold text-lg text-crimson-blue cursor-help">
                         ${segment.potentialRevenue.toLocaleString()}
                       </span>
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-2 px-3 whitespace-nowrap z-10">
@@ -535,7 +532,7 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
                   </td>
                   <td className="py-4 px-4 text-center">
                     <div className="group relative">
-                      <span className="font-bold text-lg text-orange-600 cursor-help">
+                      <span className="font-bold text-lg text-yellow-600 cursor-help">
                         ${segment.inProgressRevenue.toLocaleString()}
                       </span>
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-2 px-3 whitespace-nowrap z-10">
@@ -558,14 +555,6 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-text-secondary">{segment.suggestedAction}</p>
-                      {segment.lastUpdated && (
-                        <p className="text-xs text-gray-400">Updated {segment.lastUpdated}</p>
-                      )}
-                    </div>
-                  </td>
                   <td className="py-4 px-4 text-center">
                     <ActionsDropdown
                       segmentId={segment.id}
@@ -584,141 +573,7 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
 
 
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card title="Segment Performance" className="lg:col-span-2">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div>
-                <h5 className="font-semibold text-green-800">Highest Potential Revenue</h5>
-                <p className="text-sm text-green-600">Comeback Crew - ~$113,000 potential</p>
-              </div>
-              <SparklesIcon className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div>
-                <h5 className="font-semibold text-blue-800">Major Gift Opportunity</h5>
-                <p className="text-sm text-blue-600">Neighborhood MVPs - ~$104,000 potential</p>
-              </div>
-              <SparklesIcon className="w-6 h-6 text-blue-600" />
-            </div>
-            <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <div>
-                <h5 className="font-semibold text-orange-800">Biggest Missed Opportunity</h5>
-                <p className="text-sm text-orange-600">Under-Performers - $156,000 untapped potential</p>
-              </div>
-              <CurrencyDollarIcon className="w-6 h-6 text-orange-600" />
-            </div>
-            <div className="flex justify-between items-center p-3 bg-purple-50 border border-purple-200 rounded-lg">
-              <div>
-                <h5 className="font-semibold text-purple-800">Hidden Gems</h5>
-                <p className="text-sm text-purple-600">Over-Performers - 234 donors ready for major gift asks</p>
-              </div>
-              <SparklesIcon className="w-6 h-6 text-purple-600" />
-            </div>
-            <div className="flex justify-between items-center p-3 bg-purple-50 border border-purple-200 rounded-lg">
-              <div>
-                <h5 className="font-semibold text-purple-800">Largest Segment</h5>
-                <p className="text-sm text-purple-600">Comeback Crew - 1,571 donors</p>
-              </div>
-              <SparklesIcon className="w-6 h-6 text-purple-600" />
-            </div>
-            <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <div>
-                <h5 className="font-semibold text-orange-800">High-Value, Low Volume</h5>
-                <p className="text-sm text-orange-600">Quiet Giants - 7 donors, ~$6,000 potential</p>
-              </div>
-              <SparklesIcon className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </Card>
-
-        <div className="space-y-6">
-          <Card title="Power Actions">
-            <div className="space-y-3">
-              <ActionButton
-                type="email"
-                email="all-segments@campaign.com"
-                subject="Multi-Segment Campaign Launch"
-                body="Launching coordinated campaign across all segments..."
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white flex items-center justify-center gap-2"
-              >
-                <SparklesIcon className="w-4 h-4" />
-                Launch Multi-Segment Campaign
-              </ActionButton>
-              <Button
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white flex items-center justify-center gap-2"
-                onClick={() => setShowPredictiveScoring(!showPredictiveScoring)}
-              >
-                <CurrencyDollarIcon className="w-4 h-4" />
-                Generate All Ask Amounts
-              </Button>
-              <ActionButton
-                type="export"
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white flex items-center justify-center gap-2"
-              >
-                <PhoneIcon className="w-4 h-4" />
-                Create Call Lists
-              </ActionButton>
-              <ActionButton
-                type="export"
-                variant="secondary"
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <ArrowDownTrayIcon className="w-4 h-4" />
-                Export to Excel
-              </ActionButton>
-              <Button
-                variant="secondary"
-                className="w-full flex items-center justify-center gap-2"
-                onClick={() => {
-                  setSelectedSegment({ id: 'all', name: 'All Segments' });
-                  setShowCallScript(true);
-                }}
-              >
-                <EnvelopeIcon className="w-4 h-4" />
-                Email Templates
-              </Button>
-            </div>
-          </Card>
-          
-          <Card title="AI Recommendations">
-            <div className="space-y-3 text-sm">
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-yellow-800"><strong>Priority Action:</strong> Call "Neighborhood MVPs" first - highest revenue per donor (~$343 each).</p>
-                  </div>
-                  <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs">Do It</Button>
-                </div>
-              </div>
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-blue-800"><strong>Best Timing:</strong> "Comeback Crew" shows 40% higher engagement on Tuesdays at 10 AM.</p>
-                  </div>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs">Schedule</Button>
-                </div>
-              </div>
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-green-800"><strong>Smart Combo:</strong> Combine "First Gift Friends" + "New Faces Welcome" for 67% higher retention.</p>
-                  </div>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs">Create</Button>
-                </div>
-              </div>
-              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-purple-800"><strong>Hot Lead:</strong> 3 "Quiet Giants" haven't been contacted in 6+ months. Immediate opportunity!</p>
-                  </div>
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs">Call Now</Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
+      {/* Removed Segment Performance panel */}
 
       {/* Predictive Scoring */}
       {showPredictiveScoring && (
@@ -751,7 +606,6 @@ const SegmentsDashboard: React.FC<SegmentsDashboardProps> = ({ selectedSegmentId
               potentialRevenue: segment.potentialRevenue,
               inProgressRevenue: segment.inProgressRevenue,
               realizedRevenue: segment.realizedRevenue,
-              suggestedAction: segment.suggestedAction,
               trend: segment.trend,
               lastUpdated: segment.lastUpdated
             } : undefined;

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { XMarkIcon, SparklesIcon, FlagIcon, FunnelIcon, EyeIcon } from '../../constants';
 import Button from '../ui/Button';
-import PeopleSearchFilters from '../search/PeopleSearchFilters';
+import SmartTagFilters from './SmartTagFilters';
 
 interface SmartTag {
   id?: string;
@@ -28,14 +28,15 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
     emoji: '🏷️',
     color: '#3B82F6',
     description: '',
-    filterDefinition: {},
+    filterDefinition: [],
     isActive: true
   });
   const [showFilters, setShowFilters] = useState(false);
   const [previewCount, setPreviewCount] = useState(0);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [previewTimeout, setPreviewTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const emojiOptions = ['💰', '🎯', '🚧', '⚡', '🕒', '🔥', '⭐', '🎪', '🎨', '🎯', '🏆', '🎁', '🌟', '💎', '🚀', '🎊', '🎉', '🏷️'];
+  const emojiOptions = ['💰', '🎯', '🚧', '⚡', '🕒', '🔥', '⭐', '🎪', '🎨', '🏆', '🎁', '🌟', '💎', '🚀', '🎊', '🎉', '🏷️', '📊'];
   const colorOptions = [
     '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', 
     '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
@@ -79,10 +80,30 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
     }, 1000);
   };
 
-  const handleFiltersChange = (filters: any) => {
+  const handleFiltersChange = useCallback((filters: any[]) => {
     setFormData(prev => ({ ...prev, filterDefinition: filters }));
-    handlePreview();
-  };
+
+    // Clear existing timeout
+    if (previewTimeout) {
+      clearTimeout(previewTimeout);
+    }
+
+    // Debounce the preview update to prevent infinite loops
+    const newTimeout = setTimeout(() => {
+      handlePreview();
+    }, 500);
+
+    setPreviewTimeout(newTimeout);
+  }, [previewTimeout]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (previewTimeout) {
+        clearTimeout(previewTimeout);
+      }
+    };
+  }, [previewTimeout]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -217,10 +238,9 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
 
                 {showFilters && (
                   <div className="mb-4">
-                    <PeopleSearchFilters
+                    <SmartTagFilters
                       onFiltersChange={handleFiltersChange}
                       initialFilters={formData.filterDefinition}
-                      compact={true}
                     />
                   </div>
                 )}

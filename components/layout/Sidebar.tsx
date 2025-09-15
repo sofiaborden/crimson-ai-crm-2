@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
   const navItems: NavItem[] = [
     { id: 'home', label: 'Home', icon: <HomeIcon className="w-5 h-5" /> },
     { id: 'people', label: 'People', icon: <UsersIcon className="w-5 h-5" /> },
-    { id: 'fundraising', label: 'Fundraising', icon: <FundraisingIcon className="w-5 h-5" /> },
+    { id: 'fundraising', label: 'Smart Segments', icon: <FundraisingIcon className="w-5 h-5" /> },
     { id: 'compliance', label: 'Compliance', icon: <ComplianceIcon className="w-5 h-5" /> },
     { id: 'treasury', label: 'Treasury', icon: <TreasuryIcon className="w-5 h-5" /> },
     { id: 'data-entry', label: 'Data Entry', icon: <DataEntryIcon className="w-5 h-5" /> },

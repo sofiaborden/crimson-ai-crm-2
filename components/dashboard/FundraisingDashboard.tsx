@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import SegmentsDashboard from './SegmentsDashboard';
@@ -27,6 +27,19 @@ const FundraisingDashboard: React.FC<FundraisingDashboardProps> = ({ segmentId }
   const [currentView, setCurrentView] = useState<FundraisingView>(segmentId ? 'segments' : 'overview');
   const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
   const [showDonorProfile, setShowDonorProfile] = useState(false);
+
+  // Listen for navigation events from Smart Segments widget
+  useEffect(() => {
+    const handleNavigateToSegments = () => {
+      setCurrentView('segments');
+    };
+
+    window.addEventListener('navigateToSegments', handleNavigateToSegments);
+
+    return () => {
+      window.removeEventListener('navigateToSegments', handleNavigateToSegments);
+    };
+  }, []);
 
   const handleDonorClick = (donorName: string) => {
     const donor = getDonorProfileByName(donorName);
@@ -177,7 +190,7 @@ const FundraisingDashboard: React.FC<FundraisingDashboardProps> = ({ segmentId }
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Fundraising</h1>
+          <h1 className="text-3xl font-bold text-text-primary">Smart Segments</h1>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -186,11 +199,11 @@ const FundraisingDashboard: React.FC<FundraisingDashboardProps> = ({ segmentId }
           >
             Overview
           </Button>
-          <Button 
+          <Button
             variant={currentView === 'segments' ? 'primary' : 'secondary'}
             onClick={() => setCurrentView('segments')}
           >
-            AI Segments
+            Smart Segments
           </Button>
           <Button 
             variant={currentView === 'campaigns' ? 'primary' : 'secondary'}
