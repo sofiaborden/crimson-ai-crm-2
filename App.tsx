@@ -11,6 +11,7 @@ import SearchDemo from './pages/SearchDemo';
 import DonorProfileDemo from './pages/DonorProfileDemo';
 import LayoutTestPage from './pages/layout-test';
 import LayoutTest2Page from './pages/layout-test-2';
+import LayoutTest3Page from './pages/layout-test-3';
 import { View, Donor } from './types';
 import { mockDonorProfiles } from './utils/mockDonorProfiles';
 
@@ -44,6 +45,8 @@ const App: React.FC = () => {
         return <LayoutTestPage />;
       case 'layout-test-2':
         return <LayoutTest2Page />;
+      case 'layout-test-3':
+        return <LayoutTest3Page />;
       default:
         return (
             <div className="flex items-center justify-center h-full">

@@ -7,7 +7,9 @@ import SettingsModal from '../settings/SettingsModal';
 import { getDonorProfileByName } from '../../utils/mockDonorProfiles';
 import { Donor } from '../../types';
 
-const Header: React.FC = () => {
+interface HeaderProps {}
+
+const Header: React.FC<HeaderProps> = () => {
   const [showCrimsonGPT, setShowCrimsonGPT] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,6 +78,7 @@ const Header: React.FC = () => {
                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-crimson-red"></span>
                </span>
              </button>
+
              <button
                onClick={() => setShowSettings(true)}
                className="p-2 rounded-full hover:bg-base-200 text-slate-500 relative"
