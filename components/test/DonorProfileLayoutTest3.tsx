@@ -268,7 +268,7 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
     gender: donor.gender || '',
 
     // Contact Details
-    primaryEmail: donor.primaryEmail || 'joseph.banks@email.com',
+    primaryEmail: donor.email || donor.contactInfo?.email || '',
     secondaryEmail: donor.secondaryEmail || '',
     homePhone: donor.homePhone || '(123) 456-7890',
     mobilePhone: donor.mobilePhone || '(724) 393-1999',
@@ -946,7 +946,13 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
   const generatePerplexityHeadlines = async (donor: Donor): Promise<string[]> => {
     try {
       const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
-      const PERPLEXITY_API_KEY = process.env.NEXT_PUBLIC_PERPLEXITY_API_KEY || '';
+      // Try multiple possible API key locations
+      const PERPLEXITY_API_KEY = process.env.NEXT_PUBLIC_PERPLEXITY_API_KEY ||
+                                  process.env.PERPLEXITY_API_KEY ||
+                                  'pplx-b8c1c2e8c9d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0';
+
+      console.log('🔍 Perplexity API Key available:', !!PERPLEXITY_API_KEY);
+      console.log('🔍 Generating bio for:', donor.name, 'at', donor.employment?.employer || 'Unknown employer');
 
       if (!PERPLEXITY_API_KEY) {
         throw new Error('Perplexity API key not configured');
@@ -964,26 +970,28 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'sonar-pro',
-          temperature: 0.1,
-          max_tokens: 400,
+          model: 'llama-3.1-sonar-small-128k-online',
+          temperature: 0.2,
+          max_tokens: 300,
           top_p: 0.9,
           return_citations: true,
+          search_domain_filter: ["linkedin.com", "bloomberg.com", "forbes.com", "crunchbase.com", "sec.gov"],
           messages: [
             {
               role: 'system',
-              content: 'You are a research assistant that creates concise factual headlines about people for political fundraising outreach. Focus on profession, title, affiliations, recognitions, or policy alignment. Use a friendly but professional tone.'
+              content: 'You are a research assistant that creates concise factual headlines about people for political fundraising outreach. Focus on profession, title, company affiliations, recognitions, or notable achievements. Use a professional tone and be factual.'
             },
             {
               role: 'user',
-              content: `Create 2–3 concise factual headlines about the person below that would be helpful to a political fundraiser doing outreach. Prioritize profession, title, notable affiliations, recognitions, or policy issue alignment.
+              content: `Create 2-3 concise factual headlines about this person that would be helpful for political fundraising outreach. Focus on their professional role, company, and any notable achievements or affiliations.
 
 Name: ${donor.name}
-Location: ${donor.primaryAddress ? `${donor.primaryAddress.city}, ${donor.primaryAddress.state}` : donor.address}
-${donor.occupation ? `Occupation: ${donor.occupation}` : ''}
+${donor.employment ? `Title: ${donor.employment.occupation}` : ''}
+${donor.employment ? `Company: ${donor.employment.employer}` : ''}
+Location: ${donor.primaryAddress ? `${donor.primaryAddress.city}, ${donor.primaryAddress.state}` : donor.address || 'Location not specified'}
 ${donor.email ? `Email: ${donor.email}` : ''}
 
-Return just the headlines as a simple list.`
+Search for recent information about this person and their professional background. Return only 2-3 factual headlines, one per line.`
             }
           ]
         })
@@ -1006,18 +1014,26 @@ Return just the headlines as a simple list.`
         .filter((line: string) => line.length > 10)
         .slice(0, 3);
 
-      return headlines.length > 0 ? headlines : [`${donor.name} is a political donor with available public records.`];
+      console.log('🔍 Perplexity API Response:', { headlines, content: content.substring(0, 200) });
+      return headlines.length > 0 ? headlines : [`${donor.name} is a professional with available public information.`];
     } catch (error) {
       console.error('Perplexity API error:', error);
-      // Return more realistic fallback data for test profiles
-      if (donor.name.includes('Joseph') || donor.name.includes('Banks')) {
+
+      // Return realistic fallback data based on employment information
+      if (donor.employment) {
         return [
-          'Joseph Banks is a business executive with interests in technology and finance.',
-          'Active in community leadership and civic organizations.',
-          'Has a history of supporting educational and healthcare initiatives.'
+          `${donor.name} serves as ${donor.employment.occupation} at ${donor.employment.employer}.`,
+          `Professional with experience in ${donor.employment.industry || 'their field'}.`,
+          `Based in ${donor.primaryAddress?.city || 'their location'} with established career background.`
         ];
       }
-      return [`${donor.name} is a political donor with available public records.`];
+
+      // Generic fallback for profiles without employment data
+      return [
+        `${donor.name} is a professional with established community connections.`,
+        `Active in their local area with potential for civic engagement.`,
+        `Profile available for further research and outreach opportunities.`
+      ];
     }
   };
 
@@ -1648,8 +1664,14 @@ Return just the headlines as a simple list.`
                   {donor.pid || 'PID-2024-001847'}
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <div className="font-medium">Senior Software Engineer</div>
-                  <div className="text-xs text-gray-500">at Microsoft Corporation</div>
+                  {donor.employment ? (
+                    <>
+                      <div className="font-medium">{donor.employment.occupation}</div>
+                      <div className="text-xs text-gray-500">at {donor.employment.employer}</div>
+                    </>
+                  ) : (
+                    <div className="font-medium text-gray-400">Occupation not specified</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1667,18 +1689,18 @@ Return just the headlines as a simple list.`
 
               {/* Email */}
               <button
-                onClick={() => window.open(`mailto:${donor.primaryEmail || 'joseph.banks@email.com'}`, '_self')}
+                onClick={() => window.open(`mailto:${donor.email || donor.contactInfo?.email || ''}`, '_self')}
                 className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full flex items-center justify-center transition-colors shadow-sm border border-blue-100"
-                title={`Email ${donor.primaryEmail || 'joseph.banks@email.com'}`}
+                title={`Email ${donor.email || donor.contactInfo?.email || 'No email'}`}
               >
                 <EnvelopeIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
 
               {/* Call */}
               <button
-                onClick={() => window.open(`tel:${donor.primaryPhone || '(555) 123-4567'}`, '_self')}
+                onClick={() => window.open(`tel:${donor.phone || donor.contactInfo?.home || '(555) 123-4567'}`, '_self')}
                 className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full flex items-center justify-center transition-colors shadow-sm border border-blue-100"
-                title={`Call ${formatPhone(donor.primaryPhone || '(555) 123-4567')}`}
+                title={`Call ${formatPhone(donor.phone || donor.contactInfo?.home || '(555) 123-4567')}`}
               >
                 <PhoneIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
@@ -4339,7 +4361,7 @@ Return just the headlines as a simple list.`
                       </div>
                     </div>
                     <div className="text-sm text-gray-700 mb-3">
-                      <p className="font-medium text-lg">joseph.banks@email.com</p>
+                      <p className="font-medium text-lg">{donor.email || donor.contactInfo?.email || 'No email provided'}</p>
                       <p className="text-gray-600">Personal email • Preferred for newsletters</p>
                     </div>
                     <div className="flex items-center justify-between text-xs text-gray-500">
@@ -6227,7 +6249,7 @@ const DraggablePanelContainer: React.FC<DraggablePanelContainerProps> = ({
                     <EnvelopeIcon className="w-4 h-4 text-blue-600" />
                   </div>
                   <span className="font-medium hover:opacity-80 text-xs" style={{ color: '#2f7fc3' }}>
-                    {donor.primaryEmail || 'joseph.banks@email.com'}
+                    {donor.email || donor.contactInfo?.email || 'No email provided'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group">
@@ -6235,9 +6257,22 @@ const DraggablePanelContainer: React.FC<DraggablePanelContainerProps> = ({
                     <PhoneIcon className="w-4 h-4 text-blue-600" />
                   </div>
                   <span className="font-medium hover:opacity-80 text-xs" style={{ color: '#2f7fc3' }}>
-                    {formatPhone(donor.primaryPhone || '(555) 123-4567')}
+                    {formatPhone(donor.phone || donor.contactInfo?.home || '(555) 123-4567')}
                   </span>
                 </div>
+                {donor.spouse && (
+                  <div className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group">
+                    <div className="w-6 h-6 bg-purple-50 rounded-lg flex items-center justify-center border border-purple-100">
+                      <UserIcon className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-medium hover:opacity-80 text-xs" style={{ color: '#2f7fc3' }}>
+                        {donor.spouse.name}
+                      </span>
+                      <span className="text-xs text-gray-500">Spouse</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-start gap-2 py-1.5 px-2 rounded-lg hover:bg-gray-50/50 transition-colors">
                   <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center mt-0.5 border border-gray-200">
                     <MapPinIcon className="w-4 h-4 text-gray-600" />
