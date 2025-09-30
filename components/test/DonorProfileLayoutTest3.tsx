@@ -942,98 +942,75 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
     }
   };
 
-  // Generate Perplexity headlines with timeout
+  // Generate Perplexity headlines using backend API route
   const generatePerplexityHeadlines = async (donor: Donor): Promise<string[]> => {
     try {
-      const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
-      // Try multiple possible API key locations
-      const PERPLEXITY_API_KEY = process.env.NEXT_PUBLIC_PERPLEXITY_API_KEY ||
-                                  process.env.PERPLEXITY_API_KEY ||
-                                  'pplx-b8c1c2e8c9d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0';
-
-      console.log('🔍 Perplexity API Key available:', !!PERPLEXITY_API_KEY);
       console.log('🔍 Generating bio for:', donor.name, 'at', donor.employment?.employer || 'Unknown employer');
 
-      if (!PERPLEXITY_API_KEY) {
-        throw new Error('Perplexity API key not configured');
-      }
-
-      // Create timeout promise
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Perplexity API timeout after 15 seconds')), 15000);
-      });
-
-      const fetchPromise = fetch(PERPLEXITY_API_URL, {
+      // Call our backend API server instead of Perplexity directly
+      const response = await fetch('http://localhost:3000/api/generate-bio', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-small-128k-online',
-          temperature: 0.2,
-          max_tokens: 300,
-          top_p: 0.9,
-          return_citations: true,
-          search_domain_filter: ["linkedin.com", "bloomberg.com", "forbes.com", "crunchbase.com", "sec.gov"],
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a research assistant that creates concise factual headlines about people for political fundraising outreach. Focus on profession, title, company affiliations, recognitions, or notable achievements. Use a professional tone and be factual.'
-            },
-            {
-              role: 'user',
-              content: `Create 2-3 concise factual headlines about this person that would be helpful for political fundraising outreach. Focus on their professional role, company, and any notable achievements or affiliations.
-
-Name: ${donor.name}
-${donor.employment ? `Title: ${donor.employment.occupation}` : ''}
-${donor.employment ? `Company: ${donor.employment.employer}` : ''}
-Location: ${donor.primaryAddress ? `${donor.primaryAddress.city}, ${donor.primaryAddress.state}` : donor.address || 'Location not specified'}
-${donor.email ? `Email: ${donor.email}` : ''}
-
-Search for recent information about this person and their professional background. Return only 2-3 factual headlines, one per line.`
-            }
-          ]
+          name: donor.name,
+          occupation: donor.employment?.occupation,
+          employer: donor.employment?.employer,
+          location: donor.primaryAddress ? `${donor.primaryAddress.city}, ${donor.primaryAddress.state}` : donor.address,
+          email: donor.email,
+          industry: donor.employment?.industry
         })
       });
 
-      const response = await Promise.race([fetchPromise, timeoutPromise]);
+      console.log('🔍 Backend API Response Status:', response.status);
 
       if (!response.ok) {
-        throw new Error(`Perplexity API error: ${response.status}`);
+        const errorData = await response.json();
+        console.error('🔍 Backend API Error:', errorData);
+        throw new Error(errorData.error || `Backend API error: ${response.status}`);
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '';
+      console.log('🔍 Backend API Success:', data);
 
-      // Parse headlines from response
-      const headlines = content
-        .split('\n')
-        .filter((line: string) => line.trim() && !line.startsWith('•') && !line.startsWith('-'))
-        .map((line: string) => line.replace(/^\d+\.\s*/, '').trim())
-        .filter((line: string) => line.length > 10)
-        .slice(0, 3);
+      if (data.success && data.headlines && data.headlines.length > 0) {
+        console.log('✅ Successfully generated headlines via backend API');
+        return data.headlines;
+      } else {
+        throw new Error('No headlines returned from backend API');
+      }
 
-      console.log('🔍 Perplexity API Response:', { headlines, content: content.substring(0, 200) });
-      return headlines.length > 0 ? headlines : [`${donor.name} is a professional with available public information.`];
+
     } catch (error) {
-      console.error('Perplexity API error:', error);
+      console.error('❌ Perplexity API error:', error);
+      console.error('❌ Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        name: error instanceof Error ? error.name : 'Unknown error type'
+      });
+
+      console.log('🔄 Using fallback headlines due to API error');
 
       // Return realistic fallback data based on employment information
       if (donor.employment) {
-        return [
+        const fallbackHeadlines = [
           `${donor.name} serves as ${donor.employment.occupation} at ${donor.employment.employer}.`,
           `Professional with experience in ${donor.employment.industry || 'their field'}.`,
           `Based in ${donor.primaryAddress?.city || 'their location'} with established career background.`
         ];
+        console.log('🔄 Employment-based fallback:', fallbackHeadlines);
+        return fallbackHeadlines;
       }
 
       // Generic fallback for profiles without employment data
-      return [
+      const genericFallback = [
         `${donor.name} is a professional with established community connections.`,
         `Active in their local area with potential for civic engagement.`,
         `Profile available for further research and outreach opportunities.`
       ];
+      console.log('🔄 Generic fallback:', genericFallback);
+      return genericFallback;
     }
   };
 
