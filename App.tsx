@@ -4,6 +4,7 @@ import { useState } from 'react';
 import MainLayout from './components/layout/MainLayout';
 import HomeDashboard from './components/dashboard/HomeDashboard';
 import DonorProfile from './components/profile/DonorProfile';
+import DonorProfileLayoutTest3 from './components/test/DonorProfileLayoutTest3';
 import ComplianceDashboard from './components/dashboard/ComplianceDashboard';
 import FundraisingDashboard from './components/dashboard/FundraisingDashboard';
 import PeopleDashboard from './components/dashboard/PeopleDashboard';
@@ -12,8 +13,10 @@ import DonorProfileDemo from './pages/DonorProfileDemo';
 import LayoutTestPage from './pages/layout-test';
 import LayoutTest2Page from './pages/layout-test-2';
 import LayoutTest3Page from './pages/layout-test-3';
+import TestSelectiveRollout from './pages/test-selective-rollout';
 import { View, Donor } from './types';
 import { mockDonorProfiles } from './utils/mockDonorProfiles';
+import { useTest3Layout } from './utils/profileLayoutSelector';
 
 
 const App: React.FC = () => {
@@ -21,13 +24,21 @@ const App: React.FC = () => {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [segmentId, setSegmentId] = useState<string | null>(null);
 
+
+
   const renderView = () => {
     switch (currentView) {
       case 'home':
         return <HomeDashboard setView={setCurrentView} setProfileId={setProfileId} setSegmentId={setSegmentId} />;
       case 'profile':
         if (profileId && mockDonorProfiles[profileId]) {
-          return <DonorProfile donor={mockDonorProfiles[profileId]} />;
+          const donor = mockDonorProfiles[profileId];
+          // Use Test3 layout for specific users, otherwise use production layout
+          if (useTest3Layout(donor)) {
+            return <DonorProfileLayoutTest3 donor={donor} />;
+          } else {
+            return <DonorProfile donor={donor} />;
+          }
         }
         // Fallback or show an error/list if no ID matches
         return <div>Profile not found.</div>;
@@ -47,6 +58,8 @@ const App: React.FC = () => {
         return <LayoutTest2Page />;
       case 'layout-test-3':
         return <LayoutTest3Page />;
+      case 'test-selective-rollout':
+        return <TestSelectiveRollout />;
       default:
         return (
             <div className="flex items-center justify-center h-full">

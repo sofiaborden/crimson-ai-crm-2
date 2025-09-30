@@ -1,6 +1,8 @@
 import React from 'react';
 import { Donor } from '../../types';
 import DonorProfile from '../profile/DonorProfile';
+import DonorProfileLayoutTest3 from '../test/DonorProfileLayoutTest3';
+import { useTest3Layout } from '../../utils/profileLayoutSelector';
 import { XMarkIcon } from '../../constants';
 
 interface DonorProfileModalProps {
@@ -29,7 +31,11 @@ const DonorProfileModal: React.FC<DonorProfileModalProps> = ({ donor, isOpen, on
         </div>
         
         <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
-          <DonorProfile donor={donor} />
+          {useTest3Layout(donor) ? (
+            <DonorProfileLayoutTest3 donor={donor} />
+          ) : (
+            <DonorProfile donor={donor} />
+          )}
         </div>
       </div>
     </div>
