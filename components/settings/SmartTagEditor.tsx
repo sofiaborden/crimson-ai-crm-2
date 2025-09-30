@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { XMarkIcon, SparklesIcon, FlagIcon, FunnelIcon, EyeIcon } from '../../constants';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { XMarkIcon, SparklesIcon, FlagIcon, FunnelIcon, EyeIcon, PlusIcon, ChevronDownIcon } from '../../constants';
 import Button from '../ui/Button';
 import SmartTagFilters from './SmartTagFilters';
+import ActionSelector from './ActionSelector';
+import TriggerConfigModal from './TriggerConfigModal';
 
 interface SmartTag {
   id?: string;
@@ -9,7 +11,11 @@ interface SmartTag {
   emoji: string;
   color: string;
   description: string;
+  category: 'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'clubs' | 'contact-flag' | 'membership' | 'volunteers' | 'board';
+  processingType: 'static' | 'dynamic';
   filterDefinition: any;
+  inclusionTrigger?: any;
+  removalTrigger?: any;
   count?: number;
   isActive: boolean;
   createdBy: string;
@@ -28,32 +34,94 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
     emoji: '🏷️',
     color: '#3B82F6',
     description: '',
+    category: 'smart-tags' as const,
+    processingType: 'static' as const,
     filterDefinition: [],
+    inclusionTrigger: null,
+    removalTrigger: null,
     isActive: true
   });
   const [showFilters, setShowFilters] = useState(false);
   const [previewCount, setPreviewCount] = useState(0);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [previewTimeout, setPreviewTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [showInclusionTrigger, setShowInclusionTrigger] = useState(false);
+  const [showRemovalTrigger, setShowRemovalTrigger] = useState(false);
+  const [showEmojiDropdown, setShowEmojiDropdown] = useState(false);
+  const [showColorDropdown, setShowColorDropdown] = useState(false);
+  const emojiDropdownRef = useRef<HTMLDivElement>(null);
+  const colorDropdownRef = useRef<HTMLDivElement>(null);
 
-  const emojiOptions = ['💰', '🎯', '🚧', '⚡', '🕒', '🔥', '⭐', '🎪', '🎨', '🏆', '🎁', '🌟', '💎', '🚀', '🎊', '🎉', '🏷️', '📊'];
+  const emojiOptions = ['💰', '🎯', '🚧', '⚡', '🕒', '🔥', '⭐', '🎪', '🎨', '🏆', '🎁', '🌟', '💎', '🚀', '🎊', '🎉', '🏷️', '📊', '👔', '🏥', '🏫', '🏢', '🎓', '🏛️', '🔍', '📌', '🤝'];
   const colorOptions = [
-    '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', 
+    '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
     '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
   ];
 
+  const categoryOptions = [
+    { value: 'smart-tags', label: 'Smart Tags' },
+    { value: 'flags', label: 'Flags' },
+    { value: 'keywords', label: 'Keywords' },
+    { value: 'attributes', label: 'Attributes' },
+    { value: 'clubs', label: 'Clubs' },
+    { value: 'contact-flag', label: 'Contact Flag' },
+    { value: 'membership', label: 'Membership' },
+    { value: 'volunteers', label: 'Volunteers' },
+    { value: 'board', label: 'Board' }
+  ];
+
+  // Suggest emoji and color based on category
+  const getSuggestedEmojiAndColor = (category: string) => {
+    const suggestions = {
+      'smart-tags': { emoji: '🎯', color: '#3B82F6' },
+      'flags': { emoji: '🏷️', color: '#EF4444' },
+      'keywords': { emoji: '🔍', color: '#10B981' },
+      'attributes': { emoji: '⭐', color: '#F59E0B' },
+      'clubs': { emoji: '🎪', color: '#8B5CF6' },
+      'contact-flag': { emoji: '📌', color: '#06B6D4' },
+      'membership': { emoji: '👔', color: '#84CC16' },
+      'volunteers': { emoji: '🤝', color: '#F97316' },
+      'board': { emoji: '🏛️', color: '#EC4899' }
+    };
+    return suggestions[category as keyof typeof suggestions] || { emoji: '🏷️', color: '#3B82F6' };
+  };
+
   useEffect(() => {
     if (tag) {
+      // Existing tag - use current values
       setFormData({
         name: tag.name,
         emoji: tag.emoji,
         color: tag.color,
         description: tag.description,
+        category: tag.category,
+        processingType: tag.processingType,
         filterDefinition: tag.filterDefinition,
+        inclusionTrigger: tag.inclusionTrigger || null,
+        removalTrigger: tag.removalTrigger || null,
         isActive: tag.isActive
       });
+    } else {
+      // New tag - apply suggestions based on default category
+      const suggestions = getSuggestedEmojiAndColor('smart-tags');
+      setFormData(prev => ({
+        ...prev,
+        emoji: suggestions.emoji,
+        color: suggestions.color
+      }));
     }
   }, [tag]);
+
+  // Handle category change to suggest new emoji/color for new tags
+  const handleCategoryChange = (newCategory: string) => {
+    const suggestions = getSuggestedEmojiAndColor(newCategory);
+    setFormData(prev => ({
+      ...prev,
+      category: newCategory as any,
+      // Only suggest new emoji/color if this is a new tag (no existing tag)
+      ...(tag ? {} : { emoji: suggestions.emoji, color: suggestions.color })
+    }));
+  };
 
   const handleSave = () => {
     if (!formData.name.trim()) {
@@ -105,9 +173,26 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
     };
   }, [previewTimeout]);
 
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiDropdownRef.current && !emojiDropdownRef.current.contains(event.target as Node)) {
+        setShowEmojiDropdown(false);
+      }
+      if (colorDropdownRef.current && !colorDropdownRef.current.contains(event.target as Node)) {
+        setShowColorDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
         {/* Header */}
         <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
           <div className="flex items-center justify-between">
@@ -131,71 +216,179 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
           </div>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)] relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Tag Configuration */}
-            <div className="space-y-6">
+            <div className="space-y-6 relative">
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <FlagIcon className="w-5 h-5 text-crimson-blue" />
-                  Tag Details
+                  Tag Configuration
                 </h3>
-                
+
                 <div className="space-y-4">
+                  {/* Title */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tag Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g., Big Givers, Prime Persuadables"
+                      placeholder="e.g., Big Givers, VIP Donor, Healthcare"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
                     />
                   </div>
 
+                  {/* Description */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Brief description of what this tag represents"
-                      rows={2}
+                      placeholder="Describe what this tag represents..."
+                      rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
                     />
                   </div>
 
+                  {/* Tag Category */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tag Category</label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
+                    >
+                      {categoryOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {!tag && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Emoji and color will be suggested based on category
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Emoji and Color - Visual Dropdowns */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    {/* Emoji Dropdown */}
+                    <div className="relative" ref={emojiDropdownRef}>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Emoji</label>
-                      <div className="grid grid-cols-6 gap-2">
-                        {emojiOptions.map((emoji) => (
-                          <button
-                            key={emoji}
-                            onClick={() => setFormData(prev => ({ ...prev, emoji }))}
-                            className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center text-lg hover:bg-gray-100 transition-colors ${
-                              formData.emoji === emoji ? 'border-crimson-blue bg-crimson-blue bg-opacity-10' : 'border-gray-300'
-                            }`}
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowEmojiDropdown(!showEmojiDropdown)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">{formData.emoji}</span>
+                          <span className="text-gray-700">
+                            {formData.emoji === '💰' ? 'Money' : formData.emoji === '🎯' ? 'Target' : formData.emoji === '🚧' ? 'Construction' : formData.emoji === '⚡' ? 'Lightning' : formData.emoji === '🕒' ? 'Clock' : formData.emoji === '🔥' ? 'Fire' : formData.emoji === '⭐' ? 'Star' : formData.emoji === '🎪' ? 'Circus' : formData.emoji === '🎨' ? 'Art' : formData.emoji === '🏆' ? 'Trophy' : formData.emoji === '🎁' ? 'Gift' : formData.emoji === '🌟' ? 'Sparkle' : formData.emoji === '💎' ? 'Diamond' : formData.emoji === '🚀' ? 'Rocket' : formData.emoji === '🎊' ? 'Confetti' : formData.emoji === '🎉' ? 'Party' : formData.emoji === '🏷️' ? 'Tag' : formData.emoji === '📊' ? 'Chart' : formData.emoji === '👔' ? 'Business' : formData.emoji === '🏥' ? 'Hospital' : formData.emoji === '🏫' ? 'School' : formData.emoji === '🏢' ? 'Office' : formData.emoji === '🎓' ? 'Graduate' : formData.emoji === '🏛️' ? 'Government' : formData.emoji === '🔍' ? 'Search' : formData.emoji === '📌' ? 'Pin' : formData.emoji === '🤝' ? 'Handshake' : ''}
+                          </span>
+                        </span>
+                        <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${showEmojiDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showEmojiDropdown && (
+                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[1000] p-3 max-w-xs">
+                          <div className="grid grid-cols-6 gap-1.5 max-h-32 overflow-y-auto">
+                            {emojiOptions.map((emoji) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, emoji }));
+                                  setShowEmojiDropdown(false);
+                                }}
+                                className={`w-7 h-7 rounded border flex items-center justify-center text-sm hover:bg-gray-50 transition-colors ${
+                                  formData.emoji === emoji ? 'border-crimson-blue bg-crimson-blue bg-opacity-10' : 'border-gray-200'
+                                }`}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    <div>
+                    {/* Color Dropdown */}
+                    <div className="relative" ref={colorDropdownRef}>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
-                      <div className="grid grid-cols-5 gap-2">
-                        {colorOptions.map((color) => (
-                          <button
-                            key={color}
-                            onClick={() => setFormData(prev => ({ ...prev, color }))}
-                            className={`w-8 h-8 rounded-lg border-2 transition-all ${
-                              formData.color === color ? 'border-gray-800 scale-110' : 'border-gray-300'
-                            }`}
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowColorDropdown(!showColorDropdown)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded border border-gray-300"
+                            style={{ backgroundColor: formData.color }}
+                          ></div>
+                          <span className="text-gray-700">
+                            {formData.color === '#3B82F6' ? 'Blue' : formData.color === '#10B981' ? 'Green' : formData.color === '#F59E0B' ? 'Yellow' : formData.color === '#EF4444' ? 'Red' : formData.color === '#8B5CF6' ? 'Purple' : formData.color === '#06B6D4' ? 'Cyan' : formData.color === '#84CC16' ? 'Lime' : formData.color === '#F97316' ? 'Orange' : formData.color === '#EC4899' ? 'Pink' : formData.color === '#6366F1' ? 'Indigo' : 'Custom'}
+                          </span>
+                        </span>
+                        <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${showColorDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showColorDropdown && (
+                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[1000] p-3 max-w-xs">
+                          <div className="grid grid-cols-5 gap-1.5">
+                            {colorOptions.map((color) => (
+                              <button
+                                key={color}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, color }));
+                                  setShowColorDropdown(false);
+                                }}
+                                className={`w-7 h-7 rounded border-2 transition-all ${
+                                  formData.color === color ? 'border-gray-800 scale-105' : 'border-gray-200'
+                                }`}
+                                style={{ backgroundColor: color }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Processing Type - Moved up for better space utilization */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Processing Type</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input
+                          type="radio"
+                          name="processingType"
+                          value="static"
+                          checked={formData.processingType === 'static'}
+                          onChange={(e) => setFormData(prev => ({ ...prev, processingType: e.target.value as any }))}
+                          className="text-crimson-blue focus:ring-crimson-blue"
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900 text-sm">📌 Static Flow</div>
+                          <div className="text-xs text-gray-600">Manual application</div>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                        <input
+                          type="radio"
+                          name="processingType"
+                          value="dynamic"
+                          checked={formData.processingType === 'dynamic'}
+                          onChange={(e) => setFormData(prev => ({ ...prev, processingType: e.target.value as any }))}
+                          className="text-crimson-blue focus:ring-crimson-blue"
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900 text-sm">⚡ Dynamic Flow</div>
+                          <div className="text-xs text-gray-600">Auto-processing</div>
+                        </div>
+                      </label>
                     </div>
                   </div>
 
@@ -203,9 +396,12 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Preview</h4>
                     <div className="flex items-center gap-3">
-                      <div 
+                      <div
                         className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-                        style={{ backgroundColor: `${formData.color}20`, border: `2px solid ${formData.color}30` }}
+                        style={{
+                          backgroundColor: formData.color + '20',
+                          border: '2px solid ' + formData.color + '30'
+                        }}
                       >
                         {formData.emoji}
                       </div>
@@ -219,64 +415,140 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
               </div>
             </div>
 
-            {/* Right Column - Filter Configuration */}
+            {/* Right Column - Dynamic Flow Configuration */}
             <div className="space-y-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              {formData.processingType === 'dynamic' ? (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <FunnelIcon className="w-5 h-5 text-crimson-blue" />
-                    Filter Criteria
+                    Dynamic Flow Configuration
                   </h3>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    {showFilters ? 'Hide Filters' : 'Show Filters'}
-                  </Button>
-                </div>
 
-                {showFilters && (
-                  <div className="mb-4">
-                    <SmartTagFilters
-                      onFiltersChange={handleFiltersChange}
-                      initialFilters={formData.filterDefinition}
-                    />
+                  <div className="space-y-4">
+                    {/* Inclusion Trigger Button */}
+                    <div>
+                      <Button
+                        onClick={() => setShowInclusionTrigger(true)}
+                        className="w-full bg-crimson-blue hover:bg-crimson-dark-blue text-white"
+                      >
+                        <PlusIcon className="w-4 h-4 mr-2" />
+                        Set Inclusion Criteria
+                      </Button>
+                      {formData.inclusionTrigger && (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="text-sm text-blue-800">
+                            ✓ Inclusion criteria configured
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Removal Trigger Button */}
+                    <div>
+                      <Button
+                        onClick={() => setShowRemovalTrigger(true)}
+                        variant="secondary"
+                        className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                      >
+                        <PlusIcon className="w-4 h-4 mr-2" />
+                        Set Removal Criteria
+                      </Button>
+                      {formData.removalTrigger && (
+                        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                          <div className="text-sm text-gray-700">
+                            ✓ Removal criteria configured
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info Box */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <div className="text-sm text-gray-700">
+                        <strong>Dynamic Flow:</strong> This tag will automatically add/remove contacts based on your criteria.
+                        Inclusion criteria determine who gets the tag, and removal criteria determine what happens when they no longer qualify.
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <FunnelIcon className="w-5 h-5 text-crimson-blue" />
+                    Static Configuration
+                  </h3>
 
-                {/* Preview Results */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <EyeIcon className="w-4 h-4" />
-                      Preview Results
-                    </h4>
+                  <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 text-center">
+                    <div className="text-gray-600">
+                      <div className="text-lg mb-2">📌</div>
+                      <div className="font-medium mb-1">Static Flow Selected</div>
+                      <div className="text-sm">
+                        This tag will be manually applied to contacts. No automatic processing will occur.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Filter Configuration for Static Tags */}
+              {formData.processingType === 'static' && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <FunnelIcon className="w-5 h-5 text-crimson-blue" />
+                      Filter Criteria (Optional)
+                    </h3>
                     <Button
                       size="sm"
-                      onClick={handlePreview}
-                      disabled={isLoadingPreview}
-                      className="bg-crimson-blue hover:bg-crimson-dark-blue"
+                      variant="secondary"
+                      onClick={() => setShowFilters(!showFilters)}
                     >
-                      {isLoadingPreview ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Loading...
-                        </div>
-                      ) : (
-                        'Refresh'
-                      )}
+                      {showFilters ? 'Hide Filters' : 'Show Filters'}
                     </Button>
                   </div>
-                  
-                  <div className="text-center py-4">
-                    <div className="text-2xl font-bold text-crimson-blue">
-                      {isLoadingPreview ? '...' : previewCount.toLocaleString()}
+
+                  {showFilters && (
+                    <div className="mb-4">
+                      <SmartTagFilters
+                        onFiltersChange={handleFiltersChange}
+                        initialFilters={formData.filterDefinition}
+                      />
                     </div>
-                    <div className="text-sm text-gray-600">contacts match this criteria</div>
+                  )}
+
+                  {/* Preview Results */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <EyeIcon className="w-4 h-4" />
+                        Preview Results
+                      </h4>
+                      <Button
+                        size="sm"
+                        onClick={handlePreview}
+                        disabled={isLoadingPreview}
+                        className="bg-crimson-blue hover:bg-crimson-dark-blue"
+                      >
+                        {isLoadingPreview ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Loading...
+                          </div>
+                        ) : (
+                          'Refresh'
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="text-center py-4">
+                      <div className="text-2xl font-bold text-crimson-blue">
+                        {isLoadingPreview ? '...' : previewCount.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-gray-600">contacts match this criteria</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -291,6 +563,120 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
           </Button>
         </div>
       </div>
+
+      {/* Inclusion Trigger Modal */}
+      {showInclusionTrigger && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Set Inclusion Criteria</h3>
+                <button
+                  onClick={() => setShowInclusionTrigger(false)}
+                  className="text-white hover:text-crimson-accent-blue transition-colors"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">
+                Define the criteria that will automatically add contacts to this tag.
+              </p>
+              <SmartTagFilters
+                onFiltersChange={(filters) => setFormData(prev => ({ ...prev, inclusionTrigger: filters }))}
+                initialFilters={formData.inclusionTrigger || []}
+              />
+              <div className="flex justify-end gap-3 mt-6">
+                <Button variant="secondary" onClick={() => setShowInclusionTrigger(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => setShowInclusionTrigger(false)}
+                  className="bg-crimson-blue hover:bg-crimson-dark-blue"
+                >
+                  Save Criteria
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Removal Trigger Modal */}
+      {showRemovalTrigger && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+            <div className="bg-gradient-to-r from-gray-600 to-gray-700 text-white p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Set Removal Criteria</h3>
+                <button
+                  onClick={() => setShowRemovalTrigger(false)}
+                  className="text-white hover:text-gray-200 transition-colors"
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">
+                Define what happens when contacts no longer meet the inclusion criteria.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    When contacts no longer meet inclusion criteria:
+                  </label>
+                  <select
+                    value={formData.removalTrigger?.action || 'remove_code'}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      removalTrigger: { ...prev.removalTrigger, action: e.target.value }
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
+                  >
+                    <option value="remove_code">Remove Code</option>
+                    <option value="mark_inactive">Mark Inactive</option>
+                    <option value="mark_inactive_with_date">Mark Inactive with End Date</option>
+                    <option value="add_action">Add Action</option>
+                  </select>
+                </div>
+
+                {formData.removalTrigger?.action === 'add_action' && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 mb-3">
+                      Select an action to perform when contacts are removed from this tag:
+                    </p>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        // This would open the ActionSelector
+                        console.log('Open ActionSelector for removal trigger');
+                      }}
+                    >
+                      <PlusIcon className="w-4 h-4 mr-2" />
+                      Add Action
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <Button variant="secondary" onClick={() => setShowRemovalTrigger(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => setShowRemovalTrigger(false)}
+                  className="bg-gray-600 hover:bg-gray-700"
+                >
+                  Save Criteria
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

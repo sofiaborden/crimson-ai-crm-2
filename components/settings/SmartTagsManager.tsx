@@ -10,7 +10,11 @@ interface SmartTag {
   emoji: string;
   color: string;
   description: string;
+  category: 'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'clubs' | 'contact-flag' | 'membership' | 'volunteers' | 'board';
+  processingType: 'static' | 'dynamic';
   filterDefinition: any;
+  inclusionTrigger?: any;
+  removalTrigger?: any;
   count: number;
   isActive: boolean;
   createdBy: string;
@@ -23,7 +27,11 @@ const SmartTagsManager: React.FC = () => {
   const [crimsonGPTPrompt, setCrimsonGPTPrompt] = useState('');
   const [isProcessingPrompt, setIsProcessingPrompt] = useState(false);
 
-  // Mock data for the 5 universal smart tags
+  // Filter states
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Mock data for unified smart tags including all people codes
   const [smartTags, setSmartTags] = useState<SmartTag[]>([
     {
       id: '1',
@@ -31,7 +39,10 @@ const SmartTagsManager: React.FC = () => {
       emoji: '💰',
       color: '#10B981',
       description: 'Donors who gave above $500 in the last 12 months',
+      category: 'smart-tags',
+      processingType: 'dynamic',
       filterDefinition: { totalGiving: { min: 500, period: '12months' } },
+      inclusionTrigger: { totalGiving: { min: 500, period: '12months' } },
       count: 1247,
       isActive: true,
       createdBy: 'System',
@@ -43,7 +54,10 @@ const SmartTagsManager: React.FC = () => {
       emoji: '🎯',
       color: '#8B5CF6',
       description: 'FL residents, Age 35-44, moderate political engagement',
+      category: 'smart-tags',
+      processingType: 'dynamic',
       filterDefinition: { state: 'FL', ageRange: [35, 44], politicalEngagement: 'moderate' },
+      inclusionTrigger: { state: 'FL', ageRange: [35, 44], politicalEngagement: 'moderate' },
       count: 892,
       isActive: true,
       createdBy: 'System',
@@ -55,7 +69,10 @@ const SmartTagsManager: React.FC = () => {
       emoji: '🚧',
       color: '#F59E0B',
       description: 'Individuals lacking voter registration data',
+      category: 'smart-tags',
+      processingType: 'dynamic',
       filterDefinition: { voterRegistration: 'unregistered' },
+      inclusionTrigger: { voterRegistration: 'unregistered' },
       count: 456,
       isActive: true,
       createdBy: 'System',
@@ -67,7 +84,10 @@ const SmartTagsManager: React.FC = () => {
       emoji: '⚡',
       color: '#3B82F6',
       description: 'First-time donors in last 6 months or recent upgrades',
+      category: 'smart-tags',
+      processingType: 'dynamic',
       filterDefinition: { firstGiftDate: { within: '6months' }, or: { upgradedGiving: true } },
+      inclusionTrigger: { firstGiftDate: { within: '6months' }, or: { upgradedGiving: true } },
       count: 324,
       isActive: true,
       createdBy: 'System',
@@ -79,13 +99,98 @@ const SmartTagsManager: React.FC = () => {
       emoji: '🕒',
       color: '#EF4444',
       description: 'Donors who haven\'t given in 18+ months',
+      category: 'smart-tags',
+      processingType: 'dynamic',
       filterDefinition: { lastGiftDate: { before: '18months' } },
+      inclusionTrigger: { lastGiftDate: { before: '18months' } },
       count: 678,
       isActive: false,
       createdBy: 'System',
       createdDate: '2024-01-15'
+    },
+    // Example Flags
+    {
+      id: '6',
+      name: 'VIP Donor',
+      emoji: '⭐',
+      color: '#F59E0B',
+      description: 'Major donor requiring special attention',
+      category: 'flags',
+      processingType: 'static',
+      filterDefinition: {},
+      count: 45,
+      isActive: true,
+      createdBy: 'Admin',
+      createdDate: '2024-01-20'
+    },
+    {
+      id: '7',
+      name: 'Board Member',
+      emoji: '👔',
+      color: '#3B82F6',
+      description: 'Current or former board member',
+      category: 'flags',
+      processingType: 'static',
+      filterDefinition: {},
+      count: 23,
+      isActive: true,
+      createdBy: 'Admin',
+      createdDate: '2024-01-22'
+    },
+    // Example Keywords
+    {
+      id: '8',
+      name: 'Healthcare',
+      emoji: '🏥',
+      color: '#10B981',
+      description: 'Works in healthcare industry',
+      category: 'keywords',
+      processingType: 'static',
+      filterDefinition: {},
+      count: 156,
+      isActive: true,
+      createdBy: 'User',
+      createdDate: '2024-02-01'
+    },
+    // Example Attributes
+    {
+      id: '9',
+      name: 'High Net Worth',
+      emoji: '💎',
+      color: '#8B5CF6',
+      description: 'Estimated net worth over $1M',
+      category: 'attributes',
+      processingType: 'static',
+      filterDefinition: {},
+      count: 89,
+      isActive: true,
+      createdBy: 'User',
+      createdDate: '2024-02-05'
     }
   ]);
+
+  // Category options for filtering
+  const categoryOptions = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'smart-tags', label: 'Smart Tags' },
+    { value: 'flags', label: 'Flags' },
+    { value: 'keywords', label: 'Keywords' },
+    { value: 'attributes', label: 'Attributes' },
+    { value: 'clubs', label: 'Clubs' },
+    { value: 'contact-flag', label: 'Contact Flag' },
+    { value: 'membership', label: 'Membership' },
+    { value: 'volunteers', label: 'Volunteers' },
+    { value: 'board', label: 'Board' }
+  ];
+
+  // Filter tags based on selected filters
+  const filteredTags = smartTags.filter(tag => {
+    const categoryMatch = categoryFilter === 'all' || tag.category === categoryFilter;
+    const statusMatch = statusFilter === 'all' ||
+      (statusFilter === 'active' && tag.isActive) ||
+      (statusFilter === 'inactive' && !tag.isActive);
+    return categoryMatch && statusMatch;
+  });
 
   const handleCrimsonGPTPrompt = async () => {
     if (!crimsonGPTPrompt.trim()) return;
@@ -130,13 +235,50 @@ const SmartTagsManager: React.FC = () => {
           </div>
           <div>
             <h3 className="text-xl font-semibold text-gray-900">Smart Tags</h3>
-            <p className="text-sm text-gray-600">AI-powered dynamic labels for your contacts</p>
+            <p className="text-sm text-gray-600">Unified system for all people codes and dynamic labels</p>
           </div>
         </div>
         <Button onClick={() => setShowEditor(true)} className="bg-crimson-blue hover:bg-crimson-dark-blue">
           <PlusIcon className="w-4 h-4 mr-2" />
-          Create Smart Tag
+          Create Tag
         </Button>
+      </div>
+
+      {/* Filter Controls */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Category:</label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
+            >
+              {categoryOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div className="ml-auto text-sm text-gray-600">
+            Showing {filteredTags.length} of {smartTags.length} tags
+          </div>
+        </div>
       </div>
 
       {/* CrimsonGPT Prompt Box */}
@@ -183,12 +325,12 @@ const SmartTagsManager: React.FC = () => {
       {/* Smart Tags List */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h4 className="font-medium text-gray-900">Active Smart Tags</h4>
-          <p className="text-sm text-gray-600">Dynamic labels that automatically update based on your data</p>
+          <h4 className="font-medium text-gray-900">Tags</h4>
+          <p className="text-sm text-gray-600">All people codes and dynamic labels in one unified system</p>
         </div>
-        
+
         <div className="divide-y divide-gray-200">
-          {smartTags.map((tag) => (
+          {filteredTags.map((tag) => (
             <div key={tag.id} className="p-6 hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -201,13 +343,23 @@ const SmartTagsManager: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-3 mb-1">
                       <h5 className="font-semibold text-gray-900">{tag.name}</h5>
-                      <Badge 
+                      <Badge
                         className={`text-xs ${tag.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
                       >
                         {tag.isActive ? 'Active' : 'Inactive'}
                       </Badge>
+                      <Badge
+                        className={`text-xs ${tag.processingType === 'dynamic' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}`}
+                      >
+                        {tag.processingType === 'dynamic' ? '⚡ Dynamic' : '📌 Static'}
+                      </Badge>
+                      <Badge
+                        className="text-xs bg-purple-100 text-purple-800 capitalize"
+                      >
+                        {tag.category.replace('-', ' ')}
+                      </Badge>
                       <span className="text-sm text-gray-500">
-                        {tag.count.toLocaleString()} contacts • ${((tag.count * 150) / 1000).toFixed(0)}K potential
+                        {tag.count.toLocaleString()} contacts
                       </span>
                     </div>
                     <p className="text-sm text-gray-600">{tag.description}</p>
