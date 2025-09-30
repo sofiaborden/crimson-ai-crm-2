@@ -48,6 +48,15 @@ export interface Donor {
       email: string;
       website: string;
   };
+  employment?: {
+    employer: string;
+    occupation: string;
+    industry?: string;
+  };
+  spouse?: {
+    name: string;
+    email?: string;
+  };
   aiBadges: string[];
   predictiveAsk: number;
   recurrencePrediction: string;

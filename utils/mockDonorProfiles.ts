@@ -1060,8 +1060,17 @@ export const mockDonorProfiles: Record<string, Donor> = {
     contactInfo: {
       home: '(407) 555-0123',
       work: '(407) 555-0124',
-      email: 'sofia.amaya87@gmail.com',
+      email: 'samaya@cmdi.com',
       website: 'linkedin.com/in/sofiaborden'
+    },
+    employment: {
+      employer: 'CMDI',
+      occupation: 'VP & Chief Experience Officer',
+      industry: 'Political Consulting'
+    },
+    spouse: {
+      name: 'Frank Borden',
+      email: 'frank.borden@email.com'
     },
     aiBadges: ['Executive Leader', 'Tech Professional', 'Strategic Donor'],
     predictiveAsk: 2500,
@@ -1123,7 +1132,7 @@ export const mockDonorProfiles: Record<string, Donor> = {
     pid: 'RG-2024-001',
     name: 'Rachel Gideon',
     photoUrl: 'https://i.pravatar.cc/150?u=rachel-gideon&gender=female',
-    email: 'rachel.gideon@cmdi.com',
+    email: 'rbyrant@cmdi.com',
     phone: '(202) 555-0125',
     address: 'Washington, DC 20001',
     primaryAddress: {
@@ -1136,8 +1145,17 @@ export const mockDonorProfiles: Record<string, Donor> = {
     contactInfo: {
       home: '(202) 555-0125',
       work: '(202) 555-0126',
-      email: 'rachel.gideon@cmdi.com',
+      email: 'rbyrant@cmdi.com',
       website: 'linkedin.com/in/rachelgideon'
+    },
+    employment: {
+      employer: 'CMDI',
+      occupation: 'Director of Client Relations',
+      industry: 'Political Consulting'
+    },
+    spouse: {
+      name: 'JT Gideon',
+      email: 'jt.gideon@email.com'
     },
     aiBadges: ['Client Relations Expert', 'DC Professional', 'Relationship Builder'],
     predictiveAsk: 1500,
@@ -1199,7 +1217,7 @@ export const mockDonorProfiles: Record<string, Donor> = {
     pid: 'JW-2024-001',
     name: 'Jeff Wernsing',
     photoUrl: 'https://i.pravatar.cc/150?u=jeff-wernsing',
-    email: 'jeff.wernsing@cmdi.com',
+    email: 'jwernsing@cmdi.com',
     phone: '(703) 555-0127',
     address: 'Arlington, VA 22201',
     primaryAddress: {
@@ -1212,8 +1230,13 @@ export const mockDonorProfiles: Record<string, Donor> = {
     contactInfo: {
       home: '(703) 555-0127',
       work: '(703) 555-0128',
-      email: 'jeff.wernsing@cmdi.com',
+      email: 'jwernsing@cmdi.com',
       website: 'linkedin.com/in/jeffwernsing'
+    },
+    employment: {
+      employer: 'CMDI',
+      occupation: 'SVP of Compliance Services',
+      industry: 'Political Consulting'
     },
     aiBadges: ['Compliance Expert', 'Senior Executive', 'Policy Advocate'],
     predictiveAsk: 3000,
@@ -1275,7 +1298,7 @@ export const mockDonorProfiles: Record<string, Donor> = {
     pid: 'JS-2024-001',
     name: 'Jack Simms',
     photoUrl: 'https://i.pravatar.cc/150?u=jack-simms',
-    email: 'jack.simms@cmdi.com',
+    email: 'jacksimms@cmdi.com',
     phone: '(555) 555-0129',
     address: 'McLean, VA 22102',
     primaryAddress: {
@@ -1288,8 +1311,17 @@ export const mockDonorProfiles: Record<string, Donor> = {
     contactInfo: {
       home: '(555) 555-0129',
       work: '(555) 555-0130',
-      email: 'jack.simms@cmdi.com',
+      email: 'jacksimms@cmdi.com',
       website: 'linkedin.com/in/jacksimms'
+    },
+    employment: {
+      employer: 'CMDI',
+      occupation: 'President',
+      industry: 'Political Consulting'
+    },
+    spouse: {
+      name: 'Caroline Simms',
+      email: 'caroline.simms@email.com'
     },
     aiBadges: ['President', 'Executive Leader', 'Major Donor'],
     predictiveAsk: 5000,
@@ -1364,8 +1396,13 @@ export const mockDonorProfiles: Record<string, Donor> = {
     contactInfo: {
       home: '(555) 555-0131',
       work: '(555) 555-0132',
-      email: 'tom.newhouse@cmdi.com',
+      email: 'tnewhouse@cmdi.com',
       website: 'linkedin.com/in/tomnewhouse'
+    },
+    employment: {
+      employer: 'CMDI',
+      occupation: 'Vice President, Digital & Data Products',
+      industry: 'Political Consulting'
     },
     aiBadges: ['Vice President', 'Digital Innovation', 'Data Expert'],
     predictiveAsk: 3500,
@@ -1419,6 +1456,121 @@ export const mockDonorProfiles: Record<string, Donor> = {
       responseToAsk: 'Data-driven decision maker',
       eventAttendance: 'Tech and innovation focused',
       volunteerHistory: 'Digital strategy advisory'
+    }
+  },
+
+  'chris-milam': {
+    id: 'chris-milam',
+    pid: 'CM-2024-001',
+    name: 'Chris Milam',
+    photoUrl: 'https://i.pravatar.cc/150?u=chris-milam',
+    email: 'chris.milam@idmgmt.com',
+    phone: '(214) 555-0133',
+    address: 'Dallas, TX 75201',
+    primaryAddress: {
+      street: '1234 Commerce Street',
+      city: 'Dallas',
+      state: 'TX',
+      zip: '75201',
+      country: 'USA'
+    },
+    contactInfo: {
+      home: '(214) 555-0133',
+      work: '(214) 555-0134',
+      email: 'chris.milam@idmgmt.com',
+      website: 'linkedin.com/in/chrismilam'
+    },
+    employment: {
+      employer: 'International Development Management',
+      occupation: 'Senior Consultant',
+      industry: 'International Development'
+    },
+    aiBadges: ['International Expert', 'Development Professional', 'Strategic Advisor'],
+    predictiveAsk: 2000,
+    recurrencePrediction: 'Very Likely (87%)',
+    suggestedAction: 'Schedule international development briefing',
+    givingOverview: {
+      totalRaised: 6500,
+      consecutiveGifts: 5,
+      tier: 'Gold Supporter',
+      topGifts: [
+        { name: 'Q1 2024', value: 1500 },
+        { name: 'Q4 2023', value: 1200 },
+        { name: 'Q3 2023', value: 1000 },
+        { name: 'Q2 2023', value: 1300 },
+        { name: 'Q1 2023', value: 1500 }
+      ]
+    },
+    aiSnapshot: 'Chris is an international development professional with extensive experience in global consulting. He has a strong interest in foreign policy and international relations. His giving pattern shows consistent support for policy initiatives with international implications. He prefers detailed briefings and data-driven approaches to decision making.',
+
+    // Enhanced AI-powered fields
+    contactIntelligence: {
+      lastContactDate: '2024-03-08',
+      lastContactMethod: 'email',
+      lastContactOutcome: 'Positive response to international policy briefing invitation',
+      preferredContactMethod: 'email',
+      bestContactTimes: ['9:00 AM - 11:00 AM CST', '2:00 PM - 4:00 PM CST'],
+      timezone: 'America/Chicago',
+      responsePattern: 'Responds within 24-48 hours, prefers detailed information',
+      communicationNotes: 'Appreciates international context and global perspective in communications'
+    },
+
+    wealthScreening: {
+      estimatedCapacity: 75000,
+      confidenceLevel: 'Medium',
+      lastUpdated: '2024-02-15',
+      sources: ['Public records', 'Professional networks', 'Industry databases'],
+      realEstateValue: 450000,
+      businessInterests: ['International Development Management'],
+      investmentIndicators: ['Professional consulting income', 'International project work'],
+      philanthropicCapacity: {
+        annualGivingCapacity: 8000,
+        majorGiftCapacity: 25000,
+        plannedGivingProspect: true
+      }
+    },
+
+    predictiveModeling: {
+      churnRisk: 'Low',
+      churnScore: 15,
+      lifetimeValuePrediction: 45000,
+      nextGiftPrediction: {
+        amount: 1800,
+        timing: '45-60 days',
+        confidence: 82
+      },
+      upgradePotential: 'High',
+      recommendedAsk: 2500,
+      recommendedMonthlyAmount: 200,
+      bucket: 'HIGH'
+    },
+
+    totalLifetimeGiving: 6500,
+    lastGiftAmount: 1500,
+    lastGiftDate: '2024-03-15',
+    giftCount: 5,
+    engagementScore: 85,
+    urgencyIndicators: {
+      isHotLead: true,
+      hasRecentActivity: true,
+      needsAttention: false
+    },
+    relationshipMapping: {
+      family: [],
+      professionalConnections: ['International Development Management', 'Global Consulting Network', 'Foreign Policy Association'],
+      mutualConnections: ['International Development Professionals', 'Texas Business Leaders'],
+      influenceNetwork: ['International Development Council', 'Global Policy Forum'],
+      employerMatching: false
+    },
+    givingIntelligence: {
+      capacityScore: 78,
+      engagementLevel: 'High',
+      preferredContactMethod: 'Email',
+      bestContactTime: 'Business hours CST',
+      givingMotivation: 'International development and foreign policy',
+      responseToAsk: 'Analytical and globally-minded',
+      eventAttendance: 'International policy events',
+      volunteerHistory: 'International development advisory work'
     }
   }
 };
@@ -1493,6 +1645,9 @@ export const getDonorProfileByName = (name: string): Donor | null => {
 
     // Tom Newhouse variations
     { names: ['Tom Newhouse', 'tom newhouse', 'Thomas Newhouse', 'thomas newhouse', 'Tom N', 'tom n', 'Thomas', 'thomas', 'Tom', 'tom'], key: 'tom-newhouse' },
+
+    // Chris Milam variations
+    { names: ['Chris Milam', 'chris milam', 'Christopher Milam', 'christopher milam', 'Chris M', 'chris m', 'Christopher', 'christopher', 'Chris', 'chris'], key: 'chris-milam' },
 
     // Joseph Banks variations
     { names: ['Joseph Banks', 'joseph banks', 'Joseph M. Banks', 'joseph m. banks', 'Joseph M Banks', 'joseph m banks', 'Joe Banks', 'joe banks', 'Joseph', 'joseph', 'Joe', 'joe'], key: 'joseph-banks' },

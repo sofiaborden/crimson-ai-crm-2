@@ -20,9 +20,10 @@ const TestSelectiveRollout: React.FC = () => {
   const testDonors = [
     // Test3 rollout users
     'Jeff Wernsing',
-    'Sofia Borden', 
+    'Sofia Borden',
     'Jack Simms',
     'Rachel Gideon',
+    'Chris Milam',
     // Regular users (should use standard profile)
     'Joseph M. Banks',
     'Margaret Banks',

@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { View } from '../../types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { SparklesIcon, LightBulbIcon, CheckCircleIcon, ArrowTrendingUpIcon, UsersIcon, PuzzlePieceIcon, ArrowPathIcon, MapPinIcon, TrendingUpIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, HeartIcon, CalendarIcon, ChartBarIcon, CurrencyDollarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, BookmarkIcon, DocumentTextIcon, XMarkIcon } from '../../constants';
+import { SparklesIcon, LightBulbIcon, CheckCircleIcon, ArrowTrendingUpIcon, UsersIcon, PuzzlePieceIcon, ArrowPathIcon, MapPinIcon, TrendingUpIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, HeartIcon, CalendarIcon, ChartBarIcon, CurrencyDollarIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, BookmarkIcon, DocumentTextIcon, XMarkIcon, PlusIcon, UserIcon } from '../../constants';
 import LiveTracker from './LiveTracker';
 import SmartActionCenter from './SmartActionCenter';
 import SmartSegmentsWidget from './SmartSegmentsWidget';
@@ -11,6 +11,7 @@ import SmartTagsWidget from './SmartTagsWidget';
 import DailySummary from './DailySummary';
 import SettingsModal from '../settings/SettingsModal';
 import SearchModal from '../search/SearchModal';
+import CreateRecordModal from '../ui/CreateRecordModal';
 import { useSearch } from '../../hooks/useSearch';
 
 
@@ -77,6 +78,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, se
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showSearchesModal, setShowSearchesModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showCreateRecordModal, setShowCreateRecordModal] = useState(false);
 
   const handleViewProfile = () => {
     setProfileId('joseph-banks');
@@ -144,6 +146,14 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, se
             >
               <MagnifyingGlassIcon className="w-4 h-4" />
               People Search
+            </Button>
+            <Button
+              variant="secondary"
+              className="flex items-center gap-2 border-gray-300 hover:border-crimson-blue hover:text-crimson-blue transition-colors"
+              onClick={() => setShowCreateRecordModal(true)}
+            >
+              <PlusIcon className="w-4 h-4" />
+              Create Record
             </Button>
             <Button
               variant="secondary"
@@ -592,6 +602,19 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, se
         initialSection="people-codes"
         initialSubSection="smart-tags"
       />
+
+      {/* Create New Record Modal */}
+      {showCreateRecordModal && (
+        <CreateRecordModal
+          isOpen={showCreateRecordModal}
+          onClose={() => setShowCreateRecordModal(false)}
+          onRecordCreated={(recordId) => {
+            setShowCreateRecordModal(false);
+            setProfileId(recordId);
+            setView('profile');
+          }}
+        />
+      )}
     </div>
   );
 };

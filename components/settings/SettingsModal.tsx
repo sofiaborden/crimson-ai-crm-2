@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { XMarkIcon, SettingsIcon, UserGroupIcon, CurrencyDollarIcon, SparklesIcon, FlagIcon } from '../../constants';
+import { XMarkIcon, SettingsIcon, UserGroupIcon, CurrencyDollarIcon, SparklesIcon, FlagIcon, ArrowPathIcon } from '../../constants';
 import Button from '../ui/Button';
+import SmartFlowManager from './SmartFlowManager';
 import SmartTagsManager from './SmartTagsManager';
 import PeopleCodesManager from './PeopleCodesManager';
 import FundraisingCodesManager from './FundraisingCodesManager';
@@ -9,17 +10,17 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSection?: 'people-codes' | 'fundraising-codes';
-  initialSubSection?: 'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes';
+  initialSubSection?: 'smart-flow' | 'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes';
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
   initialSection = 'people-codes',
-  initialSubSection = 'smart-tags'
+  initialSubSection = 'smart-flow'
 }) => {
   const [activeSection, setActiveSection] = useState<'people-codes' | 'fundraising-codes'>(initialSection);
-  const [activeSubSection, setActiveSubSection] = useState<'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes'>(initialSubSection);
+  const [activeSubSection, setActiveSubSection] = useState<'smart-flow' | 'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes'>(initialSubSection);
 
   if (!isOpen) return null;
 
@@ -29,6 +30,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       name: 'People Codes',
       icon: UserGroupIcon,
       subsections: [
+        { id: 'smart-flow', name: 'Smart Flow', icon: ArrowPathIcon, aiPowered: true },
         { id: 'smart-tags', name: 'Smart Tags', icon: SparklesIcon, aiPowered: true },
         { id: 'flags', name: 'Flags', icon: FlagIcon },
         { id: 'keywords', name: 'Keywords', icon: FlagIcon },
@@ -120,6 +122,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Main Content */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-6">
+              {activeSection === 'people-codes' && activeSubSection === 'smart-flow' && (
+                <SmartFlowManager />
+              )}
               {activeSection === 'people-codes' && activeSubSection === 'smart-tags' && (
                 <SmartTagsManager />
               )}

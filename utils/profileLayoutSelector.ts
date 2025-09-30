@@ -13,9 +13,10 @@ import { Donor } from '../types';
 // Users selected for Test3 profile layout rollout
 const TEST3_ROLLOUT_USERS = [
   'Jeff Wernsing',
-  'Sofia Borden', 
+  'Sofia Borden',
   'Jack Simms',
-  'Rachel Gideon' // Note: Originally requested "Rachel Bryant" but profile is "Rachel Gideon"
+  'Rachel Gideon', // Note: Originally requested "Rachel Bryant" but profile is "Rachel Gideon"
+  'Chris Milam'
 ];
 
 /**
