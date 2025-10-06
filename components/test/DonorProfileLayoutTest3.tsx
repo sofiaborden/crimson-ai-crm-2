@@ -1106,7 +1106,10 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
       console.log('🔍 Generating bio for:', donor.name, 'at', donor.employment?.employer || 'Unknown employer');
 
       // Call our backend API server instead of Perplexity directly
-      const response = await fetch('http://localhost:3000/api/generate-bio', {
+      const apiUrl = process.env.NODE_ENV === 'production'
+        ? 'https://crimson-ai-crm-2.onrender.com/api/generate-bio'
+        : 'http://localhost:3000/api/generate-bio';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
