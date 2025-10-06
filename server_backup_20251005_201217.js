@@ -36,8 +36,7 @@ app.post('/api/generate-bio', async (req, res) => {
     }
 
     const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
-    const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY ||
-                               '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';
+    const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 
     console.log('🔍 Server-side API call for:', name);
     console.log('🔍 API Key available:', !!PERPLEXITY_API_KEY);
