@@ -49,6 +49,7 @@ const getMockWealthCode = (donorName: string): string | null => {
   if (donorName.includes('Sofia') || donorName.includes('Amaya')) return 'B';
   if (donorName.includes('Brooke') || donorName.includes('Taylor')) return 'C';
   if (donorName.includes('Charles') || donorName.includes('Logan')) return 'D';
+  if (donorName.includes('Jeff') || donorName.includes('Wernsing')) return 'C'; // Ensure Jeff always has wealth data for testing
   return Math.random() > 0.3 ? ['A', 'B', 'C', 'D', 'E', 'F'][Math.floor(Math.random() * 6)] : null;
 };
 
@@ -133,8 +134,7 @@ import {
   TrashIcon,
   StarIcon,
   EllipsisHorizontalIcon,
-  HeartIcon,
-  ArrowPathIcon
+  HeartIcon
 } from '../../constants';
 
 interface DonorProfileLayoutTest3Props {
@@ -229,9 +229,13 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
   const [showSmartBioConfirmModal, setShowSmartBioConfirmModal] = useState(false);
   const [smartBioError, setSmartBioError] = useState('');
   const [showCitationsModal, setShowCitationsModal] = useState(false);
+
+  // Bio Review Process states (simplified)
   const [isEditingBio, setIsEditingBio] = useState(false);
-  const [originalBioText, setOriginalBioText] = useState<string[]>([]);
   const [editedBioText, setEditedBioText] = useState<string[]>([]);
+  const [originalBioText, setOriginalBioText] = useState<string[]>([]);
+
+  // Quick Actions Dropdown state
   const [showQuickActionsDropdown, setShowQuickActionsDropdown] = useState(false);
 
   // Notes state (moved to sidebar panel)
@@ -950,7 +954,7 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
     }
   };
 
-  // Bio Review Process Functions
+  // Bio Review Process Functions (simplified)
   const handleEditBio = () => {
     setIsEditingBio(true);
     console.log('✏️ Editing bio');
@@ -995,6 +999,7 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
       try {
         await navigator.clipboard.writeText(fullText);
         console.log('✅ Bio copied to clipboard');
+        // You could add a toast notification here
       } catch (error) {
         console.error('❌ Failed to copy to clipboard:', error);
       }
@@ -1018,7 +1023,7 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
         ).join('\n')}
       `;
 
-      // Create a new window with the content
+      // Create a simple PDF using browser print functionality
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
@@ -1027,10 +1032,10 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
               <title>Smart Bio - ${donor.name}</title>
               <style>
                 body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-                .meta { color: #666; font-size: 12px; margin-bottom: 20px; }
-                .sources { margin-top: 30px; }
-                .sources h3 { color: #333; }
-                .sources ol { padding-left: 20px; }
+                h1 { color: #2f7fc3; }
+                .meta { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+                .sources { margin-top: 20px; }
+                .sources h3 { color: #2f7fc3; }
               </style>
             </head>
             <body>
@@ -1055,7 +1060,34 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
     }
   };
 
+  const handleExportAsWord = () => {
+    if (smartBioData) {
+      const bioText = smartBioData.perplexityHeadlines.join(' ');
+      const content = `Smart Bio - ${donor.name}
+Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}
 
+${bioText}
+
+${smartBioData.wealthSummary ? `Wealth Summary: ${smartBioData.wealthSummary}` : ''}
+
+Sources:
+${smartBioData.perplexityCitations.map((citation, index) =>
+  `${index + 1}. ${citation.title}: ${citation.url}`
+).join('\n')}`;
+
+      // Create a downloadable .doc file
+      const blob = new Blob([content], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `smart-bio-${donor.name.replace(/\s+/g, '-').toLowerCase()}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      console.log('✅ Bio exported as Word document');
+    }
+  };
 
   const handleEmailBio = () => {
     if (smartBioData) {
@@ -1074,7 +1106,8 @@ ${smartBioData.perplexityCitations.map((citation, index) =>
 ).join('\n')}`;
 
       const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.open(mailtoLink);
+      window.location.href = mailtoLink;
+      console.log('✅ Email client opened with bio content');
     }
   };
 
@@ -1084,19 +1117,20 @@ ${smartBioData.perplexityCitations.map((citation, index) =>
       const subject = 'Incorrect Bio';
       const body = `I would like to report an issue with the generated bio for the following donor:
 
-Name: ${donor.name}
-Email: ${donor.email || 'Not provided'}
-Organization: ${donor.employment?.employer || 'Not provided'}
+Donor PID: ${donor.pid || 'PID-2024-001847'}
+Donor Name: ${donor.name}
 
 Generated Bio:
 ${bioText}
 
+Issue Description:
 [Please describe the issue with the bio]
 
 Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
       const mailtoLink = `mailto:Support@cmdi.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.open(mailtoLink);
+      window.location.href = mailtoLink;
+      console.log('✅ Report issue email opened');
     }
   };
 
@@ -1134,6 +1168,8 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
       if (data.success && data.headlines && data.headlines.length > 0) {
         console.log('✅ Successfully generated headlines via backend API');
+        console.log('✅ Citations received:', data.citations ? data.citations.length : 0);
+        // Return both headlines and citations
         return {
           headlines: data.headlines,
           citations: data.citations || []
@@ -1161,10 +1197,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
           `Based in ${donor.primaryAddress?.city || 'their location'} with established career background.`
         ];
         console.log('🔄 Employment-based fallback:', fallbackHeadlines);
-        return {
-          headlines: fallbackHeadlines,
-          citations: []
-        };
+        return { headlines: fallbackHeadlines, citations: [] };
       }
 
       // Generic fallback for profiles without employment data
@@ -1174,10 +1207,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
         `Profile available for further research and outreach opportunities.`
       ];
       console.log('🔄 Generic fallback:', genericFallback);
-      return {
-        headlines: genericFallback,
-        citations: []
-      };
+      return { headlines: genericFallback, citations: [] };
     }
   };
 
@@ -1260,10 +1290,9 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
     return `Estimated wealth: ${wealthData.range} (${wealthData.tier})`;
   };
 
-  // Format Smart Bio as markdown
+  // Format Smart Bio as markdown (FEC integration removed - 2025-01-06)
   const formatSmartBioMarkdown = (bioData: SmartBioData): string => {
     const headlines = bioData.perplexityHeadlines.join(' ');
-    const giving = bioData.fecGivingSummary;
     const wealth = bioData.wealthSummary;
 
     const sourcesText = bioData.sources
@@ -1272,16 +1301,13 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
     let markdown = headlines;
 
-    if (giving && !giving.includes('unavailable') && !giving.includes('No recent')) {
-      markdown += `\n\n**Giving Summary:** ${giving}`;
-    }
+
 
     if (wealth) {
       markdown += `\n**${wealth}**`;
     }
 
     markdown += `\n\n**Sources (${bioData.sources.length}):** ${sourcesText}`;
-    markdown += `\n**FEC Disclaimer:** Data from the FEC does not imply endorsement. Public record info only.`;
 
     return markdown;
   };
@@ -1907,6 +1933,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
               setShowNotesModal={setShowNotesModal}
               contactsData={contactsData}
               setShowAddressBookModal={setShowAddressBookModal}
+              customAIInsights={customAIInsights}
             />
           </div>
         </div>
@@ -1960,20 +1987,17 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 showCitationsModal={showCitationsModal}
                 setShowCitationsModal={setShowCitationsModal}
                 isEditingBio={isEditingBio}
-                setIsEditingBio={setIsEditingBio}
-                originalBioText={originalBioText}
-                setOriginalBioText={setOriginalBioText}
                 editedBioText={editedBioText}
-                setEditedBioText={setEditedBioText}
-                showQuickActionsDropdown={showQuickActionsDropdown}
-                setShowQuickActionsDropdown={setShowQuickActionsDropdown}
                 handleEditBio={handleEditBio}
                 handleResetBio={handleResetBio}
                 handleSaveEditedBio={handleSaveEditedBio}
                 handleCancelEdit={handleCancelEdit}
+                setEditedBioText={setEditedBioText}
+                showQuickActionsDropdown={showQuickActionsDropdown}
+                setShowQuickActionsDropdown={setShowQuickActionsDropdown}
                 handleCopyToClipboard={handleCopyToClipboard}
                 handleExportAsPDF={handleExportAsPDF}
-
+                handleExportAsWord={handleExportAsWord}
                 handleEmailBio={handleEmailBio}
                 handleReportIssue={handleReportIssue}
                 handleDialRClick={handleDialRClick}
@@ -5207,7 +5231,6 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Generate Enhanced Smart Bio</h3>
-                  <p className="text-sm text-gray-600">Multi-source AI research</p>
                 </div>
               </div>
 
@@ -5215,10 +5238,10 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-yellow-800 font-medium text-sm">Estimated cost:</span>
-                    <span className="text-yellow-900 font-semibold text-sm">~$0.02 per bio</span>
+                    <span className="text-yellow-900 font-semibold text-sm">~$0.03 per bio</span>
                   </div>
                   <p className="text-yellow-700 text-xs">
-                    This will generate a comprehensive donor bio using AI research. Estimated cost: <strong>~$0.02</strong>
+                    Charges applied to CMDI Perplexity account
                   </p>
                 </div>
               </div>
@@ -5268,38 +5291,42 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                   {smartBioData.perplexityCitations.map((citation, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-xs font-medium text-blue-600">{index + 1}</span>
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-1">{citation.title}</h4>
+                          <h4 className="font-medium text-gray-900 mb-2 leading-snug">
+                            {citation.title || 'Source'}
+                          </h4>
                           <a
                             href={citation.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 text-sm break-all transition-colors"
+                            className="text-sm text-blue-600 hover:text-blue-800 underline break-all"
                           >
                             {citation.url}
                           </a>
                         </div>
-                        <button
-                          onClick={() => window.open(citation.url, '_blank')}
-                          className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="text-gray-400 mb-2">
-                    <DocumentIcon className="w-12 h-12 mx-auto" />
-                  </div>
-                  <p className="text-gray-500">No sources available</p>
+                  <p className="text-gray-500">No sources available for this bio.</p>
                 </div>
               )}
+            </div>
+
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowCitationsModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -6317,6 +6344,7 @@ interface DraggablePanelContainerProps {
   activeAITab: 'insights' | 'bio';
   setActiveAITab: (tab: 'insights' | 'bio') => void;
   formatCurrency: (amount: number) => string;
+  customAIInsights?: React.ReactNode;
   getSmartTags: () => any[];
   getClassificationCodes: () => any[];
   getAllClassificationCodes: () => any[];
@@ -6363,7 +6391,8 @@ const DraggablePanelContainer: React.FC<DraggablePanelContainerProps> = ({
   notesData,
   setShowNotesModal,
   contactsData,
-  setShowAddressBookModal
+  setShowAddressBookModal,
+  customAIInsights
 }) => {
   const renderPanel = (panelId: string) => {
     const isDragging = draggedPanel === panelId;
@@ -6913,28 +6942,24 @@ interface DraggableOverviewContainerProps {
   // Citations Modal props
   showCitationsModal: boolean;
   setShowCitationsModal: (show: boolean) => void;
-  // Bio editing props
+  // Bio Review Process props (simplified)
   isEditingBio: boolean;
-  setIsEditingBio: (editing: boolean) => void;
-  originalBioText: string[];
-  setOriginalBioText: (text: string[]) => void;
   editedBioText: string[];
-  setEditedBioText: (text: string[]) => void;
-  showQuickActionsDropdown: boolean;
-  setShowQuickActionsDropdown: (show: boolean) => void;
-  // Bio action functions
   handleEditBio: () => void;
   handleResetBio: () => void;
   handleSaveEditedBio: () => void;
   handleCancelEdit: () => void;
+  setEditedBioText: (text: string[]) => void;
+  // Quick Actions Dropdown props
+  showQuickActionsDropdown: boolean;
+  setShowQuickActionsDropdown: (show: boolean) => void;
   handleCopyToClipboard: () => void;
   handleExportAsPDF: () => void;
-
+  handleExportAsWord: () => void;
   handleEmailBio: () => void;
   handleReportIssue: () => void;
   // DialR Integration props
   handleDialRClick: () => void;
-  // Custom AI Insights prop
   customAIInsights?: React.ReactNode;
 }
 
@@ -6961,20 +6986,17 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
   showCitationsModal,
   setShowCitationsModal,
   isEditingBio,
-  setIsEditingBio,
-  originalBioText,
-  setOriginalBioText,
   editedBioText,
-  setEditedBioText,
-  showQuickActionsDropdown,
-  setShowQuickActionsDropdown,
   handleEditBio,
   handleResetBio,
   handleSaveEditedBio,
   handleCancelEdit,
+  setEditedBioText,
+  showQuickActionsDropdown,
+  setShowQuickActionsDropdown,
   handleCopyToClipboard,
   handleExportAsPDF,
-
+  handleExportAsWord,
   handleEmailBio,
   handleReportIssue,
   handleDialRClick,
@@ -6998,7 +7020,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
               onDragOver={onDragOver}
               onDrop={(e) => onDrop(e, panelId)}
               onDragEnd={onDragEnd}
-              className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 cursor-move transition-all duration-200 hover:shadow-md"
+              className="cursor-move transition-all duration-200"
             >
               {customAIInsights}
             </div>
@@ -7025,6 +7047,9 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     AI Insights
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200 ml-2">
+                      Enterprise
+                    </span>
                   </h3>
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -7191,23 +7216,22 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                               <div className="flex gap-2 mt-3">
                                 <button
                                   onClick={handleSaveEditedBio}
-                                  className="px-3 py-1 text-white text-xs rounded transition-all duration-200 hover:shadow-md hover:scale-105"
-                                  style={{ backgroundColor: '#2f7fc3' }}
+                                  className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
                                 >
-                                  Save
+                                  Save Changes
                                 </button>
                                 <button
                                   onClick={handleCancelEdit}
-                                  className="px-3 py-1 bg-gray-500 text-white text-xs rounded transition-all duration-200 hover:bg-gray-600 hover:shadow-md hover:scale-105"
+                                  className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600"
                                 >
                                   Cancel
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <div className="transition-opacity duration-300 ease-out">
+                            <div>
                               {smartBioData.perplexityHeadlines.map((headline, index) => (
-                                <p key={index} className="text-gray-900 text-sm mb-2 transition-all duration-200" style={{ lineHeight: '1.6' }}>
+                                <p key={index} className="text-gray-900 leading-relaxed text-sm mb-1">
                                   {headline}
                                 </p>
                               ))}
@@ -7217,122 +7241,131 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
 
                         {/* Wealth Summary */}
                         {smartBioData.wealthSummary && (
-                          <div className="bg-blue-gray-50 border-l-4 pl-4 py-2 mb-3 rounded-r-md transition-all duration-200 hover:bg-blue-gray-100" style={{ borderLeftColor: '#2f7fc3' }}>
-                            <p className="text-gray-700 text-sm font-medium">
-                              {smartBioData.wealthSummary}
-                            </p>
-                          </div>
+                          <p className="text-gray-700 text-sm mb-3 font-medium">
+                            {smartBioData.wealthSummary}
+                          </p>
                         )}
 
-                        {/* Sources and Edit Controls */}
-                        <div className="flex items-center justify-between mb-3">
-                          {/* Sources Button - Bottom Left */}
-                          {smartBioData.perplexityCitations && smartBioData.perplexityCitations.length > 0 ? (
+                        {/* Perplexity Sources Button */}
+                        {smartBioData.perplexityCitations && smartBioData.perplexityCitations.length > 0 && (
+                          <div className="mt-3">
                             <button
                               onClick={() => setShowCitationsModal(true)}
-                              className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                              className="text-xs text-blue-600 hover:text-blue-800 font-medium underline"
                             >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                              </svg>
                               Sources ({smartBioData.perplexityCitations.length})
                             </button>
-                          ) : (
-                            <span className="text-xs text-gray-500">No sources available</span>
-                          )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                          {/* Edit/Reset Controls - Bottom Right */}
-                          {!isEditingBio && (
-                            <div className="flex items-center gap-2">
-                              {/* Edit Icon Button */}
-                              <button
-                                onClick={handleEditBio}
-                                className="p-1.5 rounded-md transition-all duration-200 hover:shadow-md hover:scale-105 group relative"
-                                style={{ backgroundColor: '#2f7fc3' }}
-                                title="Edit"
-                              >
-                                <PencilIcon className="w-3 h-3 text-white" />
-                              </button>
+                    {/* Bio Review Process (simplified) */}
+                    {!isEditingBio && (
+                      <div className="px-4 py-3 border-t border-gray-100">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Bio Actions</span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleEditBio}
+                              className="px-3 py-1 text-white text-xs rounded hover:bg-opacity-90 transition-colors flex items-center gap-1"
+                              style={{ backgroundColor: '#2f7fc3' }}
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Edit
+                            </button>
+                            <button
+                              onClick={handleResetBio}
+                              className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors flex items-center gap-1"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              Reset
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-                              {/* Reset Icon Button */}
-                              <button
-                                onClick={handleResetBio}
-                                className="p-1.5 bg-gray-500 rounded-md transition-all duration-200 hover:bg-gray-600 hover:shadow-md hover:scale-105 group relative"
-                                title="Reset"
-                              >
-                                <ArrowPathIcon className="w-3 h-3 text-white" />
-                              </button>
+                    {/* Quick Actions Dropdown */}
+                    <div className="px-4 pb-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between text-xs text-gray-500 pt-3">
+                        <span>Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowQuickActionsDropdown(!showQuickActionsDropdown)}
+                            className="text-white text-xs rounded px-3 py-1 hover:bg-opacity-90 transition-colors flex items-center gap-1"
+                            style={{ backgroundColor: '#2f7fc3' }}
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                            Actions
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+
+                          {showQuickActionsDropdown && (
+                            <div className="absolute right-0 bottom-full mb-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => {
+                                    handleCopyToClipboard();
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                  Copy
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleExportAsPDF();
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  PDF
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleEmailBio();
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                  Email
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleReportIssue();
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                  </svg>
+                                  Report Issue
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
-
-                    {/* Bio Actions - Timestamp and Actions Dropdown */}
-                    {!isEditingBio && (
-                      <div className="px-4 py-3 border-t border-gray-100">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
-                          <div className="flex items-center gap-2">
-                            {/* Actions Dropdown */}
-                            <div className="relative">
-                              <button
-                                onClick={() => setShowQuickActionsDropdown(!showQuickActionsDropdown)}
-                                className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
-                              >
-                                Actions
-                                <ChevronDownIcon className="w-3 h-3" />
-                              </button>
-
-                              {showQuickActionsDropdown && (
-                                <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                                  <div className="py-1">
-                                    <button
-                                      onClick={() => {
-                                        handleCopyToClipboard();
-                                        setShowQuickActionsDropdown(false);
-                                      }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      Copy Bio
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        handleExportAsPDF();
-                                        setShowQuickActionsDropdown(false);
-                                      }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      Export as PDF
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        handleEmailBio();
-                                        setShowQuickActionsDropdown(false);
-                                      }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      Email Bio
-                                    </button>
-                                    <div className="border-t border-gray-100 my-1"></div>
-                                    <button
-                                      onClick={() => {
-                                        handleReportIssue();
-                                        setShowQuickActionsDropdown(false);
-                                      }}
-                                      className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
-                                    >
-                                      Report Issue
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%)'}}>
@@ -7342,7 +7375,6 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-gray-900">Enhanced Smart Bio</h4>
-                        <span className="text-xs text-gray-600">Multi-Source AI Research</span>
                       </div>
                     </div>
 

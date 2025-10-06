@@ -146,6 +146,12 @@ const CreateRecordModal: React.FC<CreateRecordModalProps> = ({ isOpen, onClose, 
       // Add to mock profiles (in a real app, this would be an API call)
       (mockDonorProfiles as any)[recordId] = newDonor;
 
+      console.log(`✅ New donor record created:`, {
+        id: recordId,
+        name: formData.name,
+        willUseTest3Layout: true
+      });
+
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 

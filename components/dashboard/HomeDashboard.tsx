@@ -612,6 +612,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ setView, setProfileId, se
             setShowCreateRecordModal(false);
             setProfileId(recordId);
             setView('profile');
+            console.log(`✅ New record created with ID: ${recordId} - will use Test3 layout`);
           }}
         />
       )}

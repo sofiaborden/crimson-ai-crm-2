@@ -2,11 +2,12 @@ import { Donor } from '../types';
 
 /**
  * Selective rollout logic for Test3 profile layout
- * 
+ *
  * This utility determines which donors should see the enhanced Test3 profile layout
  * vs the standard production profile layout.
- * 
- * Phase 1: Limited rollout to 4 specific users for testing and feedback
+ *
+ * Phase 1: Limited rollout to specific users for testing and feedback
+ * Phase 2: All newly created records automatically use Test3 layout for testing
  * Future phases can expand this list or use different criteria
  */
 
@@ -16,7 +17,8 @@ const TEST3_ROLLOUT_USERS = [
   'Sofia Borden',
   'Jack Simms',
   'Rachel Gideon', // Note: Originally requested "Rachel Bryant" but profile is "Rachel Gideon"
-  'Chris Milam'
+  'Chris Milam',
+  'Tom Newhouse'
 ];
 
 /**
@@ -25,6 +27,13 @@ const TEST3_ROLLOUT_USERS = [
  * @returns boolean - true if should use Test3 layout, false for standard layout
  */
 export const useTest3Layout = (donor: Donor): boolean => {
+  // Check if this is a newly created record (custom ID format)
+  // All newly created records automatically use Test3 layout for testing
+  if (donor.id.startsWith('custom-')) {
+    return true;
+  }
+
+  // Check if user is in the rollout list
   return TEST3_ROLLOUT_USERS.includes(donor.name);
 };
 

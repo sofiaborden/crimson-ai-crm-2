@@ -13,7 +13,12 @@ import DonorProfileDemo from './pages/DonorProfileDemo';
 import LayoutTestPage from './pages/layout-test';
 import LayoutTest2Page from './pages/layout-test-2';
 import LayoutTest3Page from './pages/layout-test-3';
+import LayoutTestGrowthPage from './pages/layout-test-growth';
+import LayoutTestCorePage from './pages/layout-test-core';
+import LayoutTestCoreTier2Page from './pages/layout-test-core-tier-2';
+import LayoutTestCoreTier2OutOfCreditsPage from './pages/layout-test-core-tier-2-out-of-credits';
 import TestSelectiveRollout from './pages/test-selective-rollout';
+import TestSmartBioAllProfiles from './pages/test-smart-bio-all-profiles';
 import { View, Donor } from './types';
 import { mockDonorProfiles } from './utils/mockDonorProfiles';
 import { useTest3Layout } from './utils/profileLayoutSelector';
@@ -58,8 +63,18 @@ const App: React.FC = () => {
         return <LayoutTest2Page />;
       case 'layout-test-3':
         return <LayoutTest3Page />;
+      case 'layout-test-growth':
+        return <LayoutTestGrowthPage />;
+      case 'layout-test-core':
+        return <LayoutTestCorePage />;
+      case 'layout-test-core-tier-2':
+        return <LayoutTestCoreTier2Page />;
+      case 'layout-test-core-tier-2-out-of-credits':
+        return <LayoutTestCoreTier2OutOfCreditsPage />;
       case 'test-selective-rollout':
         return <TestSelectiveRollout />;
+      case 'test-smart-bio-all-profiles':
+        return <TestSmartBioAllProfiles />;
       default:
         return (
             <div className="flex items-center justify-center h-full">

@@ -49,6 +49,7 @@ const getMockWealthCode = (donorName: string): string | null => {
   if (donorName.includes('Sofia') || donorName.includes('Amaya')) return 'B';
   if (donorName.includes('Brooke') || donorName.includes('Taylor')) return 'C';
   if (donorName.includes('Charles') || donorName.includes('Logan')) return 'D';
+  if (donorName.includes('Jeff') || donorName.includes('Wernsing')) return 'C'; // Ensure Jeff always has wealth data for testing
   return Math.random() > 0.3 ? ['A', 'B', 'C', 'D', 'E', 'F'][Math.floor(Math.random() * 6)] : null;
 };
 
@@ -127,14 +128,14 @@ import {
   XMarkIcon,
   TrophyIcon,
   ChatBubbleLeftRightIcon,
+  InformationCircleIcon,
   TrendingUpIcon,
   CheckCircleIcon,
   CheckIcon,
   TrashIcon,
   StarIcon,
   EllipsisHorizontalIcon,
-  HeartIcon,
-  ArrowPathIcon
+  HeartIcon
 } from '../../constants';
 
 interface DonorProfileLayoutTest3Props {
@@ -164,17 +165,15 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
   const [showDialRLogModal, setShowDialRLogModal] = useState(false);
   const [showTargetPathLogModal, setShowTargetPathLogModal] = useState(false);
 
-  // Contact Insights panel management
+  // Contact Insights panel management - Simplified to only Communication Intelligence and DialR Insights
   const [contactInsightsPanelOrder, setContactInsightsPanelOrder] = useState([
     'communication-intelligence',
-    'targetpath-insights',
-    'dialr-insights',
-    'patterns-triggers'
+    'dialr-insights'
   ]);
 
-  // Track which panels are on left vs right side
-  const [leftSidePanels, setLeftSidePanels] = useState(new Set(['communication-intelligence', 'targetpath-insights', 'dialr-insights']));
-  const [rightSidePanels, setRightSidePanels] = useState(new Set(['patterns-triggers']));
+  // Track which panels are on left vs right side - Now both panels will be full-width
+  const [leftSidePanels, setLeftSidePanels] = useState(new Set(['communication-intelligence', 'dialr-insights']));
+  const [rightSidePanels, setRightSidePanels] = useState(new Set([]));
 
   // Gift modal state
   const [showGiftModal, setShowGiftModal] = useState(false);
@@ -229,9 +228,13 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
   const [showSmartBioConfirmModal, setShowSmartBioConfirmModal] = useState(false);
   const [smartBioError, setSmartBioError] = useState('');
   const [showCitationsModal, setShowCitationsModal] = useState(false);
+
+  // Bio Review Process states (simplified)
   const [isEditingBio, setIsEditingBio] = useState(false);
-  const [originalBioText, setOriginalBioText] = useState<string[]>([]);
   const [editedBioText, setEditedBioText] = useState<string[]>([]);
+  const [originalBioText, setOriginalBioText] = useState<string[]>([]);
+
+  // Quick Actions Dropdown state
   const [showQuickActionsDropdown, setShowQuickActionsDropdown] = useState(false);
 
   // Notes state (moved to sidebar panel)
@@ -355,7 +358,7 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
 
   // Drag and drop state for overview panels
   const [overviewPanelOrder, setOverviewPanelOrder] = useState([
-    'aiInsights', 'recentActivity', 'givingSummary', 'movesManagement'
+    'aiInsights', 'donorHealthSummary', 'recentActivity', 'givingSummary', 'movesManagement'
   ]);
   const [draggedOverviewPanel, setDraggedOverviewPanel] = useState<string | null>(null);
   const [minimizedOverviewPanels, setMinimizedOverviewPanels] = useState<Set<string>>(new Set());
@@ -950,7 +953,7 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
     }
   };
 
-  // Bio Review Process Functions
+  // Bio Review Process Functions (simplified)
   const handleEditBio = () => {
     setIsEditingBio(true);
     console.log('✏️ Editing bio');
@@ -995,6 +998,7 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
       try {
         await navigator.clipboard.writeText(fullText);
         console.log('✅ Bio copied to clipboard');
+        // You could add a toast notification here
       } catch (error) {
         console.error('❌ Failed to copy to clipboard:', error);
       }
@@ -1018,7 +1022,7 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
         ).join('\n')}
       `;
 
-      // Create a new window with the content
+      // Create a simple PDF using browser print functionality
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(`
@@ -1027,10 +1031,10 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
               <title>Smart Bio - ${donor.name}</title>
               <style>
                 body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-                .meta { color: #666; font-size: 12px; margin-bottom: 20px; }
-                .sources { margin-top: 30px; }
-                .sources h3 { color: #333; }
-                .sources ol { padding-left: 20px; }
+                h1 { color: #2f7fc3; }
+                .meta { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+                .sources { margin-top: 20px; }
+                .sources h3 { color: #2f7fc3; }
               </style>
             </head>
             <body>
@@ -1055,7 +1059,34 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
     }
   };
 
+  const handleExportAsWord = () => {
+    if (smartBioData) {
+      const bioText = smartBioData.perplexityHeadlines.join(' ');
+      const content = `Smart Bio - ${donor.name}
+Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}
 
+${bioText}
+
+${smartBioData.wealthSummary ? `Wealth Summary: ${smartBioData.wealthSummary}` : ''}
+
+Sources:
+${smartBioData.perplexityCitations.map((citation, index) =>
+  `${index + 1}. ${citation.title}: ${citation.url}`
+).join('\n')}`;
+
+      // Create a downloadable .doc file
+      const blob = new Blob([content], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `smart-bio-${donor.name.replace(/\s+/g, '-').toLowerCase()}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      console.log('✅ Bio exported as Word document');
+    }
+  };
 
   const handleEmailBio = () => {
     if (smartBioData) {
@@ -1074,7 +1105,8 @@ ${smartBioData.perplexityCitations.map((citation, index) =>
 ).join('\n')}`;
 
       const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.open(mailtoLink);
+      window.location.href = mailtoLink;
+      console.log('✅ Email client opened with bio content');
     }
   };
 
@@ -1084,19 +1116,20 @@ ${smartBioData.perplexityCitations.map((citation, index) =>
       const subject = 'Incorrect Bio';
       const body = `I would like to report an issue with the generated bio for the following donor:
 
-Name: ${donor.name}
-Email: ${donor.email || 'Not provided'}
-Organization: ${donor.employment?.employer || 'Not provided'}
+Donor PID: ${donor.pid || 'PID-2024-001847'}
+Donor Name: ${donor.name}
 
 Generated Bio:
 ${bioText}
 
+Issue Description:
 [Please describe the issue with the bio]
 
 Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
       const mailtoLink = `mailto:Support@cmdi.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.open(mailtoLink);
+      window.location.href = mailtoLink;
+      console.log('✅ Report issue email opened');
     }
   };
 
@@ -1134,6 +1167,8 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
       if (data.success && data.headlines && data.headlines.length > 0) {
         console.log('✅ Successfully generated headlines via backend API');
+        console.log('✅ Citations received:', data.citations ? data.citations.length : 0);
+        // Return both headlines and citations
         return {
           headlines: data.headlines,
           citations: data.citations || []
@@ -1161,10 +1196,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
           `Based in ${donor.primaryAddress?.city || 'their location'} with established career background.`
         ];
         console.log('🔄 Employment-based fallback:', fallbackHeadlines);
-        return {
-          headlines: fallbackHeadlines,
-          citations: []
-        };
+        return { headlines: fallbackHeadlines, citations: [] };
       }
 
       // Generic fallback for profiles without employment data
@@ -1174,10 +1206,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
         `Profile available for further research and outreach opportunities.`
       ];
       console.log('🔄 Generic fallback:', genericFallback);
-      return {
-        headlines: genericFallback,
-        citations: []
-      };
+      return { headlines: genericFallback, citations: [] };
     }
   };
 
@@ -1260,10 +1289,9 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
     return `Estimated wealth: ${wealthData.range} (${wealthData.tier})`;
   };
 
-  // Format Smart Bio as markdown
+  // Format Smart Bio as markdown (FEC integration removed - 2025-01-06)
   const formatSmartBioMarkdown = (bioData: SmartBioData): string => {
     const headlines = bioData.perplexityHeadlines.join(' ');
-    const giving = bioData.fecGivingSummary;
     const wealth = bioData.wealthSummary;
 
     const sourcesText = bioData.sources
@@ -1272,16 +1300,13 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
     let markdown = headlines;
 
-    if (giving && !giving.includes('unavailable') && !giving.includes('No recent')) {
-      markdown += `\n\n**Giving Summary:** ${giving}`;
-    }
+
 
     if (wealth) {
       markdown += `\n**${wealth}**`;
     }
 
     markdown += `\n\n**Sources (${bioData.sources.length}):** ${sourcesText}`;
-    markdown += `\n**FEC Disclaimer:** Data from the FEC does not imply endorsement. Public record info only.`;
 
     return markdown;
   };
@@ -1907,6 +1932,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
               setShowNotesModal={setShowNotesModal}
               contactsData={contactsData}
               setShowAddressBookModal={setShowAddressBookModal}
+              customAIInsights={customAIInsights}
             />
           </div>
         </div>
@@ -1960,20 +1986,17 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 showCitationsModal={showCitationsModal}
                 setShowCitationsModal={setShowCitationsModal}
                 isEditingBio={isEditingBio}
-                setIsEditingBio={setIsEditingBio}
-                originalBioText={originalBioText}
-                setOriginalBioText={setOriginalBioText}
                 editedBioText={editedBioText}
-                setEditedBioText={setEditedBioText}
-                showQuickActionsDropdown={showQuickActionsDropdown}
-                setShowQuickActionsDropdown={setShowQuickActionsDropdown}
                 handleEditBio={handleEditBio}
                 handleResetBio={handleResetBio}
                 handleSaveEditedBio={handleSaveEditedBio}
                 handleCancelEdit={handleCancelEdit}
+                setEditedBioText={setEditedBioText}
+                showQuickActionsDropdown={showQuickActionsDropdown}
+                setShowQuickActionsDropdown={setShowQuickActionsDropdown}
                 handleCopyToClipboard={handleCopyToClipboard}
                 handleExportAsPDF={handleExportAsPDF}
-
+                handleExportAsWord={handleExportAsWord}
                 handleEmailBio={handleEmailBio}
                 handleReportIssue={handleReportIssue}
                 handleDialRClick={handleDialRClick}
@@ -1982,223 +2005,150 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
             )}
 
             {activeTab === 'contact-insights' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Left Side - Contact Intelligence */}
-                <div className="space-y-4">
-                  {contactInsightsPanelOrder.filter(panelId => leftSidePanels.has(panelId)).map((panelId) => {
-                    const isMinimized = minimizedContactPanels.has(panelId);
+              <div className="space-y-6">
+                {/* Communication Intelligence Panel */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleContactPanelMinimized('communication-intelligence')}
+                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                        title={minimizedContactPanels.has('communication-intelligence') ? 'Expand panel' : 'Minimize panel'}
+                      >
+                        <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform ${minimizedContactPanels.has('communication-intelligence') ? 'rotate-180' : ''}`} />
+                      </button>
+                      <h4 className="font-semibold text-gray-900">Communication Intelligence</h4>
+                    </div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+                      Last 30 days
+                    </div>
+                  </div>
 
-                    if (panelId === 'communication-intelligence') {
-                      return (
-                        <div
-                          key={panelId}
-                          draggable
-                          onDragStart={() => handleContactPanelDragStart(panelId)}
-                          onDragOver={(e) => handleContactPanelDragOver(e, panelId)}
-                          onDrop={(e) => handleContactPanelDrop(e, panelId)}
-                          onDragEnd={handleContactPanelDragEnd}
-                          className="bg-white border border-gray-200 rounded-lg p-3 cursor-move transition-all duration-200 hover:shadow-md"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => toggleContactPanelMinimized(panelId)}
-                                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                title={isMinimized ? 'Expand panel' : 'Minimize panel'}
-                              >
-                                <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform ${isMinimized ? 'rotate-180' : ''}`} />
-                              </button>
-                              <h4 className="font-semibold text-gray-900">
-                                Communication Intelligence
-                              </h4>
-                            </div>
-                            <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                              Last 30 days
+                  {!minimizedContactPanels.has('communication-intelligence') && (
+                    <div className="space-y-4">
+                      {/* New Simplified Metrics */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Total Calls Made */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                          <div className="flex items-center justify-center gap-1 mb-3">
+                            <div className="p-2 bg-blue-100 rounded-full">
+                              <PhoneIcon className="w-5 h-5 text-blue-600" />
                             </div>
                           </div>
-
-                          {!isMinimized && donor.contactIntelligence ? (
-                            <div className="space-y-3">
-                              {/* Channel Success Rates */}
-                              <div className="grid grid-cols-3 gap-2">
-                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
-                                  <div className="flex items-center justify-center gap-1 mb-1">
-                                    <div className="p-0.5 bg-gray-200 rounded">
-                                      <PhoneIcon className="w-3 h-3 text-gray-700" />
-                                    </div>
-                                    <span className="text-xs font-medium text-gray-700">Phone</span>
-                                  </div>
-                                  <div className="text-sm font-semibold text-gray-700">85%</div>
-                                  <div className="text-xs text-gray-500">Success</div>
-                                </div>
-
-                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
-                                  <div className="flex items-center justify-center gap-1 mb-1">
-                                    <div className="p-0.5 bg-gray-200 rounded">
-                                      <EnvelopeIcon className="w-3 h-3 text-gray-700" />
-                                    </div>
-                                    <span className="text-xs font-medium text-gray-700">Email</span>
-                                  </div>
-                                  <div className="text-sm font-semibold text-gray-700">72%</div>
-                                  <div className="text-xs text-gray-500">Open</div>
-                                </div>
-
-                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
-                                  <div className="flex items-center justify-center gap-1 mb-1">
-                                    <div className="p-0.5 bg-gray-200 rounded">
-                                      <ChatBubbleLeftRightIcon className="w-3 h-3 text-gray-700" />
-                                    </div>
-                                    <span className="text-xs font-medium text-gray-700">Text</span>
-                                  </div>
-                                  <div className="text-sm font-semibold text-gray-700">95%</div>
-                                  <div className="text-xs text-gray-500">Read</div>
-                                </div>
-                              </div>
-
-                        {/* Preferences & Timing */}
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
-                          <div className="grid grid-cols-2 gap-2 mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500 font-medium">Preferred:</span>
-                              <div className="flex items-center gap-1 text-sm font-medium">
-                                {donor.contactIntelligence.preferredContactMethod === 'phone' && (
-                                  <>
-                                    <div className="p-0.5 bg-gray-200 rounded">
-                                      <PhoneIcon className="w-3 h-3 text-gray-700" />
-                                    </div>
-                                    <span className="text-gray-700">Phone</span>
-                                  </>
-                                )}
-                                {donor.contactIntelligence.preferredContactMethod === 'email' && (
-                                  <>
-                                    <div className="p-0.5 bg-gray-200 rounded">
-                                      <EnvelopeIcon className="w-3 h-3 text-gray-700" />
-                                    </div>
-                                    <span className="text-gray-700">Email</span>
-                                  </>
-                                )}
-                                {donor.contactIntelligence.preferredContactMethod === 'text' && (
-                                  <>
-                                    <div className="p-0.5 bg-gray-200 rounded">
-                                      <ChatBubbleLeftRightIcon className="w-3 h-3 text-gray-700" />
-                                    </div>
-                                    <span className="text-gray-700">Text</span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500 font-medium">Timezone:</span>
-                              <span className="text-sm font-medium text-gray-700">{donor.contactIntelligence.timezone}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-xs text-gray-500 font-medium">Response:</span>
-                            <span className="text-sm font-medium text-gray-700">{donor.contactIntelligence.responsePattern}</span>
-                          </div>
-
-                          <div>
-                            <span className="text-xs text-gray-500 font-medium block mb-1">Best Contact Times:</span>
-                            <div className="flex flex-wrap gap-1">
-                              {donor.contactIntelligence.bestContactTimes.map((time, index) => (
-                                <span key={index} className="text-xs font-medium text-blue-700 bg-blue-100 border border-blue-200 px-2 py-1 rounded-full">
-                                  {time}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-center py-6">
-                              <div className="p-2 bg-gray-100 rounded-full w-fit mx-auto mb-2">
-                                <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-400" />
-                              </div>
-                              <p className="text-gray-500 text-sm font-medium">No communication data available</p>
-                              <p className="text-gray-400 text-xs mt-1">Data will populate as interactions are tracked</p>
-                            </div>
-                          )}
+                          <div className="text-2xl font-bold text-gray-900">{Math.floor(Math.random() * 15) + 5}</div>
+                          <div className="text-sm text-gray-600 font-medium">Total Calls Made</div>
+                          <div className="text-xs text-gray-500 mt-1">Last 30 days</div>
                         </div>
-                      );
-                    }
 
-                    if (panelId === 'dialr-insights') {
-                      return (
-                        <div
-                          key={panelId}
-                          draggable
-                          onDragStart={() => handleContactPanelDragStart(panelId)}
-                          onDragOver={(e) => handleContactPanelDragOver(e, panelId)}
-                          onDrop={(e) => handleContactPanelDrop(e, panelId)}
-                          onDragEnd={handleContactPanelDragEnd}
-                          className="bg-white border border-gray-200 rounded-lg p-3 cursor-move transition-all duration-200 hover:shadow-md"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-semibold text-gray-900">
-                              DialR Insights
-                            </h4>
-                            <div className="flex items-center gap-2">
-                              <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                                Recent calls
-                              </div>
-                              <button
-                                onClick={() => toggleContactPanelMinimized(panelId)}
-                                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                title={isMinimized ? 'Expand panel' : 'Minimize panel'}
-                              >
-                                <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform ${isMinimized ? 'rotate-180' : ''}`} />
-                              </button>
+                        {/* Total Texts Sent */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                          <div className="flex items-center justify-center gap-1 mb-3">
+                            <div className="p-2 bg-green-100 rounded-full">
+                              <ChatBubbleLeftRightIcon className="w-5 h-5 text-green-600" />
                             </div>
                           </div>
-
-                          {!isMinimized && donor.contactIntelligence ? (
-                            <div className="space-y-3">
-                              {/* Most Recent Call */}
-                              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                      <span className="font-semibold text-gray-900 text-sm">Call - Soft Pledge</span>
-                                    </div>
-                                    <div className="text-xs text-gray-600">{formatLastContact(donor.contactIntelligence.lastContactDate)}</div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="text-base font-bold text-green-600">$1,000</div>
-                                    <div className="text-xs text-gray-500">Pledged</div>
-                                  </div>
-                                </div>
-                                <div className="text-sm text-gray-700 bg-white rounded px-2 py-1">
-                                  <strong>Result:</strong> {donor.contactIntelligence.lastContactOutcome}
-                                </div>
-                              </div>
-
-                              {/* View DialR Log Button */}
-                              <button
-                                onClick={() => setShowDialRLogModal(true)}
-                                className="w-full px-3 py-2 text-sm font-medium bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors flex items-center justify-center gap-2"
-                              >
-                                <PhoneIcon className="w-4 h-4" />
-                                View Complete DialR Log
-                              </button>
-                            </div>
-                          ) : !isMinimized ? (
-                            <div className="text-center py-6">
-                              <div className="p-2 bg-gray-100 rounded-full w-fit mx-auto mb-2">
-                                <PhoneIcon className="w-5 h-5 text-gray-400" />
-                              </div>
-                              <p className="text-gray-500 text-sm font-medium mb-2">No DialR data available</p>
-                              <button className="px-3 py-2 text-sm font-medium bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors">
-                                Connect DialR Integration
-                              </button>
-                            </div>
-                          ) : null}
+                          <div className="text-2xl font-bold text-gray-900">{Math.floor(Math.random() * 25) + 8}</div>
+                          <div className="text-sm text-gray-600 font-medium">Total Texts Sent</div>
+                          <div className="text-xs text-gray-500 mt-1">Last 30 days</div>
                         </div>
-                      );
-                    }
 
-                    if (panelId === 'targetpath-insights') {
+                        {/* Current Pledge Amount Total */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                          <div className="flex items-center justify-center gap-1 mb-3">
+                            <div className="p-2 bg-purple-100 rounded-full">
+                              <CurrencyDollarIcon className="w-5 h-5 text-purple-600" />
+                            </div>
+                          </div>
+                          <div className="text-2xl font-bold text-gray-900">
+                            ${(Math.floor(Math.random() * 5000) + 1000).toLocaleString()}
+                          </div>
+                          <div className="text-sm text-gray-600 font-medium">Active Pledges</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {Math.floor(Math.random() * 3) + 1} pledge{Math.floor(Math.random() * 3) + 1 > 1 ? 's' : ''}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Additional Context */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <InformationCircleIcon className="w-5 h-5 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-900">Communication Summary</span>
+                        </div>
+                        <div className="text-sm text-blue-800">
+                          Recent outreach activity shows consistent engagement patterns.
+                          {Math.random() > 0.5 ? ' Active pledge commitments indicate strong donor relationship.' : ' Multiple touchpoints demonstrate ongoing cultivation efforts.'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* DialR Insights Panel */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleContactPanelMinimized('dialr-insights')}
+                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                        title={minimizedContactPanels.has('dialr-insights') ? 'Expand panel' : 'Minimize panel'}
+                      >
+                        <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform ${minimizedContactPanels.has('dialr-insights') ? 'rotate-180' : ''}`} />
+                      </button>
+                      <h4 className="font-semibold text-gray-900">DialR Insights</h4>
+                    </div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+                      Recent calls
+                    </div>
+                  </div>
+
+                  {!minimizedContactPanels.has('dialr-insights') && donor.contactIntelligence ? (
+                    <div className="space-y-4">
+                      {/* Most Recent Call */}
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="font-semibold text-gray-900 text-sm">Call - Soft Pledge</span>
+                            </div>
+                            <div className="text-xs text-gray-600">{formatLastContact(donor.contactIntelligence.lastContactDate)}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-green-600">$1,000</div>
+                            <div className="text-xs text-gray-500">Pledged</div>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-700 bg-white rounded px-3 py-2">
+                          <strong>Result:</strong> {donor.contactIntelligence.lastContactOutcome}
+                        </div>
+                      </div>
+
+                      {/* View DialR Log Button */}
+                      <button
+                        onClick={() => setShowDialRLogModal(true)}
+                        className="w-full px-4 py-3 text-sm font-medium bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors flex items-center justify-center gap-2"
+                      >
+                        <PhoneIcon className="w-4 h-4" />
+                        View Complete DialR Log
+                      </button>
+                    </div>
+                  ) : !minimizedContactPanels.has('dialr-insights') ? (
+                    <div className="text-center py-8">
+                      <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-3">
+                        <PhoneIcon className="w-6 h-6 text-gray-400" />
+                      </div>
+                      <p className="text-gray-500 text-sm font-medium mb-3">No DialR data available</p>
+                      <button className="px-4 py-2 text-sm font-medium bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors">
+                        Connect DialR Integration
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'donations' && (
                       return (
                         <div
                           key={panelId}
@@ -2355,15 +2305,10 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
                     return null;
                   })}
-                </div>
+              </div>
+            )}
 
-                {/* Right Side - Giving Intelligence */}
-                <div className="space-y-4">
-                  {contactInsightsPanelOrder.filter(panelId => rightSidePanels.has(panelId)).map((panelId) => {
-                    const isMinimized = minimizedContactPanels.has(panelId);
-
-                    if (panelId === 'targetpath-insights') {
-                      return (
+            {activeTab === 'donations' && (
                         <div
                           key={panelId}
                           draggable
@@ -5207,7 +5152,6 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Generate Enhanced Smart Bio</h3>
-                  <p className="text-sm text-gray-600">Multi-source AI research</p>
                 </div>
               </div>
 
@@ -5215,10 +5159,10 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-yellow-800 font-medium text-sm">Estimated cost:</span>
-                    <span className="text-yellow-900 font-semibold text-sm">~$0.02 per bio</span>
+                    <span className="text-yellow-900 font-semibold text-sm">~$0.03 per bio</span>
                   </div>
                   <p className="text-yellow-700 text-xs">
-                    This will generate a comprehensive donor bio using AI research. Estimated cost: <strong>~$0.02</strong>
+                    Charges applied to CMDI Perplexity account
                   </p>
                 </div>
               </div>
@@ -5268,38 +5212,42 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                   {smartBioData.perplexityCitations.map((citation, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-xs font-medium text-blue-600">{index + 1}</span>
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 mb-1">{citation.title}</h4>
+                          <h4 className="font-medium text-gray-900 mb-2 leading-snug">
+                            {citation.title || 'Source'}
+                          </h4>
                           <a
                             href={citation.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 text-sm break-all transition-colors"
+                            className="text-sm text-blue-600 hover:text-blue-800 underline break-all"
                           >
                             {citation.url}
                           </a>
                         </div>
-                        <button
-                          onClick={() => window.open(citation.url, '_blank')}
-                          className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="text-gray-400 mb-2">
-                    <DocumentIcon className="w-12 h-12 mx-auto" />
-                  </div>
-                  <p className="text-gray-500">No sources available</p>
+                  <p className="text-gray-500">No sources available for this bio.</p>
                 </div>
               )}
+            </div>
+
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowCitationsModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -6317,6 +6265,7 @@ interface DraggablePanelContainerProps {
   activeAITab: 'insights' | 'bio';
   setActiveAITab: (tab: 'insights' | 'bio') => void;
   formatCurrency: (amount: number) => string;
+  customAIInsights?: React.ReactNode;
   getSmartTags: () => any[];
   getClassificationCodes: () => any[];
   getAllClassificationCodes: () => any[];
@@ -6363,7 +6312,8 @@ const DraggablePanelContainer: React.FC<DraggablePanelContainerProps> = ({
   notesData,
   setShowNotesModal,
   contactsData,
-  setShowAddressBookModal
+  setShowAddressBookModal,
+  customAIInsights
 }) => {
   const renderPanel = (panelId: string) => {
     const isDragging = draggedPanel === panelId;
@@ -6913,28 +6863,24 @@ interface DraggableOverviewContainerProps {
   // Citations Modal props
   showCitationsModal: boolean;
   setShowCitationsModal: (show: boolean) => void;
-  // Bio editing props
+  // Bio Review Process props (simplified)
   isEditingBio: boolean;
-  setIsEditingBio: (editing: boolean) => void;
-  originalBioText: string[];
-  setOriginalBioText: (text: string[]) => void;
   editedBioText: string[];
-  setEditedBioText: (text: string[]) => void;
-  showQuickActionsDropdown: boolean;
-  setShowQuickActionsDropdown: (show: boolean) => void;
-  // Bio action functions
   handleEditBio: () => void;
   handleResetBio: () => void;
   handleSaveEditedBio: () => void;
   handleCancelEdit: () => void;
+  setEditedBioText: (text: string[]) => void;
+  // Quick Actions Dropdown props
+  showQuickActionsDropdown: boolean;
+  setShowQuickActionsDropdown: (show: boolean) => void;
   handleCopyToClipboard: () => void;
   handleExportAsPDF: () => void;
-
+  handleExportAsWord: () => void;
   handleEmailBio: () => void;
   handleReportIssue: () => void;
   // DialR Integration props
   handleDialRClick: () => void;
-  // Custom AI Insights prop
   customAIInsights?: React.ReactNode;
 }
 
@@ -6961,20 +6907,17 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
   showCitationsModal,
   setShowCitationsModal,
   isEditingBio,
-  setIsEditingBio,
-  originalBioText,
-  setOriginalBioText,
   editedBioText,
-  setEditedBioText,
-  showQuickActionsDropdown,
-  setShowQuickActionsDropdown,
   handleEditBio,
   handleResetBio,
   handleSaveEditedBio,
   handleCancelEdit,
+  setEditedBioText,
+  showQuickActionsDropdown,
+  setShowQuickActionsDropdown,
   handleCopyToClipboard,
   handleExportAsPDF,
-
+  handleExportAsWord,
   handleEmailBio,
   handleReportIssue,
   handleDialRClick,
@@ -6998,7 +6941,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
               onDragOver={onDragOver}
               onDrop={(e) => onDrop(e, panelId)}
               onDragEnd={onDragEnd}
-              className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 cursor-move transition-all duration-200 hover:shadow-md"
+              className="cursor-move transition-all duration-200"
             >
               {customAIInsights}
             </div>
@@ -7025,6 +6968,9 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     AI Insights
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200 ml-2">
+                      Enterprise
+                    </span>
                   </h3>
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -7194,7 +7140,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                                   className="px-3 py-1 text-white text-xs rounded transition-all duration-200 hover:shadow-md hover:scale-105"
                                   style={{ backgroundColor: '#2f7fc3' }}
                                 >
-                                  Save
+                                  Save Changes
                                 </button>
                                 <button
                                   onClick={handleCancelEdit}
@@ -7224,47 +7170,60 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                           </div>
                         )}
 
-                        {/* Sources and Edit Controls */}
+                        {/* Sources and Edit/Reset buttons positioned below wealth info */}
                         <div className="flex items-center justify-between mb-3">
                           {/* Sources Button - Bottom Left */}
                           {smartBioData.perplexityCitations && smartBioData.perplexityCitations.length > 0 ? (
                             <button
                               onClick={() => setShowCitationsModal(true)}
-                              className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:scale-105"
+                              style={{ backgroundColor: '#e0f2fe', color: '#0277bd' }}
                             >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                               </svg>
                               Sources ({smartBioData.perplexityCitations.length})
                             </button>
                           ) : (
-                            <span className="text-xs text-gray-500">No sources available</span>
+                            <div></div>
                           )}
 
-                          {/* Edit/Reset Controls - Bottom Right */}
-                          {!isEditingBio && (
-                            <div className="flex items-center gap-2">
-                              {/* Edit Icon Button */}
-                              <button
-                                onClick={handleEditBio}
-                                className="p-1.5 rounded-md transition-all duration-200 hover:shadow-md hover:scale-105 group relative"
-                                style={{ backgroundColor: '#2f7fc3' }}
-                                title="Edit"
-                              >
-                                <PencilIcon className="w-3 h-3 text-white" />
-                              </button>
+                          {/* Edit and Reset Icon Buttons - Bottom Right */}
+                          <div className="flex items-center gap-2">
+                            {/* Edit Icon Button */}
+                            <button
+                              onClick={handleEditBio}
+                              className="p-1.5 rounded-md transition-all duration-200 hover:shadow-md hover:scale-105 group relative"
+                              style={{ backgroundColor: '#2f7fc3' }}
+                              title="Edit"
+                            >
+                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                                Edit
+                              </div>
+                            </button>
 
-                              {/* Reset Icon Button */}
-                              <button
-                                onClick={handleResetBio}
-                                className="p-1.5 bg-gray-500 rounded-md transition-all duration-200 hover:bg-gray-600 hover:shadow-md hover:scale-105 group relative"
-                                title="Reset"
-                              >
-                                <ArrowPathIcon className="w-3 h-3 text-white" />
-                              </button>
-                            </div>
-                          )}
+                            {/* Reset Icon Button */}
+                            <button
+                              onClick={handleResetBio}
+                              className="p-1.5 bg-gray-500 rounded-md transition-all duration-200 hover:bg-gray-600 hover:shadow-md hover:scale-105 group relative"
+                              title="Reset"
+                            >
+                              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                                Reset
+                              </div>
+                            </button>
+                          </div>
                         </div>
+
+
                       </div>
                     </div>
 
@@ -7278,51 +7237,67 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                             <div className="relative">
                               <button
                                 onClick={() => setShowQuickActionsDropdown(!showQuickActionsDropdown)}
-                                className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+                                className="text-white text-xs rounded px-3 py-1 transition-all duration-200 hover:shadow-lg hover:scale-105 flex items-center gap-1"
+                                style={{ backgroundColor: '#2f7fc3' }}
                               >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
                                 Actions
-                                <ChevronDownIcon className="w-3 h-3" />
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
                               </button>
 
                               {showQuickActionsDropdown && (
-                                <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                <div className="absolute right-0 bottom-full mb-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
                                   <div className="py-1">
                                     <button
                                       onClick={() => {
                                         handleCopyToClipboard();
                                         setShowQuickActionsDropdown(false);
                                       }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors duration-150"
                                     >
-                                      Copy Bio
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                      </svg>
+                                      Copy
                                     </button>
                                     <button
                                       onClick={() => {
                                         handleExportAsPDF();
                                         setShowQuickActionsDropdown(false);
                                       }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors duration-150"
                                     >
-                                      Export as PDF
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
+                                      PDF
                                     </button>
-
                                     <button
                                       onClick={() => {
                                         handleEmailBio();
                                         setShowQuickActionsDropdown(false);
                                       }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors duration-150"
                                     >
-                                      Email Bio
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                      </svg>
+                                      Email
                                     </button>
-                                    <div className="border-t border-gray-100 my-1"></div>
                                     <button
                                       onClick={() => {
                                         handleReportIssue();
                                         setShowQuickActionsDropdown(false);
                                       }}
-                                      className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100 transition-colors duration-150"
                                     >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                      </svg>
                                       Report Issue
                                     </button>
                                   </div>
@@ -7333,6 +7308,9 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                         </div>
                       </div>
                     )}
+
+                    {/* Quick Actions Dropdown */}
+
                   </div>
                 ) : (
                   <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%)'}}>
@@ -7342,7 +7320,6 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-gray-900">Enhanced Smart Bio</h4>
-                        <span className="text-xs text-gray-600">Multi-Source AI Research</span>
                       </div>
                     </div>
 
@@ -7375,6 +7352,219 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
               </div>
             )}
             </div>
+          </div>
+        );
+
+      case 'donorHealthSummary':
+        const isDonorHealthMinimized = minimizedOverviewPanels.has(panelId);
+
+        // Generate AI-powered donor health insights
+        const generateDonorHealthInsights = () => {
+          const insights = {
+            overallHealth: Math.random() > 0.3 ? 'Excellent' : Math.random() > 0.5 ? 'Good' : 'Needs Attention',
+            giftSummary: {
+              totalGifts: donor.givingOverview?.consecutiveGifts || 12,
+              totalAmount: donor.givingOverview?.totalRaised || 15200,
+              averageGift: donor.givingOverview?.averageGift || 1900,
+              trend: Math.random() > 0.6 ? 'Increasing' : Math.random() > 0.3 ? 'Stable' : 'Declining'
+            },
+            engagementScore: Math.floor(Math.random() * 40) + 60, // 60-100
+            activeSegments: ['Major Donors', 'Q4 Campaign', 'Event Attendees'].slice(0, Math.floor(Math.random() * 3) + 1),
+            recentActivity: [
+              { type: 'gift', description: 'Major gift received', date: '2 days ago' },
+              { type: 'call', description: 'DialR call completed', date: '1 week ago' },
+              { type: 'event', description: 'Event RSVP confirmed', date: '2 weeks ago' }
+            ].slice(0, Math.floor(Math.random() * 3) + 1),
+            riskIndicators: Math.random() > 0.7 ? ['Declining engagement'] : [],
+            opportunities: ['Upgrade potential', 'Event attendance likely'].slice(0, Math.floor(Math.random() * 2) + 1),
+            outstandingActions: Math.random() > 0.5 ? ['Follow-up call scheduled', 'Thank you note pending'] : ['No pending actions']
+          };
+          return insights;
+        };
+
+        const healthInsights = generateDonorHealthInsights();
+        const healthColor = healthInsights.overallHealth === 'Excellent' ? '#10b981' :
+                           healthInsights.overallHealth === 'Good' ? '#f59e0b' : '#ef4444';
+        const trendColor = healthInsights.giftSummary.trend === 'Increasing' ? '#10b981' :
+                          healthInsights.giftSummary.trend === 'Stable' ? '#6b7280' : '#ef4444';
+
+        return (
+          <div
+            key={panelId}
+            draggable
+            onDragStart={(e) => onDragStart(e, panelId)}
+            onDragOver={onDragOver}
+            onDrop={(e) => onDrop(e, panelId)}
+            onDragEnd={onDragEnd}
+            className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 cursor-move transition-all duration-200 hover:shadow-md"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => toggleOverviewPanelMinimized(panelId)}
+                  className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                  title={isDonorHealthMinimized ? 'Expand panel' : 'Minimize panel'}
+                >
+                  <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform ${isDonorHealthMinimized ? 'rotate-180' : ''}`} />
+                </button>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)' }}>
+                  <SparklesIcon className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Donor Health Summary</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: healthColor }}></div>
+                    <span className="text-xs text-gray-500">AI-Generated Executive Summary</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${healthColor}20`, color: healthColor }}>
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: healthColor }}></div>
+                  {healthInsights.overallHealth}
+                </div>
+                <button className="text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            {!isDonorHealthMinimized && (
+              <div className="space-y-4">
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-gray-600">Engagement Score</span>
+                      <span className="text-xs font-medium" style={{ color: healthColor }}>{healthInsights.engagementScore}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${healthInsights.engagementScore}%`,
+                          backgroundColor: healthColor
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div className="text-xs text-gray-600 mb-1">Gift Trend</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold" style={{ color: trendColor }}>
+                        {healthInsights.giftSummary.trend}
+                      </span>
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: `${trendColor}30` }}>
+                        <div className="w-1.5 h-1.5 rounded-full m-0.5" style={{ backgroundColor: trendColor }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div className="text-xs text-gray-600 mb-1">Active Segments</div>
+                    <div className="text-sm font-semibold text-gray-900">{healthInsights.activeSegments.length}</div>
+                  </div>
+                </div>
+
+                {/* Gift Summary */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-blue-900 mb-2">Current Giving Cycle</h4>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-blue-700">Total Gifts:</span>
+                      <span className="ml-2 font-semibold text-blue-900">{healthInsights.giftSummary.totalGifts}</span>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">Total Amount:</span>
+                      <span className="ml-2 font-semibold text-blue-900">${healthInsights.giftSummary.totalAmount.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">Average:</span>
+                      <span className="ml-2 font-semibold text-blue-900">${healthInsights.giftSummary.averageGift.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active Segments */}
+                {healthInsights.activeSegments.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Active Segments</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {healthInsights.activeSegments.map((segment, index) => (
+                        <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                          {segment}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent Activity Summary */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Recent Activity</h4>
+                  <div className="space-y-2">
+                    {healthInsights.recentActivity.map((activity, index) => (
+                      <div key={index} className="flex items-center gap-3 text-sm">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#2f7fc3' }}></div>
+                        <span className="text-gray-700">{activity.description}</span>
+                        <span className="text-gray-500 text-xs ml-auto">{activity.date}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Risk Indicators & Opportunities */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {healthInsights.riskIndicators.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <h4 className="text-sm font-semibold text-red-900 mb-2">Risk Indicators</h4>
+                      <ul className="space-y-1">
+                        {healthInsights.riskIndicators.map((risk, index) => (
+                          <li key={index} className="text-sm text-red-700 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                            {risk}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {healthInsights.opportunities.length > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <h4 className="text-sm font-semibold text-green-900 mb-2">Opportunities</h4>
+                      <ul className="space-y-1">
+                        {healthInsights.opportunities.map((opportunity, index) => (
+                          <li key={index} className="text-sm text-green-700 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                            {opportunity}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Outstanding Actions */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <h4 className="text-sm font-semibold text-yellow-900 mb-2">Outstanding Actions</h4>
+                  <ul className="space-y-1">
+                    {healthInsights.outstandingActions.map((action, index) => (
+                      <li key={index} className="text-sm text-yellow-700 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>
+                        {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Last Updated */}
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <span className="text-xs text-gray-500">Last updated: {new Date().toLocaleDateString()}</span>
+                  <button className="text-xs font-medium transition-colors hover:opacity-80" style={{ color: '#2f7fc3' }}>
+                    View Detailed Report
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         );
 
