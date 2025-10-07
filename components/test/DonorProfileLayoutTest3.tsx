@@ -7089,7 +7089,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                     </div>
                     {/* Progress Bar */}
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="h-2 rounded-full" style={{width: '62%', background: `linear-gradient(to right, #2f7fc3, #10b981)`}}></div>
+                      <div className="h-2 rounded-full" style={{width: '62%', background: `linear-gradient(to right, #2f7fc3, #dc2626)`}}></div>
                     </div>
                   </div>
 
@@ -7359,14 +7359,13 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%)'}}>
+                  <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #ecf4ff 0%, #dbeafe 100%)'}}>
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2f7fc3'}}>
                         <SparklesIcon className="w-3 h-3 text-white" />
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-gray-900">Enhanced Smart Bio</h4>
-                        <span className="text-xs text-gray-600">Multi-Source AI Research</span>
                       </div>
                     </div>
 
@@ -7377,9 +7376,9 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                         onClick={() => setShowSmartBioConfirmModal(true)}
                         disabled={isGeneratingSmartBio}
                         className="text-white text-xs font-semibold py-2 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50"
-                        style={{background: 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)'}}
-                        onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #1e6ba8 0%, #059669 100%)')}
-                        onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)')}
+                        style={{background: 'linear-gradient(135deg, #4dadff 0%, #2f7fc3 100%)'}}
+                        onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #3b9eff 0%, #1e6ba8 100%)')}
+                        onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #4dadff 0%, #2f7fc3 100%)')}
                       >
                         {isGeneratingSmartBio ? (
                           <>
