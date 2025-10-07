@@ -912,22 +912,12 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
       ]);
 
       // Extract results with fallbacks for failed promises
-      console.log('🔍 Perplexity Promise Status:', perplexityHeadlines.status);
-      if (perplexityHeadlines.status === 'rejected') {
-        console.log('🔍 Perplexity Promise Rejection Reason:', perplexityHeadlines.reason);
-      } else {
-        console.log('🔍 Perplexity Promise Success Value:', perplexityHeadlines.value);
-      }
-
       const perplexityResult = perplexityHeadlines.status === 'fulfilled'
         ? perplexityHeadlines.value
         : { headlines: [`${donor.name} is a political donor with available public records.`], citations: [] };
 
       const headlines = perplexityResult.headlines;
       const citations = perplexityResult.citations;
-
-      console.log('🔍 Final Headlines to be used:', headlines);
-      console.log('🔍 Final Citations to be used:', citations);
 
       const wealth = wealthSummary.status === 'fulfilled'
         ? wealthSummary.value
@@ -7157,6 +7147,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                     <p className="text-red-700 text-sm">{smartBioError}</p>
                   </div>
                 )}
+
 
                 {smartBioData ? (
                   <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
