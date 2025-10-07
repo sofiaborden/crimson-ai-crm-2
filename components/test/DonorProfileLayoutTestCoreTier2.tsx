@@ -967,13 +967,6 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
               <div className="flex gap-2">
                 {/* Max Ask Preview Card */}
                 <div className="bg-white border border-gray-200 rounded-lg p-3 min-w-[80px] text-center">
-
-
-                      <svg className="w-4 h-4 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  </div>
                   <div className="text-lg font-bold text-blue-600" style={{
                     filter: 'blur(4px)',
                     userSelect: 'none'
@@ -984,14 +977,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                 </div>
 
                 {/* Gift Readiness Preview Card */}
-                <div className="relative bg-white border border-gray-200 rounded-lg p-3 min-w-[80px] text-center">
-                  <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                    <div className="text-gray-400">
-                      <svg className="w-4 h-4 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-3 min-w-[80px] text-center">
                   <div className="text-sm font-bold text-blue-600" style={{
                     filter: 'blur(4px)',
                     userSelect: 'none'
