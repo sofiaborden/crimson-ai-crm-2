@@ -7234,7 +7234,11 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                           {smartBioData.perplexityCitations && smartBioData.perplexityCitations.length > 0 ? (
                             <button
                               onClick={() => setShowCitationsModal(true)}
-                              className="text-xs text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1"
+                              style={{
+                                backgroundColor: '#2f7fc3'
+                              }}
+                              title="View citation sources"
                             >
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -7242,29 +7246,31 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                               Sources ({smartBioData.perplexityCitations.length})
                             </button>
                           ) : (
-                            <span className="text-xs text-gray-500">No sources available</span>
+                            <span className="text-xs text-gray-500 italic">No sources available</span>
                           )}
 
                           {/* Edit/Reset Controls - Bottom Right */}
                           {!isEditingBio && (
                             <div className="flex items-center gap-2">
-                              {/* Edit Icon Button */}
+                              {/* Edit Button - Icon Only */}
                               <button
                                 onClick={handleEditBio}
-                                className="p-1.5 rounded-md transition-all duration-200 hover:shadow-md hover:scale-105 group relative"
-                                style={{ backgroundColor: '#2f7fc3' }}
-                                title="Edit"
+                                className="p-2 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1"
+                                style={{
+                                  backgroundColor: '#2f7fc3'
+                                }}
+                                title="Edit bio content"
                               >
-                                <PencilIcon className="w-3 h-3 text-white" />
+                                <PencilIcon className="w-4 h-4" />
                               </button>
 
-                              {/* Reset Icon Button */}
+                              {/* Reset Button - Icon Only */}
                               <button
                                 onClick={handleResetBio}
-                                className="p-1.5 bg-gray-500 rounded-md transition-all duration-200 hover:bg-gray-600 hover:shadow-md hover:scale-105 group relative"
-                                title="Reset"
+                                className="p-2 text-white bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
+                                title="Reset to original content"
                               >
-                                <ArrowPathIcon className="w-3 h-3 text-white" />
+                                <ArrowPathIcon className="w-4 h-4" />
                               </button>
                             </div>
                           )}
@@ -7274,30 +7280,36 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
 
                     {/* Bio Actions - Timestamp and Actions Dropdown */}
                     {!isEditingBio && (
-                      <div className="px-4 py-3 border-t border-gray-100">
+                      <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
+                          <span className="text-xs text-gray-500 font-medium">Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
                           <div className="flex items-center gap-2">
                             {/* Actions Dropdown */}
                             <div className="relative">
                               <button
                                 onClick={() => setShowQuickActionsDropdown(!showQuickActionsDropdown)}
-                                className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                               >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
                                 Actions
-                                <ChevronDownIcon className="w-3 h-3" />
+                                <ChevronDownIcon className="w-3.5 h-3.5" />
                               </button>
 
                               {showQuickActionsDropdown && (
-                                <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                                  <div className="py-1">
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
+                                  <div className="py-2">
                                     <button
                                       onClick={() => {
                                         handleCopyToClipboard();
                                         setShowQuickActionsDropdown(false);
                                       }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-150 flex items-center gap-3"
                                     >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                      </svg>
                                       Copy Bio
                                     </button>
                                     <button
@@ -7305,18 +7317,23 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                                         handleExportAsPDF();
                                         setShowQuickActionsDropdown(false);
                                       }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-150 flex items-center gap-3"
                                     >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
                                       Export as PDF
                                     </button>
-
                                     <button
                                       onClick={() => {
                                         handleEmailBio();
                                         setShowQuickActionsDropdown(false);
                                       }}
-                                      className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-150 flex items-center gap-3"
                                     >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                      </svg>
                                       Email Bio
                                     </button>
                                     <div className="border-t border-gray-100 my-1"></div>
@@ -7325,8 +7342,11 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                                         handleReportIssue();
                                         setShowQuickActionsDropdown(false);
                                       }}
-                                      className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
+                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-150 flex items-center gap-3"
                                     >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                      </svg>
                                       Report Issue
                                     </button>
                                   </div>

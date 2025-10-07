@@ -1,6 +1,10 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,7 +88,14 @@ app.post('/api/generate-bio', async (req, res) => {
         );
       }
 
-      return res.json({ success: true, headlines: mockHeadlines });
+      // Include mock citations for testing
+      const mockCitations = [
+        { title: "LinkedIn Profile", url: "https://linkedin.com/in/example" },
+        { title: "Company Website", url: "https://cmdi.com/team" },
+        { title: "Professional Directory", url: "https://example.com/directory" }
+      ];
+
+      return res.json({ success: true, headlines: mockHeadlines, citations: mockCitations });
     }
 
     // Create timeout promise
