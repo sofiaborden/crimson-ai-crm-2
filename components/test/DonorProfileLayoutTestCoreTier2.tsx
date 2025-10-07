@@ -958,7 +958,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 mt-4">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-blue-900 mb-1">
+              <p className="font-medium text-blue-900 mb-1" style={{ fontSize: '0.8rem' }}>
                 ⚠️ You're missing out on the top-performing ask windows for this donor. Unlock specific ask timing, ranges, and gift likelihood — powered by CrimsonPulse AI.
               </p>
             </div>
