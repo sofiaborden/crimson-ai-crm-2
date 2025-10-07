@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { SparklesIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon } from '../../constants';
+import React, { useState, useRef, useEffect } from 'react';
+import { SparklesIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon, EllipsisVerticalIcon, ChevronDownIcon } from '../../constants';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import SmartTagEditor from './SmartTagEditor';
@@ -17,8 +17,18 @@ interface SmartTag {
   removalTrigger?: any;
   count: number;
   isActive: boolean;
+  isInclusionCriteria: boolean;
+  associatedFlows?: AssociatedFlow[];
   createdBy: string;
   createdDate: string;
+}
+
+interface AssociatedFlow {
+  id: string;
+  name: string;
+  type: 'dynamic' | 'static';
+  isActive: boolean;
+  isAutoCreated: boolean;
 }
 
 const SmartTagsManager: React.FC = () => {
@@ -30,6 +40,10 @@ const SmartTagsManager: React.FC = () => {
   // Filter states
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Dropdown states
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Mock data for unified smart tags including all people codes
   const [smartTags, setSmartTags] = useState<SmartTag[]>([
@@ -45,6 +59,23 @@ const SmartTagsManager: React.FC = () => {
       inclusionTrigger: { totalGiving: { min: 500, period: '12months' } },
       count: 1247,
       isActive: true,
+      isInclusionCriteria: true,
+      associatedFlows: [
+        {
+          id: 'flow-1',
+          name: 'Big Givers - Inclusion Flow',
+          type: 'dynamic',
+          isActive: true,
+          isAutoCreated: true
+        },
+        {
+          id: 'flow-2',
+          name: 'Major Gift Stewardship',
+          type: 'dynamic',
+          isActive: true,
+          isAutoCreated: false
+        }
+      ],
       createdBy: 'System',
       createdDate: '2024-01-15'
     },
@@ -60,6 +91,16 @@ const SmartTagsManager: React.FC = () => {
       inclusionTrigger: { state: 'FL', ageRange: [35, 44], politicalEngagement: 'moderate' },
       count: 892,
       isActive: true,
+      isInclusionCriteria: true,
+      associatedFlows: [
+        {
+          id: 'flow-3',
+          name: 'Prime Persuadables - Inclusion Flow',
+          type: 'dynamic',
+          isActive: true,
+          isAutoCreated: true
+        }
+      ],
       createdBy: 'System',
       createdDate: '2024-01-15'
     },
@@ -75,6 +116,8 @@ const SmartTagsManager: React.FC = () => {
       inclusionTrigger: { voterRegistration: 'unregistered' },
       count: 456,
       isActive: true,
+      isInclusionCriteria: false,
+      associatedFlows: [],
       createdBy: 'System',
       createdDate: '2024-01-15'
     },
@@ -90,6 +133,23 @@ const SmartTagsManager: React.FC = () => {
       inclusionTrigger: { firstGiftDate: { within: '6months' }, or: { upgradedGiving: true } },
       count: 324,
       isActive: true,
+      isInclusionCriteria: true,
+      associatedFlows: [
+        {
+          id: 'flow-4',
+          name: 'New & Rising Donors - Inclusion Flow',
+          type: 'dynamic',
+          isActive: true,
+          isAutoCreated: true
+        },
+        {
+          id: 'flow-5',
+          name: 'New Donor Welcome Journey',
+          type: 'dynamic',
+          isActive: true,
+          isAutoCreated: false
+        }
+      ],
       createdBy: 'System',
       createdDate: '2024-01-15'
     },
@@ -105,6 +165,23 @@ const SmartTagsManager: React.FC = () => {
       inclusionTrigger: { lastGiftDate: { before: '18months' } },
       count: 678,
       isActive: false,
+      isInclusionCriteria: true,
+      associatedFlows: [
+        {
+          id: 'flow-6',
+          name: 'Lapsed / At-Risk - Inclusion Flow',
+          type: 'dynamic',
+          isActive: false,
+          isAutoCreated: true
+        },
+        {
+          id: 'flow-7',
+          name: 'Lapsed Donor Re-engagement',
+          type: 'dynamic',
+          isActive: true,
+          isAutoCreated: false
+        }
+      ],
       createdBy: 'System',
       createdDate: '2024-01-15'
     },
@@ -120,6 +197,8 @@ const SmartTagsManager: React.FC = () => {
       filterDefinition: {},
       count: 45,
       isActive: true,
+      isInclusionCriteria: false,
+      associatedFlows: [],
       createdBy: 'Admin',
       createdDate: '2024-01-20'
     },
@@ -134,6 +213,8 @@ const SmartTagsManager: React.FC = () => {
       filterDefinition: {},
       count: 23,
       isActive: true,
+      isInclusionCriteria: false,
+      associatedFlows: [],
       createdBy: 'Admin',
       createdDate: '2024-01-22'
     },
@@ -149,6 +230,8 @@ const SmartTagsManager: React.FC = () => {
       filterDefinition: {},
       count: 156,
       isActive: true,
+      isInclusionCriteria: false,
+      associatedFlows: [],
       createdBy: 'User',
       createdDate: '2024-02-01'
     },
@@ -164,6 +247,8 @@ const SmartTagsManager: React.FC = () => {
       filterDefinition: {},
       count: 89,
       isActive: true,
+      isInclusionCriteria: false,
+      associatedFlows: [],
       createdBy: 'User',
       createdDate: '2024-02-05'
     }
@@ -218,12 +303,38 @@ const SmartTagsManager: React.FC = () => {
   };
 
   const toggleTagStatus = (tagId: string) => {
-    setSmartTags(tags => 
-      tags.map(tag => 
+    setSmartTags(tags =>
+      tags.map(tag =>
         tag.id === tagId ? { ...tag, isActive: !tag.isActive } : tag
       )
     );
   };
+
+  // Dropdown management
+  const toggleDropdown = (tagId: string) => {
+    setOpenDropdown(openDropdown === tagId ? null : tagId);
+  };
+
+  const closeDropdown = () => {
+    setOpenDropdown(null);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdown) {
+        const dropdownElement = dropdownRefs.current[openDropdown];
+        if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
+          closeDropdown();
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   return (
     <div className="space-y-6">
@@ -332,17 +443,34 @@ const SmartTagsManager: React.FC = () => {
         <div className="divide-y divide-gray-200">
           {filteredTags.map((tag) => (
             <div key={tag.id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="w-12 h-12 rounded-lg flex items-center justify-center text-xl"
+              <div className="flex items-start justify-between gap-6">
+                {/* Left Section - Tag Info */}
+                <div className="flex items-start gap-4 min-w-0 flex-1">
+                  <div
+                    className="w-12 h-12 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
                     style={{ backgroundColor: `${tag.color}20`, border: `2px solid ${tag.color}30` }}
                   >
                     {tag.emoji}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h5 className="font-semibold text-gray-900">{tag.name}</h5>
+                  <div className="min-w-0 flex-1">
+                    {/* Tag Name and Contact Count */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <button
+                        onClick={() => handleEditTag(tag)}
+                        className="font-semibold text-gray-900 text-lg hover:text-crimson-blue transition-colors cursor-pointer text-left"
+                      >
+                        {tag.name}
+                      </button>
+                      <span className="text-sm text-gray-500">
+                        {tag.count.toLocaleString()} contacts
+                      </span>
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-gray-600 mb-3">{tag.description}</p>
+
+                    {/* Badges Row */}
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         className={`text-xs ${tag.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}
                       >
@@ -358,54 +486,94 @@ const SmartTagsManager: React.FC = () => {
                       >
                         {tag.category.replace('-', ' ')}
                       </Badge>
-                      <span className="text-sm text-gray-500">
-                        {tag.count.toLocaleString()} contacts
-                      </span>
+                      {tag.isInclusionCriteria && (
+                        <Badge
+                          className="text-xs bg-orange-100 text-orange-800"
+                        >
+                          🎯 Inclusion Criteria
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-600">{tag.description}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Created by {tag.createdBy} on {new Date(tag.createdDate).toLocaleDateString()}
-                    </p>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => {
-                      // TODO: Implement view records functionality
-                      console.log(`Viewing records for tag: ${tag.name}`);
-                    }}
-                    className="text-xs bg-crimson-blue text-white hover:bg-crimson-dark-blue"
-                  >
-                    <EyeIcon className="w-4 h-4 mr-1" />
-                    View Records
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => toggleTagStatus(tag.id)}
-                    className="text-xs"
-                  >
-                    {tag.isActive ? 'Deactivate' : 'Activate'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => handleEditTag(tag)}
-                  >
-                    <PencilIcon className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => handleDeleteTag(tag.id)}
-                    className="text-red-600 hover:bg-red-50"
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                  </Button>
+
+                {/* Right Section - Actions and Created Date */}
+                <div className="flex flex-col items-end gap-3 flex-shrink-0">
+                  {/* Actions Dropdown */}
+                  <div className="relative" ref={(el) => (dropdownRefs.current[tag.id] = el)}>
+                    <button
+                      onClick={() => toggleDropdown(tag.id)}
+                      className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue transition-colors"
+                    >
+                      Actions
+                      <ChevronDownIcon className="w-4 h-4" />
+                    </button>
+
+                  {/* Dropdown Menu */}
+                  {openDropdown === tag.id && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            console.log(`Viewing records for tag: ${tag.name}`);
+                            closeDropdown();
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-crimson-blue hover:text-white transition-colors"
+                        >
+                          <EyeIcon className="w-4 h-4" />
+                          View Records
+                        </button>
+                        <button
+                          onClick={() => {
+                            console.log(`Adding new criteria for tag: ${tag.name}`);
+                            closeDropdown();
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-green-600 hover:text-white transition-colors"
+                        >
+                          <PlusIcon className="w-4 h-4" />
+                          Add New Criteria
+                        </button>
+                        <button
+                          onClick={() => {
+                            toggleTagStatus(tag.id);
+                            closeDropdown();
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className={`w-4 h-4 rounded-full ${tag.isActive ? 'bg-red-500' : 'bg-green-500'}`} />
+                          {tag.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <div className="border-t border-gray-100 my-1" />
+                        <button
+                          onClick={() => {
+                            handleEditTag(tag);
+                            closeDropdown();
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-600 hover:text-white transition-colors"
+                        >
+                          <PencilIcon className="w-4 h-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleDeleteTag(tag.id);
+                            closeDropdown();
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {/* Created Date */}
+                <div className="text-xs text-gray-500">
+                  Created {new Date(tag.createdDate).toLocaleDateString()}
+                </div>
+              </div>
               </div>
             </div>
           ))}

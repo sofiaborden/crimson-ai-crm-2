@@ -19,6 +19,7 @@ import LayoutTestCoreTier2Page from './pages/layout-test-core-tier-2';
 import LayoutTestCoreTier2OutOfCreditsPage from './pages/layout-test-core-tier-2-out-of-credits';
 import TestSelectiveRollout from './pages/test-selective-rollout';
 import TestSmartBioAllProfiles from './pages/test-smart-bio-all-profiles';
+import TestSmartTagsFlowIntegrationPage from './pages/test-smart-tags-flow-integration';
 import { View, Donor } from './types';
 import { mockDonorProfiles } from './utils/mockDonorProfiles';
 import { useTest3Layout } from './utils/profileLayoutSelector';
@@ -75,6 +76,8 @@ const App: React.FC = () => {
         return <TestSelectiveRollout />;
       case 'test-smart-bio-all-profiles':
         return <TestSmartBioAllProfiles />;
+      case 'test-smart-tags-flow-integration':
+        return <TestSmartTagsFlowIntegrationPage />;
       default:
         return (
             <div className="flex items-center justify-center h-full">

@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { XMarkIcon, SparklesIcon, FlagIcon, FunnelIcon, EyeIcon, PlusIcon, ChevronDownIcon } from '../../constants';
+import { XMarkIcon, SparklesIcon, FlagIcon, FunnelIcon, EyeIcon, PlusIcon, ChevronDownIcon, ArrowPathIcon } from '../../constants';
 import Button from '../ui/Button';
+import FlowBadge from '../ui/FlowBadge';
 import SmartTagFilters from './SmartTagFilters';
 import ActionSelector from './ActionSelector';
 import TriggerConfigModal from './TriggerConfigModal';
+
+interface AssociatedFlow {
+  id: string;
+  name: string;
+  type: 'dynamic' | 'static';
+  isActive: boolean;
+  isAutoCreated: boolean;
+}
 
 interface SmartTag {
   id?: string;
@@ -18,6 +27,8 @@ interface SmartTag {
   removalTrigger?: any;
   count?: number;
   isActive: boolean;
+  isInclusionCriteria: boolean;
+  associatedFlows?: AssociatedFlow[];
   createdBy: string;
   createdDate: string;
 }
@@ -39,7 +50,9 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
     filterDefinition: [],
     inclusionTrigger: null,
     removalTrigger: null,
-    isActive: true
+    isActive: true,
+    isInclusionCriteria: false,
+    associatedFlows: [] as AssociatedFlow[]
   });
   const [showFilters, setShowFilters] = useState(false);
   const [previewCount, setPreviewCount] = useState(0);
@@ -49,6 +62,7 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
   const [showRemovalTrigger, setShowRemovalTrigger] = useState(false);
   const [showEmojiDropdown, setShowEmojiDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
+  const [showFlowsModal, setShowFlowsModal] = useState(false);
   const emojiDropdownRef = useRef<HTMLDivElement>(null);
   const colorDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -99,7 +113,9 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
         filterDefinition: tag.filterDefinition,
         inclusionTrigger: tag.inclusionTrigger || null,
         removalTrigger: tag.removalTrigger || null,
-        isActive: tag.isActive
+        isActive: tag.isActive,
+        isInclusionCriteria: tag.isInclusionCriteria,
+        associatedFlows: tag.associatedFlows || []
       });
     } else {
       // New tag - apply suggestions based on default category
@@ -434,12 +450,16 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                         <PlusIcon className="w-4 h-4 mr-2" />
                         Set Inclusion Criteria
                       </Button>
-                      {formData.inclusionTrigger && (
-                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="text-sm text-blue-800">
-                            ✓ Inclusion criteria configured
-                          </div>
-                        </div>
+
+                      {/* View All Flows Badge - Only show if tag exists and has associated flows */}
+                      {tag && formData.associatedFlows && formData.associatedFlows.length > 0 && (
+                        <button
+                          onClick={() => setShowFlowsModal(true)}
+                          className="mt-2 flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 text-sm font-medium text-blue-800 w-full justify-center"
+                        >
+                          <ArrowPathIcon className="w-4 h-4" />
+                          View All Flows: {formData.associatedFlows.length}
+                        </button>
                       )}
                     </div>
 
@@ -673,6 +693,94 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                   Save Criteria
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Associated Flows Modal */}
+      {showFlowsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <ArrowPathIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Associated Flows</h2>
+                    <p className="text-crimson-accent-blue text-sm">
+                      Flows that use "{formData.name}" tag criteria
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowFlowsModal(false)}
+                  className="text-white hover:text-crimson-accent-blue transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-10"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
+              {formData.associatedFlows && formData.associatedFlows.length > 0 ? (
+                <div className="space-y-4">
+                  {formData.associatedFlows.map((flow) => (
+                    <div key={flow.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center gap-4">
+                        <FlowBadge
+                          flowName={flow.name}
+                          flowType={flow.type}
+                          isActive={flow.isActive}
+                          size="md"
+                          showActions={false}
+                        />
+                        <div className="text-sm">
+                          {flow.isAutoCreated && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              Auto-created
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            console.log(`Viewing flow: ${flow.name}`);
+                            // TODO: Implement flow view functionality
+                          }}
+                          className="text-xs"
+                        >
+                          <EyeIcon className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            console.log(`Editing flow: ${flow.name}`);
+                            // TODO: Implement flow edit functionality
+                          }}
+                          className="text-xs"
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <ArrowPathIcon className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>No associated flows found for this tag.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
