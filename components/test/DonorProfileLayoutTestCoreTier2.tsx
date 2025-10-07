@@ -954,8 +954,9 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
           </div>
         )}
 
-        {/* Upgrade CTA with Preview Cards */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 mt-4">
+        {/* Upgrade CTA with Preview Cards - Only show on Pulse Check (insights) tab */}
+        {activeTab === 'insights' && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 mt-4">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="font-medium text-blue-900 mb-1" style={{ fontSize: '0.8rem' }}>
@@ -997,6 +998,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Toast and Upgrade Modal */}
