@@ -40,7 +40,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // API endpoint for generating bio
 app.post('/api/generate-bio', async (req, res) => {
   try {
-    const { name, occupation, employer, location, email, industry } = req.body;
+    const { name, occupation, employer, location, email, industry, useSearchResults, testingMode } = req.body;
 
     if (!name) {
       return res.status(400).json({ success: false, error: 'Name is required' });
@@ -239,11 +239,22 @@ Example format:
           .slice(0, 3)
           .map(sentence => sentence.endsWith('.') ? sentence : sentence + '.');
 
-        // Use the sources from the JSON response (these should be real citations from Perplexity)
-        citations = parsedContent.sources || [];
+        // LOCALHOST TESTING: Use search_results instead of JSON sources when requested
+        if (useSearchResults && testingMode === 'localhost') {
+          console.log('🧪 LOCALHOST TESTING MODE: Using search_results instead of JSON sources');
+          citations = searchResults.map(result => ({
+            title: result.title || result.name || 'Source',
+            url: result.url || '#'
+          }));
+          console.log('🧪 Citations from search_results:', citations);
+        } else {
+          // Use the sources from the JSON response (production behavior)
+          citations = parsedContent.sources || [];
+          console.log('🔍 Sources from JSON (production):', citations);
+        }
+
         console.log('✅ Successfully parsed structured JSON response');
         console.log('🔍 Bio sentences as headlines:', headlines);
-        console.log('🔍 Sources from JSON:', citations);
         console.log('🔍 Number of citations extracted:', citations.length);
       } else {
         throw new Error('JSON missing required bio or sources fields');

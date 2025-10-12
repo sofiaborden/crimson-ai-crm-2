@@ -1106,9 +1106,9 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
       console.log('🔍 Generating bio for:', donor.name, 'at', donor.employment?.employer || 'Unknown employer');
 
       // Call our backend API server instead of Perplexity directly
-      const apiUrl = process.env.NODE_ENV === 'production'
-        ? 'https://crimson-ai-crm-2.onrender.com/api/generate-bio'
-        : 'http://localhost:3000/api/generate-bio';
+      // For localhost development, use production API since we don't have local backend
+      // Add localhost-specific parameter to request search_results instead of JSON sources
+      const apiUrl = 'https://crimson-ai-crm-2.onrender.com/api/generate-bio';
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -1120,7 +1120,10 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
           employer: donor.employment?.employer,
           location: donor.primaryAddress ? `${donor.primaryAddress.city}, ${donor.primaryAddress.state}` : donor.address,
           email: donor.email,
-          industry: donor.employment?.industry
+          industry: donor.employment?.industry,
+          // LOCALHOST TESTING: Request search_results instead of JSON sources
+          useSearchResults: true,
+          testingMode: 'localhost'
         })
       });
 
