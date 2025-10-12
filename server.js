@@ -115,6 +115,8 @@ app.post('/api/generate-bio', async (req, res) => {
         max_tokens: 1000, // Enhanced: Increased from 500 to 1000 for richer content (Original: 500 - 2025-01-06)
         top_p: 0.9,
         return_citations: true,
+        search_recency_filter: "month", // Focus on recent results
+        search_depth: "deep", // More thorough search
         search_domain_filter: ["linkedin.com", "bloomberg.com", "forbes.com", "crunchbase.com", "sec.gov", "theorg.com", "about.me", "reuters.com", "wsj.com"],
         response_format: {
           type: "json_schema",
@@ -212,10 +214,29 @@ Example format:
     const content = data.choices?.[0]?.message?.content || '';
     console.log('🔍 Raw content:', content);
 
-    // Check for search_results field (this is where Perplexity puts real citations)
+    // ENHANCED INVESTIGATION: Check all possible citation fields
     const searchResults = data.search_results || [];
-    console.log('🔍 Search results found:', searchResults.length);
-    console.log('🔍 Search results:', searchResults);
+    const citations = data.citations || [];
+    const webResults = data.web_results || [];
+    const sources = data.sources || [];
+
+    console.log('\n🔍 ===== CITATION FIELDS INVESTIGATION =====');
+    console.log('🔍 search_results field exists:', !!data.search_results);
+    console.log('🔍 search_results length:', searchResults.length);
+    console.log('🔍 search_results content:', JSON.stringify(searchResults, null, 2));
+
+    console.log('🔍 citations field exists:', !!data.citations);
+    console.log('🔍 citations length:', citations.length);
+    console.log('🔍 citations content:', JSON.stringify(citations, null, 2));
+
+    console.log('🔍 web_results field exists:', !!data.web_results);
+    console.log('🔍 web_results length:', webResults.length);
+    console.log('🔍 web_results content:', JSON.stringify(webResults, null, 2));
+
+    console.log('🔍 sources field exists:', !!data.sources);
+    console.log('🔍 sources length:', sources.length);
+    console.log('🔍 sources content:', JSON.stringify(sources, null, 2));
+    console.log('🔍 ============================================\n');
 
     let headlines = [];
     let citations = [];
@@ -239,17 +260,41 @@ Example format:
           .slice(0, 3)
           .map(sentence => sentence.endsWith('.') ? sentence : sentence + '.');
 
-        // LOCALHOST TESTING: Use search_results instead of JSON sources when requested
+        // HYBRID CITATION APPROACH: Prioritize search_results, fallback to JSON sources
+        let citationSource = 'unknown';
+
         if (useSearchResults && testingMode === 'localhost') {
-          console.log('🧪 LOCALHOST TESTING MODE: Using search_results instead of JSON sources');
-          citations = searchResults.map(result => ({
-            title: result.title || result.name || 'Source',
-            url: result.url || '#'
-          }));
-          console.log('🧪 Citations from search_results:', citations);
+          console.log('🧪 LOCALHOST TESTING MODE: Implementing hybrid citation approach');
+
+          // Try multiple potential search result fields
+          const allSearchResults = searchResults.length > 0 ? searchResults :
+                                  (citations.length > 0 ? citations :
+                                  (webResults.length > 0 ? webResults : []));
+
+          if (allSearchResults.length > 0) {
+            citations = allSearchResults.map(result => ({
+              title: result.title || result.name || 'Source',
+              url: result.url || '#',
+              sourceType: 'search_result'
+            }));
+            citationSource = 'search_results';
+            console.log('✅ Using search results for citations:', citations.length);
+          } else {
+            // Fallback to JSON sources with source type indicator
+            citations = (parsedContent.sources || []).map(source => ({
+              ...source,
+              sourceType: 'ai_generated'
+            }));
+            citationSource = 'json_fallback';
+            console.log('🔄 Fallback to JSON sources for citations:', citations.length);
+          }
+
+          console.log('🧪 Citation source used:', citationSource);
+          console.log('🧪 Final citations:', JSON.stringify(citations, null, 2));
         } else {
-          // Use the sources from the JSON response (production behavior)
+          // Production behavior: Use JSON sources only
           citations = parsedContent.sources || [];
+          citationSource = 'json_production';
           console.log('🔍 Sources from JSON (production):', citations);
         }
 
@@ -326,9 +371,19 @@ Example format:
       });
       console.log('🔍 ============================================\n');
 
-      console.log('🔍 Final response being sent:', { success: true, headlines, citations: validCitations });
+      // Add citation metadata to response
+      const responseData = {
+        success: true,
+        headlines,
+        citations: validCitations,
+        citationSource: citationSource || 'json_production',
+        citationCount: validCitations.length,
+        hasSearchResults: searchResults.length > 0,
+        hasJsonSources: (parsedContent.sources || []).length > 0
+      };
 
-      return res.json({ success: true, headlines, citations: validCitations });
+      console.log('🔍 Final response being sent:', responseData);
+      return res.json(responseData);
     } else {
       // Return employment-based fallback
       const fallbackHeadlines = [];

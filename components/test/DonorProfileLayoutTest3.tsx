@@ -1140,9 +1140,20 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
       if (data.success && data.headlines && data.headlines.length > 0) {
         console.log('✅ Successfully generated headlines via backend API');
+
+        // Log citation source information for debugging
+        console.log('🔍 Citation source:', data.citationSource);
+        console.log('🔍 Citation count:', data.citationCount);
+        console.log('🔍 Has search results:', data.hasSearchResults);
+        console.log('🔍 Has JSON sources:', data.hasJsonSources);
+
         return {
           headlines: data.headlines,
-          citations: data.citations || []
+          citations: data.citations || [],
+          citationSource: data.citationSource,
+          citationCount: data.citationCount,
+          hasSearchResults: data.hasSearchResults,
+          hasJsonSources: data.hasJsonSources
         };
       } else {
         throw new Error('No headlines returned from backend API');
