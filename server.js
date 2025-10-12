@@ -284,6 +284,37 @@ Example format:
       );
 
       console.log('✅ Valid citations after filtering:', validCitations.length);
+
+      // CITATION COMPARISON ANALYSIS - Log both sources for investigation
+      console.log('\n🔍 ===== CITATION COMPARISON ANALYSIS =====');
+      console.log('📋 SOURCE A (JSON sources - Currently Used):');
+      console.log('   Count:', citations.length);
+      console.log('   Data:', JSON.stringify(citations, null, 2));
+
+      console.log('\n📋 SOURCE B (search_results - Alternative):');
+      console.log('   Count:', searchResults.length);
+      console.log('   Data:', JSON.stringify(searchResults, null, 2));
+
+      // Create search_results citations for comparison
+      const searchResultsCitations = searchResults.map(result => ({
+        title: result.title || result.name || 'Source',
+        url: result.url || '#'
+      }));
+
+      console.log('\n📋 SOURCE B (Formatted as citations):');
+      console.log('   Count:', searchResultsCitations.length);
+      console.log('   Data:', JSON.stringify(searchResultsCitations, null, 2));
+
+      console.log('\n🔍 URL COMPARISON:');
+      citations.forEach((jsonCitation, index) => {
+        const searchCitation = searchResultsCitations[index];
+        console.log(`   Citation ${index + 1}:`);
+        console.log(`     JSON URL:    ${jsonCitation.url}`);
+        console.log(`     Search URL:  ${searchCitation ? searchCitation.url : 'N/A'}`);
+        console.log(`     Match:       ${jsonCitation.url === (searchCitation?.url) ? '✅' : '❌'}`);
+      });
+      console.log('🔍 ============================================\n');
+
       console.log('🔍 Final response being sent:', { success: true, headlines, citations: validCitations });
 
       return res.json({ success: true, headlines, citations: validCitations });
