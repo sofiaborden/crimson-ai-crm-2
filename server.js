@@ -216,7 +216,7 @@ Example format:
 
     // ENHANCED INVESTIGATION: Check all possible citation fields
     const searchResults = data.search_results || [];
-    const citations = data.citations || [];
+    const perplexityCitations = data.citations || [];
     const webResults = data.web_results || [];
     const sources = data.sources || [];
 
@@ -226,8 +226,8 @@ Example format:
     console.log('🔍 search_results content:', JSON.stringify(searchResults, null, 2));
 
     console.log('🔍 citations field exists:', !!data.citations);
-    console.log('🔍 citations length:', citations.length);
-    console.log('🔍 citations content:', JSON.stringify(citations, null, 2));
+    console.log('🔍 citations length:', perplexityCitations.length);
+    console.log('🔍 citations content:', JSON.stringify(perplexityCitations, null, 2));
 
     console.log('🔍 web_results field exists:', !!data.web_results);
     console.log('🔍 web_results length:', webResults.length);
@@ -268,7 +268,7 @@ Example format:
 
           // Try multiple potential search result fields
           const allSearchResults = searchResults.length > 0 ? searchResults :
-                                  (citations.length > 0 ? citations :
+                                  (perplexityCitations.length > 0 ? perplexityCitations :
                                   (webResults.length > 0 ? webResults : []));
 
           if (allSearchResults.length > 0) {
