@@ -2145,6 +2145,10 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 handleReportIssue={handleReportIssue}
                 handleDialRClick={handleDialRClick}
                 customAIInsights={customAIInsights}
+                // Feedback system props
+                feedbackGiven={feedbackGiven}
+                handlePositiveFeedback={handlePositiveFeedback}
+                handleNegativeFeedback={handleNegativeFeedback}
               />
             )}
 
@@ -7271,6 +7275,10 @@ interface DraggableOverviewContainerProps {
   handleDialRClick: () => void;
   // Custom AI Insights prop
   customAIInsights?: React.ReactNode;
+  // Feedback system props
+  feedbackGiven: 'positive' | 'negative' | null;
+  handlePositiveFeedback: () => void;
+  handleNegativeFeedback: () => void;
 }
 
 const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
@@ -7313,7 +7321,11 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
   handleEmailBio,
   handleReportIssue,
   handleDialRClick,
-  customAIInsights
+  customAIInsights,
+  // Feedback system props
+  feedbackGiven,
+  handlePositiveFeedback,
+  handleNegativeFeedback
 }) => {
   const renderOverviewPanel = (panelId: string) => {
     const isDragging = draggedPanel === panelId;
