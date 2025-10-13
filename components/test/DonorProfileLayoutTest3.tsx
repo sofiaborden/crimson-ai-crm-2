@@ -136,7 +136,9 @@ import {
   HeartIcon,
   ArrowPathIcon,
   EyeSlashIcon,
-  EyeIcon
+  EyeIcon,
+  HandThumbUpIcon,
+  HandThumbDownIcon
 } from '../../constants';
 
 interface DonorProfileLayoutTest3Props {
@@ -241,6 +243,12 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
   const [showHiddenSources, setShowHiddenSources] = useState(false);
   const [showHideCitationModal, setShowHideCitationModal] = useState(false);
   const [citationToHide, setCitationToHide] = useState<{title: string; url: string} | null>(null);
+
+  // User feedback system state
+  const [feedbackGiven, setFeedbackGiven] = useState<'positive' | 'negative' | null>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [showFeedbackToast, setShowFeedbackToast] = useState(false);
   const [showQuickActionsDropdown, setShowQuickActionsDropdown] = useState(false);
 
   // Load permanently hidden citations from localStorage on component mount
@@ -317,6 +325,63 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
       ...citation,
       isPermanent: permanentlyHiddenCitations.has(citation.url)
     }));
+  };
+
+  // User feedback functions
+  const handlePositiveFeedback = () => {
+    if (feedbackGiven) return; // Prevent multiple submissions
+
+    setFeedbackGiven('positive');
+    setShowFeedbackToast(true);
+
+    // Store feedback data
+    const feedbackData = {
+      donorId: donor.id,
+      timestamp: new Date().toISOString(),
+      feedbackType: 'positive',
+      bioGenerated: smartBioData?.lastGenerated
+    };
+
+    // Save to localStorage for localhost testing
+    const existingFeedback = JSON.parse(localStorage.getItem('smartBioFeedback') || '[]');
+    existingFeedback.push(feedbackData);
+    localStorage.setItem('smartBioFeedback', JSON.stringify(existingFeedback));
+
+    console.log('✅ Positive feedback recorded:', feedbackData);
+
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => setShowFeedbackToast(false), 3000);
+  };
+
+  const handleNegativeFeedback = () => {
+    if (feedbackGiven) return; // Prevent multiple submissions
+
+    setFeedbackGiven('negative');
+    setShowFeedbackModal(true);
+  };
+
+  const submitNegativeFeedback = () => {
+    const feedbackData = {
+      donorId: donor.id,
+      timestamp: new Date().toISOString(),
+      feedbackType: 'negative',
+      comment: feedbackComment.trim(),
+      bioGenerated: smartBioData?.lastGenerated
+    };
+
+    // Save to localStorage for localhost testing
+    const existingFeedback = JSON.parse(localStorage.getItem('smartBioFeedback') || '[]');
+    existingFeedback.push(feedbackData);
+    localStorage.setItem('smartBioFeedback', JSON.stringify(existingFeedback));
+
+    console.log('📝 Negative feedback recorded:', feedbackData);
+
+    setShowFeedbackModal(false);
+    setFeedbackComment('');
+    setShowFeedbackToast(true);
+
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => setShowFeedbackToast(false), 3000);
   };
 
   // Notes state (moved to sidebar panel)
@@ -5507,6 +5572,74 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
         </div>
       )}
 
+      {/* Feedback Toast */}
+      {showFeedbackToast && (
+        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <HandThumbUpIcon className="w-4 h-4 text-green-600" />
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-gray-900">Thank you for your feedback!</h4>
+              <p className="text-xs text-gray-600">Your input helps us improve the Smart Bio feature.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Negative Feedback Modal */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <HandThumbDownIcon className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Thank you for your feedback</h3>
+                  <p className="text-sm text-gray-600">Help us improve the Smart Bio feature</p>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="feedback-comment" className="block text-sm font-medium text-gray-700 mb-2">
+                  What could be better? (optional)
+                </label>
+                <textarea
+                  id="feedback-comment"
+                  value={feedbackComment}
+                  onChange={(e) => setFeedbackComment(e.target.value)}
+                  placeholder="Help us improve - what could be better? (optional)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={submitNegativeFeedback}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                  style={{ backgroundColor: '#2f7fc3' }}
+                >
+                  Submit
+                </button>
+                <button
+                  onClick={() => {
+                    setShowFeedbackModal(false);
+                    setFeedbackComment('');
+                    setFeedbackGiven(null); // Reset so user can try again
+                  }}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Note Modal */}
       {showAddNoteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -7470,7 +7603,41 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                     {!isEditingBio && (
                       <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500 font-medium">Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-gray-500 font-medium">Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
+
+                            {/* Feedback Buttons */}
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={handlePositiveFeedback}
+                                disabled={feedbackGiven !== null}
+                                className={`p-1 rounded transition-colors ${
+                                  feedbackGiven === 'positive'
+                                    ? 'text-green-600 bg-green-100'
+                                    : feedbackGiven === null
+                                      ? 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                                      : 'text-gray-300 cursor-not-allowed'
+                                }`}
+                                title={feedbackGiven ? 'Feedback already submitted' : 'This bio was helpful'}
+                              >
+                                <HandThumbUpIcon className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={handleNegativeFeedback}
+                                disabled={feedbackGiven !== null}
+                                className={`p-1 rounded transition-colors ${
+                                  feedbackGiven === 'negative'
+                                    ? 'text-red-600 bg-red-100'
+                                    : feedbackGiven === null
+                                      ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                                      : 'text-gray-300 cursor-not-allowed'
+                                }`}
+                                title={feedbackGiven ? 'Feedback already submitted' : 'This bio needs improvement'}
+                              >
+                                <HandThumbDownIcon className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
                           <div className="flex items-center gap-2">
                             {/* Actions Dropdown */}
                             <div className="relative">
