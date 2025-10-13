@@ -207,15 +207,56 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
   const [activeTab, setActiveTab] = useState<'insights' | 'bio'>('insights');
   const [showDialRModal, setShowDialRModal] = useState(false);
   const [showDialRTooltip, setShowDialRTooltip] = useState(false);
+  const [selectedList, setSelectedList] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
 
   const handleDialRClick = () => {
     setShowDialRModal(true);
   };
 
-  const handleDialRListSelection = (listName: string) => {
-    alert(`✅ ${donor.name} added to ${listName}!\n\nDialR Integration:\n• Contact added to calling queue\n• Suggested ask amount: $2,500\n• Best contact time: Weekday afternoons\n• Preferred method: Phone\n\nThe donor will be available for calling in your DialR dashboard within 5 minutes.`);
+  const handleDialRSelection = (assignmentType: string, targetName?: string) => {
+    let message = '';
+
+    switch (assignmentType) {
+      case 'my-list':
+        message = `📞 Adding ${donor.name} to your personal DialR list...\n\nReady for dialing in 15 seconds`;
+        break;
+      case 'list-assignment':
+        message = `📞 Assigning ${donor.name} to DialR list...\n\nList: "${targetName}"\nAssignment complete!`;
+        break;
+      case 'user-assignment':
+        message = `📞 Assigning ${donor.name} to team member...\n\nAssigned to: ${targetName}\nNotification sent to user!`;
+        break;
+      default:
+        message = `📞 Adding ${donor.name} to DialR...`;
+    }
+
+    console.log(`DialR ${assignmentType}:`, { donor: donor.name, targetName });
+    alert(message);
+
+    // Reset form state
+    setSelectedList('');
+    setSelectedUser('');
     setShowDialRModal(false);
   };
+
+  // Mock existing organizational lists
+  const existingLists = [
+    'Major Donors 2024',
+    'Monthly Sustainers',
+    'Event Prospects',
+    'Board Contacts',
+    'VIP Supporters'
+  ];
+
+  // Mock team members
+  const teamMembers = [
+    'Sarah Johnson',
+    'Mike Chen',
+    'Emily Rodriguez',
+    'David Kim',
+    'Lisa Thompson'
+  ];
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 p-4 shadow-sm hover:shadow-md transition-all duration-300">
@@ -315,7 +356,11 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
             {/* Progress Bar - 65% filled */}
             <div className="mb-4">
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full w-[65%] bg-gradient-to-r from-red-400 via-purple-400 to-blue-400 rounded-full"></div>
+                <div
+                  className="h-full w-[65%] rounded-full relative group cursor-help"
+                  style={{ background: 'linear-gradient(to right, #2563eb, #ef4444)' }}
+                  title="The donor has given $15,200 of their estimated $24,500 capacity."
+                ></div>
               </div>
             </div>
 
@@ -373,16 +418,20 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
       {/* DialR Modal */}
       {showDialRModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
             <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <PhoneIcon className="w-5 h-5 text-blue-600" />
-                </div>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Send to DialR</h3>
-                  <p className="text-sm text-gray-600">Add {donor.name} to a calling list</p>
+                  <h3 className="text-xl font-semibold text-gray-900">Add to DialR</h3>
+                  <p className="text-sm text-gray-600 mt-1">1 contact from "Pulse Check Insights"</p>
                 </div>
+                <button
+                  onClick={() => setShowDialRModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XMarkIcon className="w-5 h-5 text-gray-400" />
+                </button>
               </div>
 
               <div className="mb-6">
@@ -391,45 +440,76 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
                 </p>
 
                 <div className="space-y-3">
+                  {/* Add to My List - Blue bordered section */}
                   <button
-                    onClick={() => handleDialRListSelection('My List')}
-                    className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    onClick={() => handleDialRSelection('my-list')}
+                    className="w-full p-4 border-2 border-blue-500 rounded-lg hover:bg-blue-50 transition-colors text-left mb-4"
                   >
-                    <StarIcon className="w-5 h-5 text-yellow-500" />
-                    <div>
-                      <div className="font-medium text-gray-900">My List</div>
-                      <div className="text-sm text-gray-600">Your personal calling list</div>
+                    <div className="flex items-center gap-3">
+                      <PhoneIcon className="w-6 h-6 text-blue-500" />
+                      <div>
+                        <div className="text-lg font-medium text-gray-900">Add to My List</div>
+                        <div className="text-sm text-gray-600">Add to your personal call list</div>
+                      </div>
                     </div>
                   </button>
 
-                  <button
-                    onClick={() => handleDialRListSelection('Major Donors List')}
-                    className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                  >
-                    <UserGroupIcon className="w-5 h-5 text-blue-500" />
-                    <div>
-                      <div className="font-medium text-gray-900">Major Donors List</div>
-                      <div className="text-sm text-gray-600">High-value donor prospects</div>
-                    </div>
-                  </button>
+                  {/* Or divider */}
+                  <div className="text-center text-gray-500 text-sm mb-4">or</div>
 
-                  <button
-                    onClick={() => handleDialRListSelection('Q4 Campaign List')}
-                    className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
-                  >
-                    <PhoneIcon className="w-5 h-5 text-green-500" />
-                    <div>
-                      <div className="font-medium text-gray-900">Q4 Campaign List</div>
-                      <div className="text-sm text-gray-600">Year-end fundraising campaign</div>
-                    </div>
-                  </button>
+                  {/* Assign to List */}
+                  <div className="mb-4">
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Assign to List</h4>
+                    <select
+                      value={selectedList}
+                      onChange={(e) => setSelectedList(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a list...</option>
+                      {existingLists.map((list) => (
+                        <option key={list} value={list}>{list}</option>
+                      ))}
+                    </select>
+                    {selectedList && (
+                      <button
+                        onClick={() => handleDialRSelection('list-assignment', selectedList)}
+                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Assign to {selectedList}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Assign to User */}
+                  <div className="mb-4">
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Assign to User</h4>
+                    <select
+                      value={selectedUser}
+                      onChange={(e) => setSelectedUser(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a user...</option>
+                      {teamMembers.map((member) => (
+                        <option key={member} value={member}>{member}</option>
+                      ))}
+                    </select>
+                    {selectedUser && (
+                      <button
+                        onClick={() => handleDialRSelection('user-assignment', selectedUser)}
+                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Assign to {selectedUser}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              {/* Cancel button */}
+              <div className="flex justify-end">
                 <button
                   onClick={() => setShowDialRModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -462,6 +542,12 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
   const [originalBioText, setOriginalBioText] = useState<string[]>([]);
   const [editedBioText, setEditedBioText] = useState<string[]>([]);
   const [showQuickActionsDropdown, setShowQuickActionsDropdown] = useState(false);
+
+  // DialR state
+  const [showDialRModal, setShowDialRModal] = useState(false);
+  const [showDialRTooltip, setShowDialRTooltip] = useState(false);
+  const [selectedList, setSelectedList] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
 
   // Enhanced Smart Bio generation with multiple data sources
   const generateEnhancedSmartBio = async () => {
@@ -594,6 +680,55 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
 
   const insight = getPulseCheckInsight(donor);
 
+  // DialR handlers
+  const handleDialRClick = () => {
+    setShowDialRModal(true);
+  };
+
+  const handleDialRSelection = (assignmentType: string, targetName?: string) => {
+    let message = '';
+
+    switch (assignmentType) {
+      case 'my-list':
+        message = `📞 Adding ${donor.name} to your personal DialR list...\n\nReady for dialing in 15 seconds`;
+        break;
+      case 'list-assignment':
+        message = `📞 Assigning ${donor.name} to DialR list...\n\nList: "${targetName}"\nAssignment complete!`;
+        break;
+      case 'user-assignment':
+        message = `📞 Assigning ${donor.name} to team member...\n\nAssigned to: ${targetName}\nNotification sent to user!`;
+        break;
+      default:
+        message = `📞 Adding ${donor.name} to DialR...`;
+    }
+
+    console.log(`DialR ${assignmentType}:`, { donor: donor.name, targetName });
+    alert(message);
+
+    // Reset form state
+    setSelectedList('');
+    setSelectedUser('');
+    setShowDialRModal(false);
+  };
+
+  // Mock existing organizational lists
+  const existingLists = [
+    'Major Donors 2024',
+    'Monthly Sustainers',
+    'Event Prospects',
+    'Board Contacts',
+    'VIP Supporters'
+  ];
+
+  // Mock team members
+  const teamMembers = [
+    'Sarah Johnson',
+    'Mike Chen',
+    'Emily Rodriguez',
+    'David Kim',
+    'Lisa Thompson'
+  ];
+
   const handleViewNow = () => {
     if (credits > 0) {
       setIsTransitioning(true);
@@ -725,21 +860,43 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
       {/* Tab Content */}
       <div className="space-y-4">
         {activeTab === 'insights' ? (
-          <div className="flex items-start gap-3">
-            <insight.icon className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-gray-900 font-medium mb-1">{insight.text}</p>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm text-gray-600">Confidence:</span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  {insight.confidence}
-                </span>
+          <>
+            <div className="flex items-start gap-3">
+              <insight.icon className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-gray-900 font-medium mb-1">{insight.text}</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm text-gray-600">Confidence:</span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    {insight.confidence}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Suggested Action:</span> {insight.action}
+                </p>
               </div>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Suggested Action:</span> {insight.action}
-              </p>
             </div>
-          </div>
+
+            {/* DialR Button */}
+            <div className="flex justify-end mt-4">
+              <div className="relative">
+                <button
+                  onClick={handleDialRClick}
+                  onMouseEnter={() => setShowDialRTooltip(true)}
+                  onMouseLeave={() => setShowDialRTooltip(false)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+                >
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                  Send to DialR
+                </button>
+                {showDialRTooltip && (
+                  <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
+                    Send to DialR
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         ) : (
           <div>
             {smartBioData ? (
@@ -1060,6 +1217,110 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                   ) : (
                     'Generate Bio'
                   )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DialR Modal - Smart Segments Pattern */}
+      {showDialRModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Add to DialR</h3>
+                  <p className="text-sm text-gray-600 mt-1">1 contact from "Pulse Check Insights"</p>
+                </div>
+                <button
+                  onClick={() => setShowDialRModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XMarkIcon className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-700 mb-4 text-sm">
+                  Select a DialR list to add this donor for phone outreach campaigns.
+                </p>
+
+                <div className="space-y-3">
+                  {/* Add to My List - Blue bordered section */}
+                  <button
+                    onClick={() => handleDialRSelection('my-list')}
+                    className="w-full p-4 border-2 border-blue-500 rounded-lg hover:bg-blue-50 transition-colors text-left mb-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <PhoneIcon className="w-6 h-6 text-blue-500" />
+                      <div>
+                        <div className="text-lg font-medium text-gray-900">Add to My List</div>
+                        <div className="text-sm text-gray-600">Add to your personal call list</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Or divider */}
+                  <div className="text-center text-gray-500 text-sm mb-4">or</div>
+
+                  {/* Assign to List */}
+                  <div className="mb-4">
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Assign to List</h4>
+                    <select
+                      value={selectedList}
+                      onChange={(e) => setSelectedList(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a list...</option>
+                      {existingLists.map((list) => (
+                        <option key={list} value={list}>{list}</option>
+                      ))}
+                    </select>
+                    {selectedList && (
+                      <button
+                        onClick={() => handleDialRSelection('list-assignment', selectedList)}
+                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Assign to {selectedList}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Assign to User */}
+                  <div className="mb-4">
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Assign to User</h4>
+                    <select
+                      value={selectedUser}
+                      onChange={(e) => setSelectedUser(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a user...</option>
+                      {teamMembers.map((member) => (
+                        <option key={member} value={member}>{member}</option>
+                      ))}
+                    </select>
+                    {selectedUser && (
+                      <button
+                        onClick={() => handleDialRSelection('user-assignment', selectedUser)}
+                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Assign to {selectedUser}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Cancel button */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowDialRModal(false)}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
                 </button>
               </div>
             </div>
