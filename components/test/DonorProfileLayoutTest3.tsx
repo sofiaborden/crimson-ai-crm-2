@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Donor } from '../../types';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -134,7 +134,9 @@ import {
   StarIcon,
   EllipsisHorizontalIcon,
   HeartIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  EyeSlashIcon,
+  EyeIcon
 } from '../../constants';
 
 interface DonorProfileLayoutTest3Props {
@@ -232,7 +234,90 @@ const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [originalBioText, setOriginalBioText] = useState<string[]>([]);
   const [editedBioText, setEditedBioText] = useState<string[]>([]);
+
+  // Citation hide/exclude state
+  const [hiddenCitations, setHiddenCitations] = useState<Set<string>>(new Set());
+  const [permanentlyHiddenCitations, setPermanentlyHiddenCitations] = useState<Set<string>>(new Set());
+  const [showHiddenSources, setShowHiddenSources] = useState(false);
+  const [showHideCitationModal, setShowHideCitationModal] = useState(false);
+  const [citationToHide, setCitationToHide] = useState<{title: string; url: string} | null>(null);
   const [showQuickActionsDropdown, setShowQuickActionsDropdown] = useState(false);
+
+  // Load permanently hidden citations from localStorage on component mount
+  useEffect(() => {
+    const savedHiddenCitations = localStorage.getItem(`hiddenCitations_${donor.id}`);
+    if (savedHiddenCitations) {
+      try {
+        const hiddenUrls = JSON.parse(savedHiddenCitations);
+        setPermanentlyHiddenCitations(new Set(hiddenUrls));
+      } catch (error) {
+        console.error('Failed to load hidden citations from localStorage:', error);
+      }
+    }
+  }, [donor.id]);
+
+  // Citation hide/exclude functions
+  const handleHideCitation = (citation: {title: string; url: string}) => {
+    setCitationToHide(citation);
+    setShowHideCitationModal(true);
+  };
+
+  const confirmHideCitation = (permanent: boolean) => {
+    if (!citationToHide) return;
+
+    if (permanent) {
+      // Add to permanently hidden citations
+      const newPermanentlyHidden = new Set(permanentlyHiddenCitations);
+      newPermanentlyHidden.add(citationToHide.url);
+      setPermanentlyHiddenCitations(newPermanentlyHidden);
+
+      // Save to localStorage
+      const hiddenUrls = Array.from(newPermanentlyHidden);
+      localStorage.setItem(`hiddenCitations_${donor.id}`, JSON.stringify(hiddenUrls));
+    } else {
+      // Add to session-only hidden citations
+      const newHidden = new Set(hiddenCitations);
+      newHidden.add(citationToHide.url);
+      setHiddenCitations(newHidden);
+    }
+
+    setShowHideCitationModal(false);
+    setCitationToHide(null);
+  };
+
+  const handleRestoreCitation = (url: string, permanent: boolean) => {
+    if (permanent) {
+      const newPermanentlyHidden = new Set(permanentlyHiddenCitations);
+      newPermanentlyHidden.delete(url);
+      setPermanentlyHiddenCitations(newPermanentlyHidden);
+
+      // Update localStorage
+      const hiddenUrls = Array.from(newPermanentlyHidden);
+      localStorage.setItem(`hiddenCitations_${donor.id}`, JSON.stringify(hiddenUrls));
+    } else {
+      const newHidden = new Set(hiddenCitations);
+      newHidden.delete(url);
+      setHiddenCitations(newHidden);
+    }
+  };
+
+  // Get visible and hidden citations
+  const getVisibleCitations = () => {
+    if (!smartBioData?.perplexityCitations) return [];
+    return smartBioData.perplexityCitations.filter(citation =>
+      !hiddenCitations.has(citation.url) && !permanentlyHiddenCitations.has(citation.url)
+    );
+  };
+
+  const getHiddenCitations = () => {
+    if (!smartBioData?.perplexityCitations) return [];
+    return smartBioData.perplexityCitations.filter(citation =>
+      hiddenCitations.has(citation.url) || permanentlyHiddenCitations.has(citation.url)
+    ).map(citation => ({
+      ...citation,
+      isPermanent: permanentlyHiddenCitations.has(citation.url)
+    }));
+  };
 
   // Notes state (moved to sidebar panel)
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -5268,7 +5353,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Perplexity Sources ({smartBioData.perplexityCitations.length})
+                  Sources ({getVisibleCitations().length} visible{getHiddenCitations().length > 0 ? `, ${getHiddenCitations().length} hidden` : ''})
                 </h3>
                 <button
                   onClick={() => setShowCitationsModal(false)}
@@ -5280,9 +5365,10 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
             </div>
 
             <div className="p-6 overflow-y-auto max-h-[60vh]">
-              {smartBioData.perplexityCitations.length > 0 ? (
+              {/* Visible Citations */}
+              {getVisibleCitations().length > 0 ? (
                 <div className="space-y-4">
-                  {smartBioData.perplexityCitations.map((citation, index) => (
+                  {getVisibleCitations().map((citation, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
@@ -5299,12 +5385,24 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                             {citation.url}
                           </a>
                         </div>
-                        <button
-                          onClick={() => window.open(citation.url, '_blank')}
-                          className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                          <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {/* Hide Citation Button */}
+                          <button
+                            onClick={() => handleHideCitation(citation)}
+                            className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                            title="Hide this source"
+                          >
+                            <EyeSlashIcon className="w-4 h-4" />
+                          </button>
+                          {/* External Link Button */}
+                          <button
+                            onClick={() => window.open(citation.url, '_blank')}
+                            className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                            title="Open in new tab"
+                          >
+                            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -5317,6 +5415,93 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                   <p className="text-gray-500">No sources available</p>
                 </div>
               )}
+
+              {/* Hidden Sources Section */}
+              {getHiddenCitations().length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowHiddenSources(!showHiddenSources)}
+                    className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors mb-4"
+                  >
+                    <EyeIcon className="w-4 h-4" />
+                    {showHiddenSources ? 'Hide' : 'Show'} Hidden Sources ({getHiddenCitations().length})
+                  </button>
+
+                  {showHiddenSources && (
+                    <div className="space-y-3">
+                      {getHiddenCitations().map((citation, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50 opacity-75">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-medium text-gray-500">H</span>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-600 mb-1 line-through">{citation.title}</h4>
+                              <p className="text-gray-500 text-sm break-all line-through">{citation.url}</p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                Hidden {citation.isPermanent ? 'permanently' : 'for this session'}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleRestoreCitation(citation.url, citation.isPermanent)}
+                              className="flex-shrink-0 p-1 text-gray-400 hover:text-green-600 transition-colors"
+                              title="Restore this source"
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hide Citation Confirmation Modal */}
+      {showHideCitationModal && citationToHide && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <EyeSlashIcon className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Hide Source</h3>
+                  <p className="text-sm text-gray-600">This will hide this source from the bio</p>
+                </div>
+              </div>
+
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 text-sm mb-1">{citationToHide.title}</h4>
+                <p className="text-xs text-gray-600 break-all">{citationToHide.url}</p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => confirmHideCitation(false)}
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Hide for this session only
+                </button>
+                <button
+                  onClick={() => confirmHideCitation(true)}
+                  className="w-full px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                  style={{ backgroundColor: '#2f7fc3' }}
+                >
+                  Hide permanently
+                </button>
+                <button
+                  onClick={() => setShowHideCitationModal(false)}
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -7170,10 +7355,6 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                       <div className="flex items-center gap-2">
                         <SparklesIcon className="w-4 h-4" style={{ color: '#2f7fc3' }} />
                         <h3 className="text-base font-semibold text-gray-900">Enhanced Smart Bio</h3>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-xs text-gray-600">{smartBioData.confidence}</span>
-                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -7257,7 +7438,9 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                               </svg>
-                              Sources ({smartBioData.perplexityCitations.length})
+                              Sources ({smartBioData.perplexityCitations.filter(citation =>
+                                !hiddenCitations.has(citation.url) && !permanentlyHiddenCitations.has(citation.url)
+                              ).length})
                             </button>
                           ) : (
                             <span className="text-xs text-gray-500 italic">No sources available</span>
@@ -7278,14 +7461,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                                 <PencilIcon className="w-4 h-4" />
                               </button>
 
-                              {/* Reset Button - Icon Only */}
-                              <button
-                                onClick={handleResetBio}
-                                className="p-2 text-white bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
-                                title="Reset to original content"
-                              >
-                                <ArrowPathIcon className="w-4 h-4" />
-                              </button>
+
                             </div>
                           )}
                         </div>
