@@ -241,11 +241,12 @@ Example format:
     let headlines = [];
     let citations = [];
     let citationSource = 'unknown';
+    let parsedContent = null;
 
     console.log('🔍 Attempting to parse content as JSON...');
     try {
       // Try to parse the content as JSON (structured response)
-      const parsedContent = JSON.parse(content);
+      parsedContent = JSON.parse(content);
       console.log('✅ JSON parsing successful!');
       console.log('🔍 Parsed JSON content:', JSON.stringify(parsedContent, null, 2));
       console.log('🔍 JSON has bio field:', !!parsedContent.bio);
