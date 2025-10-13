@@ -16,6 +16,7 @@ const port = process.env.PORT || 3000;
 app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:5173',
+    'http://localhost:5174',
     'https://crimson-ai-crm-2.onrender.com'
   ];
   const origin = req.headers.origin;
