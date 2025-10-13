@@ -240,6 +240,7 @@ Example format:
 
     let headlines = [];
     let citations = [];
+    let citationSource = 'unknown';
 
     console.log('🔍 Attempting to parse content as JSON...');
     try {
@@ -261,7 +262,6 @@ Example format:
           .map(sentence => sentence.endsWith('.') ? sentence : sentence + '.');
 
         // HYBRID CITATION APPROACH: Prioritize search_results, fallback to JSON sources
-        let citationSource = 'unknown';
 
         if (useSearchResults && testingMode === 'localhost') {
           console.log('🧪 LOCALHOST TESTING MODE: Implementing hybrid citation approach');
