@@ -354,17 +354,17 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
             </div>
 
             {/* Progress Bar - 65% filled */}
-            <div className="mb-4">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden relative group">
+            <div className="mb-4 relative group">
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden cursor-help">
                 <div
-                  className="h-full w-[65%] rounded-full cursor-help"
+                  className="h-full w-[65%] rounded-full"
                   style={{ background: 'linear-gradient(to right, #2563eb, #ef4444)' }}
                 ></div>
-                {/* Custom Tooltip */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                  The donor has given $15,200 of their estimated $24,500 capacity.
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
+              </div>
+              {/* Custom Tooltip */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                The donor has given $15,200 of their estimated $24,500 capacity.
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
               </div>
             </div>
 
