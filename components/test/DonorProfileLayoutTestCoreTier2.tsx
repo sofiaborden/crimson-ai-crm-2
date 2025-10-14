@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DonorProfileLayoutTest3 from './DonorProfileLayoutTest3';
 import { Donor } from '../../types';
 import {
@@ -547,11 +547,37 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
   const [editedBioText, setEditedBioText] = useState<string[]>([]);
   const [showQuickActionsDropdown, setShowQuickActionsDropdown] = useState(false);
 
+  // Citation management state
+  const [permanentlyHiddenCitations, setPermanentlyHiddenCitations] = useState<Set<string>>(new Set());
+  const [sessionHiddenCitations, setSessionHiddenCitations] = useState<Set<string>>(new Set());
+  const [showHiddenSources, setShowHiddenSources] = useState(false);
+  const [showHideCitationModal, setShowHideCitationModal] = useState(false);
+  const [citationToHide, setCitationToHide] = useState<{title: string; url: string} | null>(null);
+
+  // User feedback system state
+  const [feedbackGiven, setFeedbackGiven] = useState<'positive' | 'negative' | null>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [showFeedbackToast, setShowFeedbackToast] = useState(false);
+
   // DialR state
   const [showDialRModal, setShowDialRModal] = useState(false);
   const [showDialRTooltip, setShowDialRTooltip] = useState(false);
   const [selectedList, setSelectedList] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
+
+  // Load permanently hidden citations from localStorage on component mount
+  useEffect(() => {
+    const savedHiddenCitations = localStorage.getItem(`hiddenCitations_${donor.id}`);
+    if (savedHiddenCitations) {
+      try {
+        const hiddenUrls = JSON.parse(savedHiddenCitations);
+        setPermanentlyHiddenCitations(new Set(hiddenUrls));
+      } catch (error) {
+        console.error('Failed to load hidden citations:', error);
+      }
+    }
+  }, [donor.id]);
 
   // Enhanced Smart Bio generation with multiple data sources
   const generateEnhancedSmartBio = async () => {
@@ -620,6 +646,121 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
       setSmartBioData(updatedBioData);
     }
     console.log('🔄 Bio reset to original Perplexity content');
+  };
+
+  // User feedback functions
+  const handlePositiveFeedback = () => {
+    if (feedbackGiven) return; // Prevent multiple submissions
+
+    setFeedbackGiven('positive');
+    setShowFeedbackToast(true);
+
+    // Store feedback data
+    const feedbackData = {
+      donorId: donor.id,
+      timestamp: new Date().toISOString(),
+      feedbackType: 'positive',
+      bioGenerated: smartBioData?.lastGenerated
+    };
+
+    // Save to localStorage for localhost testing
+    const existingFeedback = JSON.parse(localStorage.getItem('smartBioFeedback') || '[]');
+    existingFeedback.push(feedbackData);
+    localStorage.setItem('smartBioFeedback', JSON.stringify(existingFeedback));
+
+    console.log('✅ Positive feedback recorded:', feedbackData);
+
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => setShowFeedbackToast(false), 3000);
+  };
+
+  const handleNegativeFeedback = () => {
+    if (feedbackGiven) return; // Prevent multiple submissions
+
+    setFeedbackGiven('negative');
+    setShowFeedbackModal(true);
+  };
+
+  const submitNegativeFeedback = () => {
+    // Store feedback data
+    const feedbackData = {
+      donorId: donor.id,
+      timestamp: new Date().toISOString(),
+      feedbackType: 'negative',
+      comment: feedbackComment,
+      bioGenerated: smartBioData?.lastGenerated
+    };
+
+    // Save to localStorage for localhost testing
+    const existingFeedback = JSON.parse(localStorage.getItem('smartBioFeedback') || '[]');
+    existingFeedback.push(feedbackData);
+    localStorage.setItem('smartBioFeedback', JSON.stringify(existingFeedback));
+
+    console.log('📝 Negative feedback recorded:', feedbackData);
+
+    setShowFeedbackModal(false);
+    setFeedbackComment('');
+    setShowFeedbackToast(true);
+
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => setShowFeedbackToast(false), 3000);
+  };
+
+  // Citation management functions
+  const getVisibleCitations = () => {
+    if (!smartBioData?.perplexityCitations) return [];
+    return smartBioData.perplexityCitations.filter(citation =>
+      !permanentlyHiddenCitations.has(citation.url) &&
+      !sessionHiddenCitations.has(citation.url)
+    );
+  };
+
+  const getHiddenCitations = () => {
+    if (!smartBioData?.perplexityCitations) return [];
+    return smartBioData.perplexityCitations.filter(citation =>
+      permanentlyHiddenCitations.has(citation.url) ||
+      sessionHiddenCitations.has(citation.url)
+    );
+  };
+
+  const handleHideCitation = (citation: {title: string; url: string}) => {
+    setCitationToHide(citation);
+    setShowHideCitationModal(true);
+  };
+
+  const confirmHideCitation = (permanent: boolean) => {
+    if (!citationToHide) return;
+
+    if (permanent) {
+      const newHiddenCitations = new Set(permanentlyHiddenCitations);
+      newHiddenCitations.add(citationToHide.url);
+      setPermanentlyHiddenCitations(newHiddenCitations);
+
+      // Save to localStorage
+      localStorage.setItem(
+        `hiddenCitations_${donor.id}`,
+        JSON.stringify(Array.from(newHiddenCitations))
+      );
+    } else {
+      const newSessionHidden = new Set(sessionHiddenCitations);
+      newSessionHidden.add(citationToHide.url);
+      setSessionHiddenCitations(newSessionHidden);
+    }
+
+    setShowHideCitationModal(false);
+    setCitationToHide(null);
+  };
+
+  const handleCopyToClipboard = () => {
+    if (!smartBioData) return;
+
+    const bioText = smartBioData.perplexityHeadlines.join('\n\n');
+    const wealthText = smartBioData.wealthSummary ? `\n\n${smartBioData.wealthSummary}` : '';
+    const fullText = bioText + wealthText;
+
+    navigator.clipboard.writeText(fullText).then(() => {
+      console.log('📋 Bio copied to clipboard');
+    });
   };
 
   const handleSaveEditedBio = () => {
@@ -818,11 +959,14 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
               onClick={() => setActiveTab('bio')}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
                 activeTab === 'bio'
-                  ? 'bg-white shadow-sm text-crimson-blue'
+                  ? 'bg-white shadow-sm'
                   : 'hover:bg-white/50 text-gray-600'
               }`}
+              style={{
+                color: activeTab === 'bio' ? '#2563eb' : '#6b7280'
+              }}
             >
-              <SparklesIcon className="w-3 h-3 inline mr-1" />
+              <SparklesIcon className="w-3 h-3 inline mr-1" style={{ color: '#2563eb' }} />
               Smart Bio
             </button>
           </div>
@@ -874,7 +1018,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 pb-3 border-b border-gray-100">
                   <div className="flex items-center gap-2">
-                    <SparklesIcon className="w-4 h-4" style={{ color: '#2f7fc3' }} />
+                    <SparklesIcon className="w-4 h-4" style={{ color: '#2563eb' }} />
                     <h3 className="text-base font-semibold text-gray-900">Enhanced Smart Bio</h3>
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -916,7 +1060,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                             <button
                               onClick={handleSaveEditedBio}
                               className="px-3 py-1 text-white text-xs rounded transition-all duration-200 hover:shadow-md hover:scale-105"
-                              style={{ backgroundColor: '#2f7fc3' }}
+                              style={{ backgroundColor: '#2563eb' }}
                             >
                               Save Changes
                             </button>
@@ -941,7 +1085,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
 
                     {/* Wealth Summary */}
                     {smartBioData.wealthSummary && (
-                      <div className="bg-blue-gray-50 border-l-4 pl-4 py-2 mb-3 rounded-r-md transition-all duration-200 hover:bg-blue-gray-100" style={{ borderLeftColor: '#2f7fc3' }}>
+                      <div className="bg-blue-gray-50 border-l-4 pl-4 py-2 mb-3 rounded-r-md transition-all duration-200 hover:bg-blue-gray-100" style={{ borderLeftColor: '#2563eb' }}>
                         <p className="text-gray-700 text-sm font-medium">
                           {smartBioData.wealthSummary}
                         </p>
@@ -955,7 +1099,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                         <button
                           onClick={() => setShowCitationsModal(true)}
                           className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md hover:scale-105"
-                          style={{ backgroundColor: '#e0f2fe', color: '#0277bd' }}
+                          style={{ backgroundColor: '#2563eb', color: 'white' }}
                         >
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -972,7 +1116,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                         <button
                           onClick={handleEditBio}
                           className="p-1.5 rounded-md transition-all duration-200 hover:shadow-md hover:scale-105 group relative"
-                          style={{ backgroundColor: '#2f7fc3' }}
+                          style={{ backgroundColor: '#2563eb' }}
                           title="Edit"
                         >
                           <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -999,14 +1143,52 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                 {!isEditingBio && (
                   <div className="px-4 py-3 border-t border-gray-100">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500">Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
+
+                        {/* Feedback Buttons */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={handlePositiveFeedback}
+                            disabled={feedbackGiven !== null}
+                            className={`p-1 rounded transition-colors ${
+                              feedbackGiven === 'positive'
+                                ? 'text-blue-600 bg-blue-100'
+                                : feedbackGiven === null
+                                  ? 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
+                                  : 'text-gray-300 cursor-not-allowed'
+                            }`}
+                            title="This bio was helpful"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L9 7m5 3v4M9 7H7l-1.5-1.5M9 7v10l-1.5 1.5" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={handleNegativeFeedback}
+                            disabled={feedbackGiven !== null}
+                            className={`p-1 rounded transition-colors ${
+                              feedbackGiven === 'negative'
+                                ? 'text-red-600 bg-red-100'
+                                : feedbackGiven === null
+                                  ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                                  : 'text-gray-300 cursor-not-allowed'
+                            }`}
+                            title="This bio needs improvement"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v2a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L15 17m-7-3V6l1.5-1.5M15 17h2l1.5 1.5M15 17v-10l1.5-1.5" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
                       <div className="flex items-center gap-2">
                         {/* Actions Dropdown */}
                         <div className="relative">
                           <button
                             onClick={() => setShowQuickActionsDropdown(!showQuickActionsDropdown)}
                             className="text-white text-xs rounded px-3 py-1 transition-all duration-200 hover:shadow-lg hover:scale-105 flex items-center gap-1"
-                            style={{ backgroundColor: '#2f7fc3' }}
+                            style={{ backgroundColor: '#2563eb' }}
                           >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -1022,6 +1204,30 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                               <div className="py-1">
                                 <button
                                   onClick={() => {
+                                    setShowSmartBioConfirmModal(true);
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors duration-150"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                  Refresh
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    console.log('Report Issue clicked');
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors duration-150"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                  </svg>
+                                  Report Issue
+                                </button>
+                                <button
+                                  onClick={() => {
                                     handleCopyToClipboard();
                                     setShowQuickActionsDropdown(false);
                                   }}
@@ -1030,7 +1236,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                   </svg>
-                                  Copy
+                                  Copy Bio
                                 </button>
                               </div>
                             </div>
@@ -1044,7 +1250,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
             ) : (
               <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%)'}}>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2f7fc3'}}>
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2563eb'}}>
                     <SparklesIcon className="w-3 h-3 text-white" />
                   </div>
                   <div>
@@ -1059,9 +1265,9 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                     onClick={() => setShowSmartBioConfirmModal(true)}
                     disabled={isGeneratingSmartBio}
                     className="text-white text-xs font-semibold py-2 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50"
-                    style={{background: 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)'}}
-                    onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #1e6ba8 0%, #059669 100%)')}
-                    onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)')}
+                    style={{backgroundColor: '#2563eb'}}
+                    onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+                    onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.backgroundColor = '#2563eb')}
                   >
                     {isGeneratingSmartBio ? (
                       <>
@@ -1146,7 +1352,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2f7fc3'}}>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2563eb'}}>
                   <SparklesIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -1177,7 +1383,9 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                   onClick={generateEnhancedSmartBio}
                   disabled={isGeneratingSmartBio}
                   className="flex-1 px-4 py-2 text-white rounded-lg transition-all duration-200 hover:shadow-lg disabled:opacity-50"
-                  style={{ backgroundColor: '#2f7fc3' }}
+                  style={{ backgroundColor: '#2563eb' }}
+                  onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+                  onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.backgroundColor = '#2563eb')}
                 >
                   {isGeneratingSmartBio ? (
                     <>
@@ -1289,6 +1497,191 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
                 <button
                   onClick={() => setShowDialRModal(false)}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Toast */}
+      {showFeedbackToast && (
+        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L9 7m5 3v4M9 7H7l-1.5-1.5M9 7v10l-1.5 1.5" />
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-gray-900">Thank you for your feedback!</h4>
+              <p className="text-xs text-gray-600">Your input helps us improve the Smart Bio feature.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Negative Feedback Modal */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Help us improve</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                What could be better about this Smart Bio? Your feedback helps us improve our AI research.
+              </p>
+              <textarea
+                value={feedbackComment}
+                onChange={(e) => setFeedbackComment(e.target.value)}
+                placeholder="Tell us what could be improved..."
+                className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows={4}
+              />
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    setShowFeedbackModal(false);
+                    setFeedbackComment('');
+                    setFeedbackGiven(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitNegativeFeedback}
+                  disabled={!feedbackComment.trim()}
+                  className="flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: '#2563eb' }}
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Citations Modal */}
+      {showCitationsModal && smartBioData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Sources ({getVisibleCitations().length} visible{getHiddenCitations().length > 0 ? `, ${getHiddenCitations().length} hidden` : ''})
+                </h3>
+                <button
+                  onClick={() => setShowCitationsModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {getVisibleCitations().length > 0 ? (
+                <div className="space-y-4">
+                  {getVisibleCitations().map((citation, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 mb-2">{citation.title}</h4>
+                          <a
+                            href={citation.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:text-blue-800 break-all"
+                          >
+                            {citation.url}
+                          </a>
+                        </div>
+                        <button
+                          onClick={() => handleHideCitation(citation)}
+                          className="ml-3 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                          title="Hide this citation"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No citations available</p>
+                </div>
+              )}
+
+              {getHiddenCitations().length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowHiddenSources(!showHiddenSources)}
+                    className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    {showHiddenSources ? 'Hide' : 'Show'} {getHiddenCitations().length} hidden source{getHiddenCitations().length !== 1 ? 's' : ''}
+                  </button>
+
+                  {showHiddenSources && (
+                    <div className="mt-4 space-y-3">
+                      {getHiddenCitations().map((citation, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50 opacity-60">
+                          <h4 className="font-medium text-gray-700 mb-1 text-sm">{citation.title}</h4>
+                          <a
+                            href={citation.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-gray-500 hover:text-gray-700 break-all"
+                          >
+                            {citation.url}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hide Citation Modal */}
+      {showHideCitationModal && citationToHide && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Hide Citation</h3>
+              <p className="text-sm text-gray-600 mb-6">
+                How would you like to hide "{citationToHide.title}"?
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => confirmHideCitation(false)}
+                  className="w-full px-4 py-2 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                >
+                  Hide for this session only
+                </button>
+                <button
+                  onClick={() => confirmHideCitation(true)}
+                  className="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                >
+                  Hide permanently
+                </button>
+                <button
+                  onClick={() => {
+                    setShowHideCitationModal(false);
+                    setCitationToHide(null);
+                  }}
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
