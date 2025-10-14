@@ -1368,10 +1368,15 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
       {/* Feedback Toast */}
       {showFeedbackToast && (
-        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
-          <div className="flex items-center gap-2">
-            <CheckCircleIcon className="w-5 h-5" />
-            <span>Thank you for your feedback!</span>
+        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <HandThumbUpIcon className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-gray-900">Thank you for your feedback!</h4>
+              <p className="text-xs text-gray-600">Your input helps us improve the Smart Bio feature.</p>
+            </div>
           </div>
         </div>
       )}
