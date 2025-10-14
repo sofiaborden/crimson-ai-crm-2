@@ -835,7 +835,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                             <button
                               onClick={handleSaveEditedBio}
                               className="px-3 py-1 text-white text-xs rounded transition-all duration-200 hover:shadow-md hover:scale-105"
-                              style={{ backgroundColor: '#2f7fc3' }}
+                              style={{ backgroundColor: '#2563eb' }}
                             >
                               Save
                             </button>
@@ -924,9 +924,9 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                             disabled={feedbackGiven !== null}
                             className={`p-1 rounded transition-colors ${
                               feedbackGiven === 'positive'
-                                ? 'text-green-600 bg-green-100'
+                                ? 'text-blue-600 bg-blue-100'
                                 : feedbackGiven === null
-                                  ? 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                                  ? 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
                                   : 'text-gray-300 cursor-not-allowed'
                             }`}
                             title={feedbackGiven ? 'Feedback already submitted' : 'This bio was helpful'}
@@ -6793,14 +6793,13 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => confirmHideCitation(false)}
-                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  className="w-full px-4 py-2 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
                 >
                   Hide for this session only
                 </button>
                 <button
                   onClick={() => confirmHideCitation(true)}
-                  className="w-full px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-                  style={{ backgroundColor: '#2f7fc3' }}
+                  className="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
                 >
                   Hide permanently
                 </button>
@@ -6820,8 +6819,8 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
       {showFeedbackToast && (
         <div className="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-              <HandThumbUpIcon className="w-4 h-4 text-green-600" />
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <HandThumbUpIcon className="w-4 h-4 text-blue-600" />
             </div>
             <div>
               <h4 className="text-sm font-medium text-gray-900">Thank you for your feedback!</h4>
@@ -6864,7 +6863,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 <button
                   onClick={submitNegativeFeedback}
                   className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-                  style={{ backgroundColor: '#2f7fc3' }}
+                  style={{ backgroundColor: '#2563eb' }}
                 >
                   Submit
                 </button>
@@ -8606,7 +8605,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
               {/* Header */}
               <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)' }}>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #10b981 100%)' }}>
                   <SparklesIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -8628,10 +8627,10 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                       : 'hover:bg-white/50'
                   }`}
                   style={{
-                    color: activeAITab === 'insights' ? '#2f7fc3' : '#6b7280'
+                    color: activeAITab === 'insights' ? '#2563eb' : '#6b7280'
                   }}
                 >
-                  <SparklesIcon className="w-3 h-3 inline mr-1" style={{ color: '#2f7fc3' }} />
+                  <SparklesIcon className="w-3 h-3 inline mr-1" style={{ color: '#2563eb' }} />
                   Insights
                 </button>
                 <button
@@ -8642,10 +8641,10 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                       : 'hover:bg-white/50'
                   }`}
                   style={{
-                    color: activeAITab === 'bio' ? '#2f7fc3' : '#6b7280'
+                    color: activeAITab === 'bio' ? '#2563eb' : '#6b7280'
                   }}
                 >
-                  <SparklesIcon className="w-3 h-3 inline mr-1" style={{ color: '#2f7fc3' }} />
+                  <SparklesIcon className="w-3 h-3 inline mr-1" style={{ color: '#2563eb' }} />
                   Smart Bio
                 </button>
               </div>
@@ -8673,7 +8672,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                     </div>
                     {/* Progress Bar */}
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="h-2 rounded-full" style={{width: '62%', background: `linear-gradient(to right, #2f7fc3, #dc2626)`}}></div>
+                      <div className="h-2 rounded-full" style={{width: '62%', background: `linear-gradient(to right, #2563eb, #dc2626)`}}></div>
                     </div>
                   </div>
 
@@ -8707,14 +8706,14 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                       <button
                         onClick={handleDialRClick}
                         className="flex items-center justify-center gap-1 text-white text-xs font-medium py-2 px-2 rounded-lg transition-colors"
-                        style={{ backgroundColor: '#2f7fc3' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e6ba8'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2f7fc3'}
+                        style={{ backgroundColor: '#2563eb' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                       >
                         <PhoneIcon className="w-3 h-3" />
                         Send to DialR
                       </button>
-                      <button className="flex items-center justify-center gap-1 text-white text-xs font-medium py-2 px-2 rounded-lg transition-colors" style={{ backgroundColor: '#2f7fc3' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e6ba8'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2f7fc3'}>
+                      <button className="flex items-center justify-center gap-1 text-white text-xs font-medium py-2 px-2 rounded-lg transition-colors" style={{ backgroundColor: '#2563eb' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}>
                         <ArrowTopRightOnSquareIcon className="w-3 h-3" />
                         TargetPath
                       </button>
@@ -8738,7 +8737,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 pb-3 border-b border-gray-100">
                       <div className="flex items-center gap-2">
-                        <SparklesIcon className="w-4 h-4" style={{ color: '#2f7fc3' }} />
+                        <SparklesIcon className="w-4 h-4" style={{ color: '#2563eb' }} />
                         <h3 className="text-base font-semibold text-gray-900">Enhanced Smart Bio</h3>
                       </div>
                       <div className="flex items-center gap-2">
@@ -8776,7 +8775,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                                 <button
                                   onClick={handleSaveEditedBio}
                                   className="px-3 py-1 text-white text-xs rounded transition-all duration-200 hover:shadow-md hover:scale-105"
-                                  style={{ backgroundColor: '#2f7fc3' }}
+                                  style={{ backgroundColor: '#2563eb' }}
                                 >
                                   Save
                                 </button>
@@ -8801,7 +8800,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
 
                         {/* Wealth Summary */}
                         {smartBioData.wealthSummary && (
-                          <div className="bg-blue-gray-50 border-l-4 pl-4 py-2 mb-3 rounded-r-md transition-all duration-200 hover:bg-blue-gray-100" style={{ borderLeftColor: '#2f7fc3' }}>
+                          <div className="bg-blue-gray-50 border-l-4 pl-4 py-2 mb-3 rounded-r-md transition-all duration-200 hover:bg-blue-gray-100" style={{ borderLeftColor: '#2563eb' }}>
                             <p className="text-gray-700 text-sm font-medium">
                               {smartBioData.wealthSummary}
                             </p>
@@ -8816,7 +8815,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                               onClick={() => setShowCitationsModal(true)}
                               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1"
                               style={{
-                                backgroundColor: '#2f7fc3'
+                                backgroundColor: '#2563eb'
                               }}
                               title="View citation sources"
                             >
@@ -8837,7 +8836,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                                 onClick={handleEditBio}
                                 className="p-2 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1"
                                 style={{
-                                  backgroundColor: '#2f7fc3'
+                                  backgroundColor: '#2563eb'
                                 }}
                                 title="Edit bio content"
                               >
@@ -8865,9 +8864,9 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                                 disabled={feedbackGiven !== null}
                                 className={`p-1 rounded transition-colors ${
                                   feedbackGiven === 'positive'
-                                    ? 'text-green-600 bg-green-100'
+                                    ? 'text-blue-600 bg-blue-100'
                                     : feedbackGiven === null
-                                      ? 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                                      ? 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
                                       : 'text-gray-300 cursor-not-allowed'
                                 }`}
                                 title={feedbackGiven ? 'Feedback already submitted' : 'This bio was helpful'}
@@ -8968,7 +8967,7 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                 ) : (
                   <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #ecf4ff 0%, #dbeafe 100%)'}}>
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2f7fc3'}}>
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2563eb'}}>
                         <SparklesIcon className="w-3 h-3 text-white" />
                       </div>
                       <div>
@@ -8983,9 +8982,9 @@ const DraggableOverviewContainer: React.FC<DraggableOverviewContainerProps> = ({
                         onClick={() => setShowSmartBioConfirmModal(true)}
                         disabled={isGeneratingSmartBio}
                         className="text-white text-xs font-semibold py-2 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50"
-                        style={{background: 'linear-gradient(135deg, #4dadff 0%, #2f7fc3 100%)'}}
-                        onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #3b9eff 0%, #1e6ba8 100%)')}
-                        onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #4dadff 0%, #2f7fc3 100%)')}
+                        style={{background: '#2563eb'}}
+                        onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = '#1d4ed8')}
+                        onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = '#2563eb')}
                       >
                         {isGeneratingSmartBio ? (
                           <>
