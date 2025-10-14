@@ -355,12 +355,16 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
 
             {/* Progress Bar - 65% filled */}
             <div className="mb-4">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden relative group">
                 <div
-                  className="h-full w-[65%] rounded-full relative group cursor-help"
+                  className="h-full w-[65%] rounded-full cursor-help"
                   style={{ background: 'linear-gradient(to right, #2563eb, #ef4444)' }}
-                  title="The donor has given $15,200 of their estimated $24,500 capacity."
                 ></div>
+                {/* Custom Tooltip */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                  The donor has given $15,200 of their estimated $24,500 capacity.
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
               </div>
             </div>
 
@@ -653,29 +657,13 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
 
   // Generate Pulse Check insights based on donor data
   const getPulseCheckInsight = (donor: Donor) => {
-    const insights = [
-      {
-        icon: TrendingUpIcon,
-        text: "This donor is in your top 10% of likely re-engagers this quarter.",
-        confidence: "Moderate",
-        action: "Consider outreach before next campaign."
-      },
-      {
-        icon: TrendingUpIcon,
-        text: "Giving potential higher than 75% of similar supporters.",
-        confidence: "Moderate", 
-        action: "Consider mid-level upgrade approach."
-      },
-      {
-        icon: TrendingUpIcon,
-        text: "Recent engagement suggests high responsiveness to outreach.",
-        confidence: "Moderate",
-        action: "Schedule personalized contact within 3 weeks."
-      }
-    ];
-
-    // Return a random insight for demo purposes
-    return insights[Math.floor(Math.random() * insights.length)];
+    // Return single static insight message
+    return {
+      icon: TrendingUpIcon,
+      text: "This donor is in your top 10% of likely re-engagers this quarter.",
+      confidence: "Moderate",
+      action: "Consider outreach before next campaign."
+    };
   };
 
   const insight = getPulseCheckInsight(donor);
@@ -877,25 +865,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
               </div>
             </div>
 
-            {/* DialR Button */}
-            <div className="flex justify-end mt-4">
-              <div className="relative">
-                <button
-                  onClick={handleDialRClick}
-                  onMouseEnter={() => setShowDialRTooltip(true)}
-                  onMouseLeave={() => setShowDialRTooltip(false)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
-                >
-                  <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                  Send to DialR
-                </button>
-                {showDialRTooltip && (
-                  <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
-                    Send to DialR
-                  </div>
-                )}
-              </div>
-            </div>
+
           </>
         ) : (
           <div>
