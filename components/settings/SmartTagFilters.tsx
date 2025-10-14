@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusIcon, XMarkIcon, CalendarIcon } from '../../constants';
+import { PlusIcon, XMarkIcon, CalendarIcon, SparklesIcon, ChatBubbleLeftRightIcon } from '../../constants';
 import Button from '../ui/Button';
 
 interface SmartTagFilter {
@@ -28,7 +28,13 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
     value2: ''
   });
 
+  // CrimsonGPT state
+  const [crimsonGPTPrompt, setCrimsonGPTPrompt] = useState('');
+  const [isProcessingPrompt, setIsProcessingPrompt] = useState(false);
+  const [showCrimsonGPT, setShowCrimsonGPT] = useState(false);
+
   const filterFields = [
+    { value: 'smartTags', label: 'Smart Tags', type: 'select' },
     { value: 'totalGiving', label: 'Total Giving', type: 'currency' },
     { value: 'giftCount', label: 'Number of Gifts', type: 'number' },
     { value: 'lastGiftDate', label: 'Last Gift Date', type: 'date' },
@@ -98,6 +104,141 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
     console.log('Filters changed:', filters);
     onFiltersChange(filters);
   }, [filters]);
+
+  // CrimsonGPT natural language processing
+  const handleCrimsonGPTPrompt = async () => {
+    if (!crimsonGPTPrompt.trim()) return;
+
+    setIsProcessingPrompt(true);
+
+    // Simulate AI processing - in real implementation, this would call CrimsonGPT API
+    setTimeout(() => {
+      const parsedFilters = parseNaturalLanguageQuery(crimsonGPTPrompt);
+
+      // Add parsed filters to existing filters
+      const newFilters = [...filters, ...parsedFilters];
+      setFilters(newFilters);
+
+      setIsProcessingPrompt(false);
+      setCrimsonGPTPrompt('');
+      setShowCrimsonGPT(false);
+    }, 2000);
+  };
+
+  // Parse natural language queries into filter objects
+  const parseNaturalLanguageQuery = (query: string): SmartTagFilter[] => {
+    const parsedFilters: SmartTagFilter[] = [];
+    const lowerQuery = query.toLowerCase();
+
+    // Smart Tag detection
+    if (lowerQuery.includes('big givers')) {
+      parsedFilters.push({
+        id: Date.now().toString() + '_1',
+        field: 'smartTags',
+        operator: 'contains',
+        value: 'Big Givers',
+        label: 'Smart Tag contains Big Givers'
+      });
+    }
+
+    if (lowerQuery.includes('prime persuadables')) {
+      parsedFilters.push({
+        id: Date.now().toString() + '_2',
+        field: 'smartTags',
+        operator: 'contains',
+        value: 'Prime Persuadables',
+        label: 'Smart Tag contains Prime Persuadables'
+      });
+    }
+
+    if (lowerQuery.includes('new & rising') || lowerQuery.includes('new and rising')) {
+      parsedFilters.push({
+        id: Date.now().toString() + '_3',
+        field: 'smartTags',
+        operator: 'contains',
+        value: 'New & Rising Donors',
+        label: 'Smart Tag contains New & Rising Donors'
+      });
+    }
+
+    if (lowerQuery.includes('lapsed') || lowerQuery.includes('at-risk')) {
+      parsedFilters.push({
+        id: Date.now().toString() + '_4',
+        field: 'smartTags',
+        operator: 'contains',
+        value: 'Lapsed/At-Risk',
+        label: 'Smart Tag contains Lapsed/At-Risk'
+      });
+    }
+
+    if (lowerQuery.includes('not yet registered') || lowerQuery.includes('unregistered')) {
+      parsedFilters.push({
+        id: Date.now().toString() + '_5',
+        field: 'smartTags',
+        operator: 'contains',
+        value: 'Not Yet Registered',
+        label: 'Smart Tag contains Not Yet Registered'
+      });
+    }
+
+    // Geographic filters
+    const stateMatch = lowerQuery.match(/in\s+(california|ca|florida|fl|texas|tx|new york|ny|georgia|ga)/);
+    if (stateMatch) {
+      const stateMap: { [key: string]: string } = {
+        'california': 'CA', 'ca': 'CA',
+        'florida': 'FL', 'fl': 'FL',
+        'texas': 'TX', 'tx': 'TX',
+        'new york': 'NY', 'ny': 'NY',
+        'georgia': 'GA', 'ga': 'GA'
+      };
+      const state = stateMap[stateMatch[1]];
+      if (state) {
+        parsedFilters.push({
+          id: Date.now().toString() + '_geo',
+          field: 'state',
+          operator: 'equals',
+          value: state,
+          label: `State equals ${state}`
+        });
+      }
+    }
+
+    // Amount filters
+    const amountMatch = lowerQuery.match(/(\$?\d+)\+?/);
+    if (amountMatch && (lowerQuery.includes('gave') || lowerQuery.includes('donated') || lowerQuery.includes('over'))) {
+      const amount = amountMatch[1].replace('$', '');
+      parsedFilters.push({
+        id: Date.now().toString() + '_amount',
+        field: 'totalGiving',
+        operator: '>=',
+        value: amount,
+        label: `Total Giving >= $${amount}`
+      });
+    }
+
+    // Time-based filters
+    if (lowerQuery.includes('last year') || lowerQuery.includes('2023')) {
+      parsedFilters.push({
+        id: Date.now().toString() + '_time',
+        field: 'lastGiftDate',
+        operator: 'within',
+        value: '12 months',
+        label: 'Last Gift within 12 months'
+      });
+    }
+
+    if (lowerQuery.includes('last 30 days') || lowerQuery.includes('this month')) {
+      parsedFilters.push({
+        id: Date.now().toString() + '_time2',
+        field: 'lastGiftDate',
+        operator: 'within',
+        value: '30 days',
+        label: 'Last Gift within 30 days'
+      });
+    }
+
+    return parsedFilters;
+  };
 
   const addFilter = () => {
     console.log('Add filter clicked', newFilter);
@@ -320,6 +461,14 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
 
   const getSelectOptions = (field: string) => {
     switch (field) {
+      case 'smartTags':
+        return [
+          { value: 'Big Givers', label: 'Big Givers' },
+          { value: 'Prime Persuadables', label: 'Prime Persuadables' },
+          { value: 'New & Rising Donors', label: 'New & Rising Donors' },
+          { value: 'Lapsed/At-Risk', label: 'Lapsed/At-Risk' },
+          { value: 'Not Yet Registered', label: 'Not Yet Registered' }
+        ];
       case 'gender':
         return [
           { value: 'Male', label: 'Male' },
@@ -352,6 +501,80 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
           <Button size="sm" variant="secondary" onClick={clearAllFilters}>
             Clear All
           </Button>
+        )}
+      </div>
+
+      {/* CrimsonGPT Natural Language Filter */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-4 shadow-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+            <ChatBubbleLeftRightIcon className="w-4 h-4 text-white" />
+          </div>
+          <h4 className="font-semibold text-white text-sm">CrimsonGPT Natural Language Filter</h4>
+          <SparklesIcon className="w-4 h-4 text-blue-200" />
+        </div>
+
+        {!showCrimsonGPT ? (
+          <button
+            onClick={() => setShowCrimsonGPT(true)}
+            className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+          >
+            Use Natural Language to Add Filters
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={crimsonGPTPrompt}
+                onChange={(e) => setCrimsonGPTPrompt(e.target.value)}
+                placeholder="e.g., 'Show me Big Givers in California who gave over $500 last year'"
+                className="flex-1 px-3 py-2 bg-white bg-opacity-90 border border-white border-opacity-30 rounded-lg text-gray-900 placeholder-gray-500 text-sm focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent"
+                onKeyPress={(e) => e.key === 'Enter' && handleCrimsonGPTPrompt()}
+              />
+              <button
+                onClick={handleCrimsonGPTPrompt}
+                disabled={!crimsonGPTPrompt.trim() || isProcessingPrompt}
+                className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              >
+                {isProcessingPrompt ? 'Processing...' : 'Apply'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCrimsonGPT(false);
+                  setCrimsonGPTPrompt('');
+                }}
+                className="px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Example queries */}
+            <div className="text-xs text-blue-100">
+              <p className="mb-1">Try examples like:</p>
+              <div className="flex flex-wrap gap-1">
+                <button
+                  onClick={() => setCrimsonGPTPrompt('Show me Big Givers in Florida')}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-white transition-colors"
+                >
+                  "Big Givers in Florida"
+                </button>
+                <button
+                  onClick={() => setCrimsonGPTPrompt('Prime Persuadables who gave over $200')}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-white transition-colors"
+                >
+                  "Prime Persuadables over $200"
+                </button>
+                <button
+                  onClick={() => setCrimsonGPTPrompt('Lapsed donors in the last 30 days')}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-white transition-colors"
+                >
+                  "Lapsed donors last 30 days"
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
