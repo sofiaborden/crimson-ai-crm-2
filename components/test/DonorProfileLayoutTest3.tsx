@@ -713,11 +713,14 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
               onClick={() => setActiveTab('bio')}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
                 activeTab === 'bio'
-                  ? 'bg-white shadow-sm text-crimson-blue'
+                  ? 'bg-white shadow-sm'
                   : 'hover:bg-white/50 text-gray-600'
               }`}
+              style={{
+                color: activeTab === 'bio' ? '#2563eb' : undefined
+              }}
             >
-              <SparklesIcon className="w-3 h-3 inline mr-1" />
+              <SparklesIcon className="w-3 h-3 inline mr-1" style={{ color: '#2563eb' }} />
               Smart Bio
             </button>
           </div>
@@ -794,7 +797,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 pb-3 border-b border-gray-100">
                   <div className="flex items-center gap-2">
-                    <SparklesIcon className="w-4 h-4" style={{ color: '#2f7fc3' }} />
+                    <SparklesIcon className="w-4 h-4" style={{ color: '#2563eb' }} />
                     <h3 className="text-base font-semibold text-gray-900">Enhanced Smart Bio</h3>
                   </div>
                   <div className="flex items-center gap-2">
@@ -857,7 +860,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
 
                     {/* Wealth Summary */}
                     {smartBioData.wealthSummary && (
-                      <div className="bg-blue-gray-50 border-l-4 pl-4 py-2 mb-3 rounded-r-md transition-all duration-200 hover:bg-blue-gray-100" style={{ borderLeftColor: '#2f7fc3' }}>
+                      <div className="bg-blue-gray-50 border-l-4 pl-4 py-2 mb-3 rounded-r-md transition-all duration-200 hover:bg-blue-gray-100" style={{ borderLeftColor: '#2563eb' }}>
                         <p className="text-gray-700 text-sm font-medium">
                           {smartBioData.wealthSummary}
                         </p>
@@ -872,7 +875,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                           onClick={() => setShowCitationsModal(true)}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1"
                           style={{
-                            backgroundColor: '#2f7fc3'
+                            backgroundColor: '#2563eb'
                           }}
                           title="View citation sources"
                         >
@@ -893,7 +896,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                             onClick={handleEditBio}
                             className="p-2 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1"
                             style={{
-                              backgroundColor: '#2f7fc3'
+                              backgroundColor: '#2563eb'
                             }}
                             title="Edit bio content"
                           >
@@ -1024,7 +1027,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
             ) : (
               <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #ecf4ff 0%, #dbeafe 100%)'}}>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2f7fc3'}}>
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2563eb'}}>
                     <SparklesIcon className="w-3 h-3 text-white" />
                   </div>
                   <div>
@@ -1039,9 +1042,9 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                     onClick={() => setShowSmartBioConfirmModal(true)}
                     disabled={isGeneratingSmartBio}
                     className="text-white text-xs font-semibold py-2 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50"
-                    style={{background: 'linear-gradient(135deg, #4dadff 0%, #2f7fc3 100%)'}}
-                    onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #3b9eff 0%, #1e6ba8 100%)')}
-                    onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #4dadff 0%, #2f7fc3 100%)')}
+                    style={{background: '#2563eb'}}
+                    onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = '#1d4ed8')}
+                    onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = '#2563eb')}
                   >
                     {isGeneratingSmartBio ? (
                       <>
@@ -1062,25 +1065,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
         )}
       </div>
 
-      {/* DialR Button */}
-      <div className="flex justify-end">
-        <div className="relative">
-          <button
-            onClick={handleDialRClick}
-            onMouseEnter={() => setShowDialRTooltip(true)}
-            onMouseLeave={() => setShowDialRTooltip(false)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
-          >
-            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-            DialR
-          </button>
-          {showDialRTooltip && (
-            <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
-              Send to DialR
-            </div>
-          )}
-        </div>
-      </div>
+
 
       {/* DialR Modal - Smart Segments Pattern */}
       {showDialRModal && (
@@ -6628,7 +6613,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2f7fc3'}}>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2563eb'}}>
                   <SparklesIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -6660,7 +6645,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                   onClick={generateEnhancedSmartBio}
                   disabled={isGeneratingSmartBio}
                   className="flex-1 px-4 py-2 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
-                  style={{backgroundColor: '#2f7fc3'}}
+                  style={{backgroundColor: '#2563eb'}}
                 >
                   {isGeneratingSmartBio ? 'Generating...' : 'Generate Bio'}
                 </button>
