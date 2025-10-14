@@ -141,12 +141,338 @@ import {
   HandThumbDownIcon
 } from '../../constants';
 
+// Enterprise AI Insights component for Test 3 profiles
+const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
+  const [activeTab, setActiveTab] = useState<'insights' | 'bio'>('insights');
+  const [showDialRModal, setShowDialRModal] = useState(false);
+  const [showDialRTooltip, setShowDialRTooltip] = useState(false);
+  const [selectedList, setSelectedList] = useState('');
+  const [selectedUser, setSelectedUser] = useState('');
+
+  const handleDialRClick = () => {
+    setShowDialRModal(true);
+  };
+
+  const handleDialRSelection = (assignmentType: string, targetName?: string) => {
+    let message = '';
+
+    switch (assignmentType) {
+      case 'my-list':
+        message = `📞 Adding ${donor.name} to your personal DialR list...\n\nReady for dialing in 15 seconds`;
+        break;
+      case 'list-assignment':
+        message = `📞 Assigning ${donor.name} to DialR list...\n\nList: "${targetName}"\nAssignment complete!`;
+        break;
+      case 'user-assignment':
+        message = `📞 Assigning ${donor.name} to team member...\n\nAssigned to: ${targetName}\nNotification sent to user!`;
+        break;
+      default:
+        message = `📞 Adding ${donor.name} to DialR...`;
+    }
+
+    console.log(`DialR ${assignmentType}:`, { donor: donor.name, targetName });
+    alert(message);
+
+    // Reset form state
+    setSelectedList('');
+    setSelectedUser('');
+    setShowDialRModal(false);
+  };
+
+  // Mock existing organizational lists
+  const existingLists = [
+    'Major Donors 2024',
+    'Monthly Sustainers',
+    'Event Prospects',
+    'Board Contacts',
+    'VIP Supporters'
+  ];
+
+  // Mock team members
+  const teamMembers = [
+    'Sarah Johnson',
+    'Mike Chen',
+    'Emily Rodriguez',
+    'David Kim',
+    'Lisa Thompson'
+  ];
+
+  return (
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/60 p-4 shadow-sm hover:shadow-md transition-all duration-300">
+      {/* Custom CSS for pulse animation */}
+      <style jsx>{`
+        @keyframes heartbeat {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          25% {
+            transform: scale(1.15);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1);
+            opacity: 0.9;
+          }
+          75% {
+            transform: scale(1.08);
+            opacity: 1;
+          }
+        }
+        .pulse-heart {
+          animation: heartbeat 1.5s ease-in-out infinite;
+          transform-origin: center;
+        }
+      `}</style>
+
+      {/* Header with Pulse Check and Enterprise badge */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <HeartIcon className="w-5 h-5 text-red-500 pulse-heart" />
+          <h3 className="text-lg font-semibold text-gray-900">Pulse Check</h3>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+            Enterprise
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Insights/Bio Toggle */}
+          <div className="flex bg-gray-100 rounded-xl p-1">
+            <button
+              onClick={() => setActiveTab('insights')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                activeTab === 'insights'
+                  ? 'bg-white shadow-sm text-crimson-blue'
+                  : 'hover:bg-white/50 text-gray-600'
+              }`}
+            >
+              <SparklesIcon className="w-3 h-3 inline mr-1" />
+              Insights
+            </button>
+            <button
+              onClick={() => setActiveTab('bio')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                activeTab === 'bio'
+                  ? 'bg-white shadow-sm text-crimson-blue'
+                  : 'hover:bg-white/50 text-gray-600'
+              }`}
+            >
+              <SparklesIcon className="w-3 h-3 inline mr-1" />
+              Smart Bio
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="space-y-4">
+        {activeTab === 'insights' ? (
+          <>
+            {/* Estimated Wealth */}
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">Estimated Wealth: $800k-$900k</h4>
+            </div>
+
+            {/* Four Metric Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              <div className="text-center p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="text-lg font-bold text-gray-900">$15,200</div>
+                <div className="text-xs text-gray-600">Total Given (CTD)</div>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="text-lg font-bold text-blue-600">$24,500</div>
+                <div className="text-xs text-blue-600">Potential (CTD)</div>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="text-lg font-bold text-blue-600">$1,000</div>
+                <div className="text-xs text-blue-600">Max Ask</div>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="text-sm font-bold text-blue-600">Next 30 Days</div>
+                <div className="text-xs text-blue-600">Gift Readiness</div>
+              </div>
+            </div>
+
+            {/* Progress Bar - 65% filled */}
+            <div className="mb-4 relative group">
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden cursor-help">
+                <div
+                  className="h-full w-[65%] rounded-full"
+                  style={{ background: 'linear-gradient(to right, #2563eb, #ef4444)' }}
+                ></div>
+              </div>
+              {/* Custom Tooltip */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                The donor has given $15,200 of their estimated $24,500 capacity.
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+
+            {/* Status Indicators */}
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center gap-2">
+                <ExclamationTriangleIcon className="w-4 h-4 text-orange-500" />
+                <span className="text-sm text-gray-700">Below capacity at 62% - eligible for upgrade.</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-sm text-gray-700">Level - Up List</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="py-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 text-center">
+              <div className="w-12 h-12 bg-crimson-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                <SparklesIcon className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">Enhanced Smart Bio</h4>
+              <p className="text-sm text-gray-600 mb-4">
+                Get a complete donor snapshot with intelligence you can act on. See what matters most: recent news, issue alignment, and wealth signals.
+              </p>
+              <button className="px-6 py-3 bg-crimson-blue text-white text-sm font-semibold rounded-lg hover:bg-crimson-dark-blue transition-colors shadow-md hover:shadow-lg">
+                <SparklesIcon className="w-4 h-4 inline mr-2" />
+                Generate Enhanced Bio
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* DialR Button */}
+      <div className="flex justify-end">
+        <div className="relative">
+          <button
+            onClick={handleDialRClick}
+            onMouseEnter={() => setShowDialRTooltip(true)}
+            onMouseLeave={() => setShowDialRTooltip(false)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+          >
+            <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+            DialR
+          </button>
+          {showDialRTooltip && (
+            <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
+              Send to DialR
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* DialR Modal - Smart Segments Pattern */}
+      {showDialRModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Add to DialR</h3>
+                  <p className="text-sm text-gray-600 mt-1">1 contact from "Pulse Check Insights"</p>
+                </div>
+                <button
+                  onClick={() => setShowDialRModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XMarkIcon className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-700 mb-4 text-sm">
+                  Select a DialR list to add this donor for phone outreach campaigns.
+                </p>
+
+                <div className="space-y-3">
+                  {/* Add to My List - Blue bordered section */}
+                  <button
+                    onClick={() => handleDialRSelection('my-list')}
+                    className="w-full p-4 border-2 border-blue-500 rounded-lg hover:bg-blue-50 transition-colors text-left mb-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <PhoneIcon className="w-6 h-6 text-blue-500" />
+                      <div>
+                        <div className="text-lg font-medium text-gray-900">Add to My List</div>
+                        <div className="text-sm text-gray-600">Add to your personal call list</div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Or divider */}
+                  <div className="text-center text-gray-500 text-sm mb-4">or</div>
+
+                  {/* Assign to List */}
+                  <div className="mb-4">
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Assign to List</h4>
+                    <select
+                      value={selectedList}
+                      onChange={(e) => setSelectedList(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a list...</option>
+                      {existingLists.map((list) => (
+                        <option key={list} value={list}>{list}</option>
+                      ))}
+                    </select>
+                    {selectedList && (
+                      <button
+                        onClick={() => handleDialRSelection('list-assignment', selectedList)}
+                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Assign to {selectedList}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Assign to User */}
+                  <div className="mb-4">
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">Assign to User</h4>
+                    <select
+                      value={selectedUser}
+                      onChange={(e) => setSelectedUser(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a user...</option>
+                      {teamMembers.map((member) => (
+                        <option key={member} value={member}>{member}</option>
+                      ))}
+                    </select>
+                    {selectedUser && (
+                      <button
+                        onClick={() => handleDialRSelection('user-assignment', selectedUser)}
+                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Assign to {selectedUser}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Cancel button */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowDialRModal(false)}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface DonorProfileLayoutTest3Props {
   donor: Donor;
   customAIInsights?: React.ReactNode;
 }
 
 const DonorProfileLayoutTest3: React.FC<DonorProfileLayoutTest3Props> = ({ donor, customAIInsights }) => {
+  // Use Enterprise AI Insights by default for Test 3 profiles
+  const defaultAIInsights = <EnterpriseAIInsights donor={donor} />;
   // Tab state - updated to match existing donor profile tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'contact-insights' | 'enriched' | 'donor-discovery' | 'fec-insights' | 'donations' | 'actions' | 'more'>('overview');
   const [activeMoreTab, setActiveMoreTab] = useState<'codes' | 'moves' | 'tasks' | 'events'>('events');
@@ -2144,7 +2470,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 handleEmailBio={handleEmailBio}
                 handleReportIssue={handleReportIssue}
                 handleDialRClick={handleDialRClick}
-                customAIInsights={customAIInsights}
+                customAIInsights={customAIInsights || defaultAIInsights}
                 // Feedback system props
                 feedbackGiven={feedbackGiven}
                 handlePositiveFeedback={handlePositiveFeedback}
