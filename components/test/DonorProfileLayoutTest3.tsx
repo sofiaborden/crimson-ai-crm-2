@@ -782,14 +782,13 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
           </>
         ) : (
           <div className="space-y-4">
-            {/* Smart Bio Error Display */}
             {smartBioError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                 <p className="text-red-700 text-sm">{smartBioError}</p>
               </div>
             )}
 
-            {/* Smart Bio Content or Generation Prompt */}
+
             {smartBioData ? (
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
                 {/* Header */}
@@ -797,10 +796,6 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                   <div className="flex items-center gap-2">
                     <SparklesIcon className="w-4 h-4" style={{ color: '#2f7fc3' }} />
                     <h3 className="text-base font-semibold text-gray-900">Enhanced Smart Bio</h3>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-xs text-gray-600">{smartBioData.confidence}</span>
-                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -904,6 +899,8 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                           >
                             <PencilIcon className="w-4 h-4" />
                           </button>
+
+
                         </div>
                       )}
                     </div>
@@ -1002,12 +999,13 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                                   </svg>
                                   Email Bio
                                 </button>
+                                <div className="border-t border-gray-100 my-1"></div>
                                 <button
                                   onClick={() => {
                                     handleReportIssue();
                                     setShowQuickActionsDropdown(false);
                                   }}
-                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-150 flex items-center gap-3"
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-150 flex items-center gap-3"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -1024,7 +1022,7 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                 )}
               </div>
             ) : (
-              <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%)'}}>
+              <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #ecf4ff 0%, #dbeafe 100%)'}}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2f7fc3'}}>
                     <SparklesIcon className="w-3 h-3 text-white" />
@@ -1041,9 +1039,9 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
                     onClick={() => setShowSmartBioConfirmModal(true)}
                     disabled={isGeneratingSmartBio}
                     className="text-white text-xs font-semibold py-2 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50"
-                    style={{background: 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)'}}
-                    onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #1e6ba8 0%, #059669 100%)')}
-                    onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)')}
+                    style={{background: 'linear-gradient(135deg, #4dadff 0%, #2f7fc3 100%)'}}
+                    onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #3b9eff 0%, #1e6ba8 100%)')}
+                    onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #4dadff 0%, #2f7fc3 100%)')}
                   >
                     {isGeneratingSmartBio ? (
                       <>
