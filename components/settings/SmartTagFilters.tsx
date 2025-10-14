@@ -31,7 +31,6 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
   // CrimsonGPT state
   const [crimsonGPTPrompt, setCrimsonGPTPrompt] = useState('');
   const [isProcessingPrompt, setIsProcessingPrompt] = useState(false);
-  const [showCrimsonGPT, setShowCrimsonGPT] = useState(false);
 
   const filterFields = [
     { value: 'smartTags', label: 'Smart Tags', type: 'select' },
@@ -121,7 +120,6 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
 
       setIsProcessingPrompt(false);
       setCrimsonGPTPrompt('');
-      setShowCrimsonGPT(false);
     }, 2000);
   };
 
@@ -505,77 +503,64 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
       </div>
 
       {/* CrimsonGPT Natural Language Filter */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-4 shadow-lg">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-lg p-6 shadow-lg">
+        <div className="flex items-center gap-2 mb-4">
           <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-            <ChatBubbleLeftRightIcon className="w-4 h-4 text-white" />
+            <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
           </div>
-          <h4 className="font-semibold text-white text-sm">CrimsonGPT Natural Language Filter</h4>
-          <SparklesIcon className="w-4 h-4 text-blue-200" />
+          <h4 className="font-semibold text-white text-lg">CrimsonGPT Natural Language Filter</h4>
+          <SparklesIcon className="w-5 h-5 text-crimson-accent-blue" />
         </div>
 
-        {!showCrimsonGPT ? (
-          <button
-            onClick={() => setShowCrimsonGPT(true)}
-            className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
-          >
-            Use Natural Language to Add Filters
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={crimsonGPTPrompt}
-                onChange={(e) => setCrimsonGPTPrompt(e.target.value)}
-                placeholder="e.g., 'Show me Big Givers in California who gave over $500 last year'"
-                className="flex-1 px-3 py-2 bg-white bg-opacity-90 border border-white border-opacity-30 rounded-lg text-gray-900 placeholder-gray-500 text-sm focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent"
-                onKeyPress={(e) => e.key === 'Enter' && handleCrimsonGPTPrompt()}
-              />
-              <button
-                onClick={handleCrimsonGPTPrompt}
-                disabled={!crimsonGPTPrompt.trim() || isProcessingPrompt}
-                className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-              >
-                {isProcessingPrompt ? 'Processing...' : 'Apply'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowCrimsonGPT(false);
-                  setCrimsonGPTPrompt('');
-                }}
-                className="px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
-              >
-                <XMarkIcon className="w-4 h-4" />
-              </button>
-            </div>
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={crimsonGPTPrompt}
+              onChange={(e) => setCrimsonGPTPrompt(e.target.value)}
+              placeholder="Describe your ideal filters: 'Find all Big Givers in California who gave over $500 last year'"
+              className="flex-1 px-4 py-3 bg-white rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-crimson-accent-blue focus:border-transparent border-0"
+              onKeyPress={(e) => e.key === 'Enter' && handleCrimsonGPTPrompt()}
+            />
+            <button
+              onClick={handleCrimsonGPTPrompt}
+              disabled={!crimsonGPTPrompt.trim() || isProcessingPrompt}
+              className="px-6 py-3 bg-white text-crimson-blue rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+            >
+              <SparklesIcon className="w-4 h-4" />
+              {isProcessingPrompt ? 'Processing...' : 'Create'}
+            </button>
+          </div>
 
-            {/* Example queries */}
-            <div className="text-xs text-blue-100">
-              <p className="mb-1">Try examples like:</p>
-              <div className="flex flex-wrap gap-1">
-                <button
-                  onClick={() => setCrimsonGPTPrompt('Show me Big Givers in Florida')}
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-white transition-colors"
-                >
-                  "Big Givers in Florida"
-                </button>
-                <button
-                  onClick={() => setCrimsonGPTPrompt('Prime Persuadables who gave over $200')}
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-white transition-colors"
-                >
-                  "Prime Persuadables over $200"
-                </button>
-                <button
-                  onClick={() => setCrimsonGPTPrompt('Lapsed donors in the last 30 days')}
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-2 py-1 rounded text-white transition-colors"
-                >
-                  "Lapsed donors last 30 days"
-                </button>
-              </div>
+          <p className="text-white text-sm opacity-90">
+            CrimsonGPT will convert your description into smart filters and apply them automatically.
+          </p>
+
+          {/* Example queries */}
+          <div className="text-sm text-white opacity-80">
+            <p className="mb-2">Try examples like:</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setCrimsonGPTPrompt('Show me Big Givers in Florida')}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-white transition-colors"
+              >
+                "Big Givers in Florida"
+              </button>
+              <button
+                onClick={() => setCrimsonGPTPrompt('Prime Persuadables who gave over $200')}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-white transition-colors"
+              >
+                "Prime Persuadables over $200"
+              </button>
+              <button
+                onClick={() => setCrimsonGPTPrompt('Lapsed donors in the last 30 days')}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-white transition-colors"
+              >
+                "Lapsed donors last 30 days"
+              </button>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Active Filters */}
