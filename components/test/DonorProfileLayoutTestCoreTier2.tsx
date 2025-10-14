@@ -871,7 +871,7 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
         <div className="relative">
           {showToast && (
             <div className="absolute -top-2 -right-2 z-10">
-              <div className="bg-crimson-blue text-white px-3 py-2 rounded-lg shadow-lg animate-bounce">
+              <div className="text-white px-3 py-2 rounded-lg shadow-lg animate-bounce" style={{ backgroundColor: '#2563eb' }}>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium">{`1 credit used, ${credits} remaining`}</span>
@@ -1321,10 +1321,25 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
 
       {/* Toast and Upgrade Modal */}
       {showToast && (
-        <Toast
-          message={`1 credit used, ${credits} remaining`}
-          onClose={() => setShowToast(false)}
-        />
+        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#2563eb' }}>
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-gray-900">Credit Used</h4>
+              <p className="text-xs text-gray-600">{`1 credit used, ${credits} remaining`}</p>
+            </div>
+            <button
+              onClick={() => setShowToast(false)}
+              className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
       <UpgradeModal
         isOpen={showUpgradeModal}
