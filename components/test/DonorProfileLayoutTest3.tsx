@@ -1184,7 +1184,10 @@ Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
               <button
                 onClick={generateEnhancedSmartBio}
                 disabled={isGeneratingSmartBio}
-                className="flex-1 px-4 py-2 bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50"
+                style={{backgroundColor: '#2563eb'}}
+                onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+                onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.backgroundColor = '#2563eb')}
               >
                 {isGeneratingSmartBio ? 'Generating...' : 'Generate Bio'}
               </button>
