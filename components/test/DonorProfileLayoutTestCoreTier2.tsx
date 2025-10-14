@@ -781,21 +781,6 @@ const CoreTier2PulseCheck: React.FC<{ donor: Donor }> = ({ donor }) => {
     console.log('❌ Edit cancelled');
   };
 
-  // Quick Actions Toolbar Functions
-  const handleCopyToClipboard = async () => {
-    if (smartBioData) {
-      const bioText = smartBioData.perplexityHeadlines.join(' ');
-      const fullText = `${bioText}\n\n${smartBioData.wealthSummary ? `Wealth: ${smartBioData.wealthSummary}` : ''}`;
-
-      try {
-        await navigator.clipboard.writeText(fullText);
-        console.log('✅ Bio copied to clipboard');
-      } catch (error) {
-        console.error('❌ Failed to copy to clipboard:', error);
-      }
-    }
-  };
-
   // Generate Pulse Check insights based on donor data
   const getPulseCheckInsight = (donor: Donor) => {
     // Return single static insight message
