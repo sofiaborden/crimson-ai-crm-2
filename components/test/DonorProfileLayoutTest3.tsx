@@ -141,6 +141,111 @@ import {
   HandThumbDownIcon
 } from '../../constants';
 
+// Generate Perplexity headlines using backend API route
+const generatePerplexityHeadlines = async (donor: Donor): Promise<{headlines: string[], citations: Array<{title: string, url: string}>}> => {
+  try {
+    console.log('🔍 Generating bio for:', donor.name, 'at', donor.employment?.employer || 'Unknown employer');
+
+    // Call our backend API server instead of Perplexity directly
+    // For localhost development, use production API since we don't have local backend
+    // Add localhost-specific parameter to request search_results instead of JSON sources
+    const apiUrl = 'https://crimson-ai-crm-2.onrender.com/api/generate-bio';
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: donor.name,
+        occupation: donor.employment?.occupation,
+        employer: donor.employment?.employer,
+        location: donor.primaryAddress ? `${donor.primaryAddress.city}, ${donor.primaryAddress.state}` : donor.address,
+        email: donor.email,
+        industry: donor.employment?.industry,
+        // LOCALHOST TESTING: Request search_results instead of JSON sources
+        useSearchResults: true,
+        testingMode: 'localhost'
+      })
+    });
+
+    console.log('🔍 Backend API Response Status:', response.status);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('🔍 Backend API Error:', errorData);
+      throw new Error(errorData.error || `Backend API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('🔍 Backend API Success:', data);
+
+    if (data.success && data.headlines && data.headlines.length > 0) {
+      console.log('✅ Successfully generated headlines via backend API');
+
+      // Log citation source information for debugging
+      console.log('🔍 Citation source:', data.citationSource);
+      console.log('🔍 Citation count:', data.citationCount);
+      console.log('🔍 Has search results:', data.hasSearchResults);
+      console.log('🔍 Has JSON sources:', data.hasJsonSources);
+
+      return {
+        headlines: data.headlines,
+        citations: data.citations || []
+      };
+    } else {
+      throw new Error('No headlines returned from backend API');
+    }
+
+  } catch (error) {
+    console.error('❌ Perplexity API error:', error);
+    console.error('❌ Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown error type'
+    });
+
+    console.log('🔄 Using fallback headlines due to API error');
+
+    // Return realistic fallback data based on employment information
+    if (donor.employment) {
+      const fallbackHeadlines = [
+        `${donor.name} serves as ${donor.employment.occupation} at ${donor.employment.employer}.`,
+        `Professional with experience in ${donor.employment.industry || 'their field'}.`,
+        `Based in ${donor.primaryAddress?.city || 'their location'} with established career background.`
+      ];
+      console.log('🔄 Employment-based fallback:', fallbackHeadlines);
+      return {
+        headlines: fallbackHeadlines,
+        citations: []
+      };
+    }
+
+    // Generic fallback for profiles without employment data
+    const genericFallback = [
+      `${donor.name} is a professional with established community connections.`,
+      `Active in their local area with potential for civic engagement.`,
+      `Profile available for further research and outreach opportunities.`
+    ];
+    console.log('🔄 Generic fallback:', genericFallback);
+    return {
+      headlines: genericFallback,
+      citations: []
+    };
+  }
+};
+
+// Generate wealth summary from i360 data
+const generateWealthSummary = (donor: Donor): string => {
+  const wealthCode = getMockWealthCode(donor.name);
+
+  if (!wealthCode || !WEALTH_MAPPING[wealthCode as keyof typeof WEALTH_MAPPING]) {
+    return '';
+  }
+
+  const wealthData = WEALTH_MAPPING[wealthCode as keyof typeof WEALTH_MAPPING];
+  return `Estimated wealth: ${wealthData.range} (${wealthData.tier})`;
+};
+
 // Enterprise AI Insights component for Test 3 profiles
 const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
   const [activeTab, setActiveTab] = useState<'insights' | 'bio'>('insights');
@@ -148,6 +253,362 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
   const [showDialRTooltip, setShowDialRTooltip] = useState(false);
   const [selectedList, setSelectedList] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
+
+  // Enhanced Smart Bio state
+  const [smartBioData, setSmartBioData] = useState<SmartBioData | null>(null);
+  const [isGeneratingSmartBio, setIsGeneratingSmartBio] = useState(false);
+  const [showSmartBioConfirmModal, setShowSmartBioConfirmModal] = useState(false);
+  const [smartBioError, setSmartBioError] = useState('');
+  const [showCitationsModal, setShowCitationsModal] = useState(false);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [originalBioText, setOriginalBioText] = useState<string[]>([]);
+  const [editedBioText, setEditedBioText] = useState<string[]>([]);
+
+  // Citation hide/exclude state
+  const [hiddenCitations, setHiddenCitations] = useState<Set<string>>(new Set());
+  const [permanentlyHiddenCitations, setPermanentlyHiddenCitations] = useState<Set<string>>(new Set());
+  const [showHiddenSources, setShowHiddenSources] = useState(false);
+  const [showHideCitationModal, setShowHideCitationModal] = useState(false);
+  const [citationToHide, setCitationToHide] = useState<{title: string; url: string} | null>(null);
+
+  // User feedback system state
+  const [feedbackGiven, setFeedbackGiven] = useState<'positive' | 'negative' | null>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [showFeedbackToast, setShowFeedbackToast] = useState(false);
+  const [showQuickActionsDropdown, setShowQuickActionsDropdown] = useState(false);
+
+  // Load permanently hidden citations from localStorage on component mount
+  useEffect(() => {
+    const savedHiddenCitations = localStorage.getItem(`hiddenCitations_${donor.id}`);
+    if (savedHiddenCitations) {
+      try {
+        const hiddenUrls = JSON.parse(savedHiddenCitations);
+        setPermanentlyHiddenCitations(new Set(hiddenUrls));
+      } catch (error) {
+        console.error('Failed to load hidden citations from localStorage:', error);
+      }
+    }
+  }, [donor.id]);
+
+  // Citation hide/exclude functions
+  const handleHideCitation = (citation: {title: string; url: string}) => {
+    setCitationToHide(citation);
+    setShowHideCitationModal(true);
+  };
+
+  const confirmHideCitation = (permanent: boolean) => {
+    if (!citationToHide) return;
+
+    if (permanent) {
+      // Add to permanently hidden citations
+      const newPermanentlyHidden = new Set(permanentlyHiddenCitations);
+      newPermanentlyHidden.add(citationToHide.url);
+      setPermanentlyHiddenCitations(newPermanentlyHidden);
+
+      // Save to localStorage
+      const hiddenUrls = Array.from(newPermanentlyHidden);
+      localStorage.setItem(`hiddenCitations_${donor.id}`, JSON.stringify(hiddenUrls));
+    } else {
+      // Add to session-only hidden citations
+      const newHidden = new Set(hiddenCitations);
+      newHidden.add(citationToHide.url);
+      setHiddenCitations(newHidden);
+    }
+
+    setShowHideCitationModal(false);
+    setCitationToHide(null);
+  };
+
+  const handleRestoreCitation = (url: string, permanent: boolean) => {
+    if (permanent) {
+      const newPermanentlyHidden = new Set(permanentlyHiddenCitations);
+      newPermanentlyHidden.delete(url);
+      setPermanentlyHiddenCitations(newPermanentlyHidden);
+
+      // Update localStorage
+      const hiddenUrls = Array.from(newPermanentlyHidden);
+      localStorage.setItem(`hiddenCitations_${donor.id}`, JSON.stringify(hiddenUrls));
+    } else {
+      const newHidden = new Set(hiddenCitations);
+      newHidden.delete(url);
+      setHiddenCitations(newHidden);
+    }
+  };
+
+  // Get visible and hidden citations
+  const getVisibleCitations = () => {
+    if (!smartBioData?.perplexityCitations) return [];
+    return smartBioData.perplexityCitations.filter(citation =>
+      !hiddenCitations.has(citation.url) && !permanentlyHiddenCitations.has(citation.url)
+    );
+  };
+
+  const getHiddenCitations = () => {
+    if (!smartBioData?.perplexityCitations) return [];
+    return smartBioData.perplexityCitations.filter(citation =>
+      hiddenCitations.has(citation.url) || permanentlyHiddenCitations.has(citation.url)
+    ).map(citation => ({
+      ...citation,
+      isPermanent: permanentlyHiddenCitations.has(citation.url)
+    }));
+  };
+
+  // User feedback functions
+  const handlePositiveFeedback = () => {
+    if (feedbackGiven) return; // Prevent multiple submissions
+
+    setFeedbackGiven('positive');
+    setShowFeedbackToast(true);
+
+    // Store feedback data
+    const feedbackData = {
+      donorId: donor.id,
+      timestamp: new Date().toISOString(),
+      feedbackType: 'positive',
+      bioGenerated: smartBioData?.lastGenerated
+    };
+
+    // Save to localStorage for localhost testing
+    const existingFeedback = JSON.parse(localStorage.getItem('smartBioFeedback') || '[]');
+    existingFeedback.push(feedbackData);
+    localStorage.setItem('smartBioFeedback', JSON.stringify(existingFeedback));
+
+    console.log('✅ Positive feedback recorded:', feedbackData);
+
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => setShowFeedbackToast(false), 3000);
+  };
+
+  const handleNegativeFeedback = () => {
+    if (feedbackGiven) return; // Prevent multiple submissions
+
+    setFeedbackGiven('negative');
+    setShowFeedbackModal(true);
+  };
+
+  const submitNegativeFeedback = () => {
+    const feedbackData = {
+      donorId: donor.id,
+      timestamp: new Date().toISOString(),
+      feedbackType: 'negative',
+      comment: feedbackComment.trim(),
+      bioGenerated: smartBioData?.lastGenerated
+    };
+
+    // Save to localStorage for localhost testing
+    const existingFeedback = JSON.parse(localStorage.getItem('smartBioFeedback') || '[]');
+    existingFeedback.push(feedbackData);
+    localStorage.setItem('smartBioFeedback', JSON.stringify(existingFeedback));
+
+    console.log('📝 Negative feedback recorded:', feedbackData);
+
+    setShowFeedbackModal(false);
+    setFeedbackComment('');
+    setShowFeedbackToast(true);
+
+    // Auto-dismiss toast after 3 seconds
+    setTimeout(() => setShowFeedbackToast(false), 3000);
+  };
+
+  // Bio Review Process Functions
+  const handleEditBio = () => {
+    setIsEditingBio(true);
+    console.log('✏️ Editing bio');
+  };
+
+  const handleResetBio = () => {
+    setEditedBioText(originalBioText);
+    if (smartBioData) {
+      const updatedBioData = {
+        ...smartBioData,
+        perplexityHeadlines: originalBioText
+      };
+      setSmartBioData(updatedBioData);
+    }
+    console.log('🔄 Bio reset to original Perplexity content');
+  };
+
+  const handleSaveEditedBio = () => {
+    if (smartBioData) {
+      const updatedBioData = {
+        ...smartBioData,
+        perplexityHeadlines: editedBioText
+      };
+      setSmartBioData(updatedBioData);
+      setIsEditingBio(false);
+      console.log('✅ Edited bio saved:', editedBioText);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingBio(false);
+    setEditedBioText(smartBioData?.perplexityHeadlines || []);
+    console.log('❌ Edit cancelled');
+  };
+
+  // Quick Actions Toolbar Functions
+  const handleCopyToClipboard = async () => {
+    if (smartBioData) {
+      const bioText = smartBioData.perplexityHeadlines.join(' ');
+      const fullText = `${bioText}\n\n${smartBioData.wealthSummary ? `Wealth: ${smartBioData.wealthSummary}` : ''}`;
+
+      try {
+        await navigator.clipboard.writeText(fullText);
+        console.log('✅ Bio copied to clipboard');
+      } catch (error) {
+        console.error('❌ Failed to copy to clipboard:', error);
+      }
+    }
+  };
+
+  const handleExportAsPDF = () => {
+    if (smartBioData) {
+      const bioText = smartBioData.perplexityHeadlines.join(' ');
+      const content = `
+        Smart Bio - ${donor.name}
+        Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}
+
+        ${bioText}
+
+        ${smartBioData.wealthSummary ? `Wealth Summary: ${smartBioData.wealthSummary}` : ''}
+
+        Sources:
+        ${smartBioData.perplexityCitations.map((citation, index) =>
+          `${index + 1}. ${citation.title}: ${citation.url}`
+        ).join('\n')}
+      `;
+
+      // Create a new window with the content
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Smart Bio - ${donor.name}</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+                .meta { color: #666; font-size: 12px; margin-bottom: 20px; }
+                .sources { margin-top: 30px; }
+                .sources h3 { color: #333; }
+                .sources ol { padding-left: 20px; }
+              </style>
+            </head>
+            <body>
+              <h1>Smart Bio - ${donor.name}</h1>
+              <div class="meta">Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}</div>
+              <p>${bioText}</p>
+              ${smartBioData.wealthSummary ? `<p><strong>Wealth Summary:</strong> ${smartBioData.wealthSummary}</p>` : ''}
+              <div class="sources">
+                <h3>Sources:</h3>
+                <ol>
+                  ${smartBioData.perplexityCitations.map(citation =>
+                    `<li><strong>${citation.title}:</strong> <a href="${citation.url}" target="_blank">${citation.url}</a></li>`
+                  ).join('')}
+                </ol>
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    }
+  };
+
+  const handleEmailBio = () => {
+    if (smartBioData) {
+      const bioText = smartBioData.perplexityHeadlines.join(' ');
+      const subject = `Smart Bio - ${donor.name}`;
+      const body = `Smart Bio for ${donor.name}
+Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}
+
+${bioText}
+
+${smartBioData.wealthSummary ? `Wealth Summary: ${smartBioData.wealthSummary}` : ''}
+
+Sources:
+${smartBioData.perplexityCitations.map((citation, index) =>
+  `${index + 1}. ${citation.title}: ${citation.url}`
+).join('\n')}`;
+
+      const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(mailtoLink);
+    }
+  };
+
+  const handleReportIssue = () => {
+    if (smartBioData) {
+      const bioText = smartBioData.perplexityHeadlines.join(' ');
+      const subject = 'Incorrect Bio';
+      const body = `I would like to report an issue with the generated bio for the following donor:
+
+Name: ${donor.name}
+Email: ${donor.email || 'Not provided'}
+Organization: ${donor.employment?.employer || 'Not provided'}
+
+Generated Bio:
+${bioText}
+
+[Please describe the issue with the bio]
+
+Generated: ${new Date(smartBioData.lastGenerated).toLocaleDateString()}`;
+
+      const mailtoLink = `mailto:Support@cmdi.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(mailtoLink);
+    }
+  };
+
+  // Enhanced Smart Bio generation with multiple data sources
+  const generateEnhancedSmartBio = async () => {
+    setIsGeneratingSmartBio(true);
+    setSmartBioError('');
+
+    try {
+      // Run all API calls in parallel with timeout handling
+      const [perplexityHeadlines, wealthSummary] = await Promise.allSettled([
+        generatePerplexityHeadlines(donor),
+        Promise.resolve(generateWealthSummary(donor)) // Wrap sync function in Promise
+      ]);
+
+      // Extract results with fallbacks for failed promises
+      const perplexityResult = perplexityHeadlines.status === 'fulfilled'
+        ? perplexityHeadlines.value
+        : { headlines: [`${donor.name} is a political donor with available public records.`], citations: [] };
+
+      const headlines = perplexityResult.headlines;
+      const citations = perplexityResult.citations;
+
+      const wealth = wealthSummary.status === 'fulfilled'
+        ? wealthSummary.value
+        : '';
+
+      // Compile sources
+      const sources = [
+        { name: 'Perplexity', url: 'https://www.perplexity.ai' },
+        ...(wealth ? [{ name: 'i360 Internal Data', url: '#' }] : [])
+      ];
+
+      const bioData: SmartBioData = {
+        perplexityHeadlines: headlines,
+        wealthSummary: wealth,
+        sources,
+        perplexityCitations: citations,
+        confidence: 'High',
+        lastGenerated: new Date().toISOString()
+      };
+
+      setSmartBioData(bioData);
+      setOriginalBioText(headlines); // Store original Perplexity content
+      setEditedBioText(headlines); // Initialize edited text with generated headlines
+    } catch (error) {
+      console.error('Failed to generate enhanced smart bio:', error);
+      setSmartBioError(error instanceof Error ? error.message : 'Failed to generate bio. Please try again.');
+    } finally {
+      setIsGeneratingSmartBio(false);
+      setShowSmartBioConfirmModal(false);
+    }
+  };
 
   const handleDialRClick = () => {
     setShowDialRModal(true);
@@ -320,20 +781,285 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
             </div>
           </>
         ) : (
-          <div className="py-6">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 text-center">
-              <div className="w-12 h-12 bg-crimson-blue rounded-full flex items-center justify-center mx-auto mb-4">
-                <SparklesIcon className="w-6 h-6 text-white" />
+          <div className="space-y-4">
+            {/* Smart Bio Error Display */}
+            {smartBioError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-red-700 text-sm">{smartBioError}</p>
               </div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">Enhanced Smart Bio</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                Get a complete donor snapshot with intelligence you can act on. See what matters most: recent news, issue alignment, and wealth signals.
-              </p>
-              <button className="px-6 py-3 bg-crimson-blue text-white text-sm font-semibold rounded-lg hover:bg-crimson-dark-blue transition-colors shadow-md hover:shadow-lg">
-                <SparklesIcon className="w-4 h-4 inline mr-2" />
-                Generate Enhanced Bio
-              </button>
-            </div>
+            )}
+
+            {/* Smart Bio Content or Generation Prompt */}
+            {smartBioData ? (
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <SparklesIcon className="w-4 h-4" style={{ color: '#2f7fc3' }} />
+                    <h3 className="text-base font-semibold text-gray-900">Enhanced Smart Bio</h3>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs text-gray-600">{smartBioData.confidence}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowSmartBioConfirmModal(true)}
+                      disabled={isGeneratingSmartBio}
+                      className="text-xs text-gray-600 hover:text-gray-800 transition-colors"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bio Content */}
+                <div className="p-4">
+                  <div className="prose prose-sm max-w-none">
+                    {/* Headlines - with editing capability */}
+                    <div className="mb-3">
+                      {isEditingBio ? (
+                        <div className="space-y-2">
+                          {editedBioText.map((headline, index) => (
+                            <textarea
+                              key={index}
+                              value={headline}
+                              onChange={(e) => {
+                                const newText = [...editedBioText];
+                                newText[index] = e.target.value;
+                                setEditedBioText(newText);
+                              }}
+                              className="w-full p-2 text-sm border border-gray-300 rounded resize-none"
+                              rows={2}
+                            />
+                          ))}
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              onClick={handleSaveEditedBio}
+                              className="px-3 py-1 text-white text-xs rounded transition-all duration-200 hover:shadow-md hover:scale-105"
+                              style={{ backgroundColor: '#2f7fc3' }}
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="px-3 py-1 bg-gray-500 text-white text-xs rounded transition-all duration-200 hover:bg-gray-600 hover:shadow-md hover:scale-105"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="transition-opacity duration-300 ease-out">
+                          {smartBioData.perplexityHeadlines.map((headline, index) => (
+                            <p key={index} className="text-gray-900 text-sm mb-2 transition-all duration-200" style={{ lineHeight: '1.6' }}>
+                              {headline}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Wealth Summary */}
+                    {smartBioData.wealthSummary && (
+                      <div className="bg-blue-gray-50 border-l-4 pl-4 py-2 mb-3 rounded-r-md transition-all duration-200 hover:bg-blue-gray-100" style={{ borderLeftColor: '#2f7fc3' }}>
+                        <p className="text-gray-700 text-sm font-medium">
+                          {smartBioData.wealthSummary}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Sources and Edit Controls */}
+                    <div className="flex items-center justify-between mb-3">
+                      {/* Sources Button - Bottom Left */}
+                      {smartBioData.perplexityCitations && smartBioData.perplexityCitations.length > 0 ? (
+                        <button
+                          onClick={() => setShowCitationsModal(true)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1"
+                          style={{
+                            backgroundColor: '#2f7fc3'
+                          }}
+                          title="View citation sources"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                          Sources ({smartBioData.perplexityCitations.length})
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-500 italic">No sources available</span>
+                      )}
+
+                      {/* Edit/Reset Controls - Bottom Right */}
+                      {!isEditingBio && (
+                        <div className="flex items-center gap-2">
+                          {/* Edit Button - Icon Only */}
+                          <button
+                            onClick={handleEditBio}
+                            className="p-2 text-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1"
+                            style={{
+                              backgroundColor: '#2f7fc3'
+                            }}
+                            title="Edit bio content"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bio Actions - Timestamp and Actions Dropdown */}
+                {!isEditingBio && (
+                  <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 font-medium">Generated {new Date(smartBioData.lastGenerated).toLocaleDateString()}</span>
+
+                        {/* Feedback Buttons */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={handlePositiveFeedback}
+                            disabled={feedbackGiven !== null}
+                            className={`p-1 rounded transition-colors ${
+                              feedbackGiven === 'positive'
+                                ? 'text-green-600 bg-green-100'
+                                : feedbackGiven === null
+                                  ? 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                                  : 'text-gray-300 cursor-not-allowed'
+                            }`}
+                            title={feedbackGiven ? 'Feedback already submitted' : 'This bio was helpful'}
+                          >
+                            <HandThumbUpIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleNegativeFeedback}
+                            disabled={feedbackGiven !== null}
+                            className={`p-1 rounded transition-colors ${
+                              feedbackGiven === 'negative'
+                                ? 'text-red-600 bg-red-100'
+                                : feedbackGiven === null
+                                  ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                                  : 'text-gray-300 cursor-not-allowed'
+                            }`}
+                            title={feedbackGiven ? 'Feedback already submitted' : 'This bio needs improvement'}
+                          >
+                            <HandThumbDownIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Actions Dropdown */}
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowQuickActionsDropdown(!showQuickActionsDropdown)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                            Actions
+                            <ChevronDownIcon className="w-3.5 h-3.5" />
+                          </button>
+
+                          {showQuickActionsDropdown && (
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
+                              <div className="py-2">
+                                <button
+                                  onClick={() => {
+                                    handleCopyToClipboard();
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-150 flex items-center gap-3"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                  Copy Bio
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleExportAsPDF();
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-150 flex items-center gap-3"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  Export as PDF
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleEmailBio();
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-150 flex items-center gap-3"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                  Email Bio
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleReportIssue();
+                                    setShowQuickActionsDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-150 flex items-center gap-3"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                  </svg>
+                                  Report Issue
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-xl p-4 border border-gray-200" style={{background: 'linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%)'}}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{backgroundColor: '#2f7fc3'}}>
+                    <SparklesIcon className="w-3 h-3 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900">Enhanced Smart Bio</h4>
+                  </div>
+                </div>
+
+                <div className="text-center py-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Get a complete donor snapshot with intelligence you can act on.</h3>
+                  <p className="text-xs text-gray-600 mb-4">See what matters most: recent news, issue alignment, and<br />wealth signals, summarized for action.</p>
+                  <button
+                    onClick={() => setShowSmartBioConfirmModal(true)}
+                    disabled={isGeneratingSmartBio}
+                    className="text-white text-xs font-semibold py-2 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50"
+                    style={{background: 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)'}}
+                    onMouseEnter={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #1e6ba8 0%, #059669 100%)')}
+                    onMouseLeave={(e) => !isGeneratingSmartBio && (e.currentTarget.style.background = 'linear-gradient(135deg, #2f7fc3 0%, #10b981 100%)')}
+                  >
+                    {isGeneratingSmartBio ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white inline-block mr-1"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <SparklesIcon className="w-3 h-3 inline mr-1" />
+                        Create Enhanced Bio
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -458,6 +1184,211 @@ const EnterpriseAIInsights: React.FC<{ donor: Donor }> = ({ donor }) => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Smart Bio Confirmation Modal */}
+      {showSmartBioConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Generate Enhanced Smart Bio</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              This will generate a comprehensive bio using AI research from multiple sources.
+              The process may take 30-60 seconds and costs approximately $0.02.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={generateEnhancedSmartBio}
+                disabled={isGeneratingSmartBio}
+                className="flex-1 px-4 py-2 bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors disabled:opacity-50"
+              >
+                {isGeneratingSmartBio ? 'Generating...' : 'Generate Bio'}
+              </button>
+              <button
+                onClick={() => setShowSmartBioConfirmModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Citations Modal */}
+      {showCitationsModal && smartBioData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Citation Sources</h3>
+              <button
+                onClick={() => setShowCitationsModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {getVisibleCitations().length > 0 ? (
+              <div className="space-y-3">
+                {getVisibleCitations().map((citation, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 mb-2">{citation.title}</h4>
+                        <a
+                          href={citation.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-sm break-all"
+                        >
+                          {citation.url}
+                        </a>
+                      </div>
+                      <button
+                        onClick={() => handleHideCitation(citation)}
+                        className="ml-3 p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        title="Hide this citation"
+                      >
+                        <EyeSlashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No citations available</p>
+            )}
+
+            {getHiddenCitations().length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => setShowHiddenSources(!showHiddenSources)}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors mb-3"
+                >
+                  <ChevronDownIcon className={`w-4 h-4 transition-transform ${showHiddenSources ? 'rotate-180' : ''}`} />
+                  Hidden Sources ({getHiddenCitations().length})
+                </button>
+
+                {showHiddenSources && (
+                  <div className="space-y-2">
+                    {getHiddenCitations().map((citation, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-700 mb-1">{citation.title}</h4>
+                            <a
+                              href={citation.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 text-sm break-all"
+                            >
+                              {citation.url}
+                            </a>
+                            <div className="mt-1">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                citation.isPermanent
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {citation.isPermanent ? 'Permanently Hidden' : 'Hidden This Session'}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleRestoreCitation(citation.url, citation.isPermanent)}
+                            className="ml-3 p-1 text-gray-400 hover:text-green-600 transition-colors"
+                            title="Restore this citation"
+                          >
+                            <EyeIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Hide Citation Confirmation Modal */}
+      {showHideCitationModal && citationToHide && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Hide Citation</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              How would you like to hide "{citationToHide.title}"?
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => confirmHideCitation(false)}
+                className="w-full px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-left"
+              >
+                <div className="font-medium">Hide for this session only</div>
+                <div className="text-sm opacity-75">Will reappear when you refresh the page</div>
+              </button>
+              <button
+                onClick={() => confirmHideCitation(true)}
+                className="w-full px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors text-left"
+              >
+                <div className="font-medium">Hide permanently</div>
+                <div className="text-sm opacity-75">Will remain hidden until manually restored</div>
+              </button>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowHideCitationModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Negative Feedback Modal */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Improve Smart Bio</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Help us improve by telling us what was wrong with this bio:
+            </p>
+            <textarea
+              value={feedbackComment}
+              onChange={(e) => setFeedbackComment(e.target.value)}
+              placeholder="What could be improved? (optional)"
+              className="w-full p-3 border border-gray-300 rounded-lg resize-none"
+              rows={4}
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={submitNegativeFeedback}
+                className="flex-1 px-4 py-2 bg-crimson-blue text-white rounded-lg hover:bg-crimson-dark-blue transition-colors"
+              >
+                Submit Feedback
+              </button>
+              <button
+                onClick={() => setShowFeedbackModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Toast */}
+      {showFeedbackToast && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+          <div className="flex items-center gap-2">
+            <CheckCircleIcon className="w-5 h-5" />
+            <span>Thank you for your feedback!</span>
           </div>
         </div>
       )}
