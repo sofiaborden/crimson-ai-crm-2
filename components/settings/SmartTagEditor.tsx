@@ -523,7 +523,7 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Processing Type</label>
                     <div className="grid grid-cols-2 gap-3">
-                      <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                         <input
                           type="radio"
                           name="processingType"
@@ -532,12 +532,9 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                           onChange={(e) => setFormData(prev => ({ ...prev, processingType: e.target.value as any }))}
                           className="text-crimson-blue focus:ring-crimson-blue"
                         />
-                        <div>
-                          <div className="font-medium text-gray-900 text-sm">📌 Static Flow</div>
-                          <div className="text-xs text-gray-600">Manual application</div>
-                        </div>
+                        <div className="font-medium text-gray-900 text-sm">📌 Static Flow</div>
                       </label>
-                      <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                         <input
                           type="radio"
                           name="processingType"
@@ -546,10 +543,7 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                           onChange={(e) => setFormData(prev => ({ ...prev, processingType: e.target.value as any }))}
                           className="text-crimson-blue focus:ring-crimson-blue"
                         />
-                        <div>
-                          <div className="font-medium text-gray-900 text-sm">⚡ Dynamic Flow</div>
-                          <div className="text-xs text-gray-600">Auto-processing</div>
-                        </div>
+                        <div className="font-medium text-gray-900 text-sm">⚡ Dynamic Flow</div>
                       </label>
                     </div>
                   </div>
@@ -572,6 +566,32 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                         <div className="text-sm text-gray-600">{formData.description || 'Description'}</div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Processing Type Explanation */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Processing Type</h4>
+                    {formData.processingType === 'static' ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-lg">📌</span>
+                          <span className="font-medium text-gray-900">Static Flow</span>
+                        </div>
+                        <div className="text-xs text-gray-600 pl-6">
+                          Manual application - This tag will be manually applied to contacts. No automatic processing will occur.
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-lg">⚡</span>
+                          <span className="font-medium text-gray-900">Dynamic Flow</span>
+                        </div>
+                        <div className="text-xs text-gray-600 pl-6">
+                          Auto-processing - This tag will automatically add/remove contacts based on your criteria. Inclusion criteria determine who gets the tag, and removal criteria determine what happens when they no longer qualify.
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -641,27 +661,9 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                         Set Inclusion Criteria
                       </Button>
 
-                      {/* Inclusion Criteria Count */}
-                      {formData.inclusionTrigger && !isLoadingPreview && (
-                        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="text-sm text-green-800 flex items-center gap-2">
-                            <UsersIcon className="w-4 h-4" />
-                            <span className="font-medium">{inclusionCount.toLocaleString()}</span>
-                            <span>records meet inclusion criteria</span>
-                          </div>
-                        </div>
-                      )}
 
-                      {/* View All Flows Badge - Only show if tag exists and has associated flows */}
-                      {tag && formData.associatedFlows && formData.associatedFlows.length > 0 && (
-                        <button
-                          onClick={() => setShowFlowsModal(true)}
-                          className="mt-2 flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 text-sm font-medium text-blue-800 w-full justify-center"
-                        >
-                          <ArrowPathIcon className="w-4 h-4" />
-                          View All Flows: {formData.associatedFlows.length}
-                        </button>
-                      )}
+
+
                     </div>
 
                     {/* Removal Trigger Button */}
@@ -705,16 +707,21 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                             </div>
                           ))}
                         </div>
+
+                        {/* View All Flows Button - Positioned with flow counts for better visual grouping */}
+                        {tag && (
+                          <button
+                            onClick={() => setShowFlowsModal(true)}
+                            className="mt-3 flex items-center gap-2 px-3 py-2 bg-blue-100 hover:bg-blue-200 border border-blue-300 rounded-lg transition-all duration-200 text-sm font-medium text-blue-800 w-full justify-center"
+                          >
+                            <ArrowPathIcon className="w-4 h-4" />
+                            View All Flows: {formData.associatedFlows.length}
+                          </button>
+                        )}
                       </div>
                     )}
 
-                    {/* Info Box */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                      <div className="text-sm text-gray-700">
-                        <strong>Dynamic Flow:</strong> This tag will automatically add/remove contacts based on your criteria.
-                        Inclusion criteria determine who gets the tag, and removal criteria determine what happens when they no longer qualify.
-                      </div>
-                    </div>
+
                   </div>
                 </div>
               ) : (
@@ -724,15 +731,7 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                     Static Configuration
                   </h3>
 
-                  <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 text-center">
-                    <div className="text-gray-600">
-                      <div className="text-lg mb-2">📌</div>
-                      <div className="font-medium mb-1">Static Flow Selected</div>
-                      <div className="text-sm">
-                        This tag will be manually applied to contacts. No automatic processing will occur.
-                      </div>
-                    </div>
-                  </div>
+
                 </div>
               )}
 
@@ -764,49 +763,7 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                     </div>
                   )}
 
-                  {/* Preview Results */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <EyeIcon className="w-4 h-4" />
-                        Preview Results
-                      </h4>
-                      <Button
-                        size="sm"
-                        onClick={handlePreview}
-                        disabled={isLoadingPreview}
-                        className="bg-crimson-blue hover:bg-crimson-dark-blue"
-                      >
-                        {isLoadingPreview ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Loading...
-                          </div>
-                        ) : (
-                          'Refresh'
-                        )}
-                      </Button>
-                    </div>
 
-                    <button
-                      onClick={() => setShowPreviewModal(true)}
-                      disabled={isLoadingPreview || previewCount === 0}
-                      className="w-full text-center py-4 hover:bg-gray-50 rounded-lg transition-colors disabled:cursor-not-allowed"
-                    >
-                      <div className="text-2xl font-bold text-crimson-blue">
-                        {isLoadingPreview ? '...' : previewCount.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {previewCount === 1 ? 'contact matches' : 'contacts match'} this criteria
-                      </div>
-                      {!isLoadingPreview && previewCount > 0 && (
-                        <div className="text-xs text-crimson-blue mt-1 flex items-center justify-center gap-1">
-                          <UsersIcon className="w-3 h-3" />
-                          Click to view records
-                        </div>
-                      )}
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
