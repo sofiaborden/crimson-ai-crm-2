@@ -114,6 +114,10 @@ const TriggerConfigModal: React.FC<TriggerConfigModalProps> = ({
         return <span className="text-2xl">📞</span>;
       case 'mailchimp':
         return <span className="text-2xl">📧</span>;
+      case 'selected_audience':
+        return <span className="text-2xl">👥</span>;
+      case 'apply_smart_tag':
+        return <span className="text-2xl">🏷️</span>;
       default:
         return <span className="text-2xl">⚡</span>;
     }
@@ -129,6 +133,8 @@ const TriggerConfigModal: React.FC<TriggerConfigModalProps> = ({
       case 'flag': return 'Flag';
       case 'dialr': return 'DialR Campaign';
       case 'mailchimp': return 'MailChimp';
+      case 'selected_audience': return 'Selected Audience';
+      case 'apply_smart_tag': return 'Apply Smart Tag';
       default: return 'Trigger';
     }
   };

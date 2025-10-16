@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XMarkIcon, CheckIcon, ClipboardDocumentListIcon, CurrencyDollarIcon, BoltIcon, CalendarIcon, UserIcon, FlagIcon, TagIcon } from '../../constants';
+import { XMarkIcon, CheckIcon, ClipboardDocumentListIcon, CurrencyDollarIcon, BoltIcon, CalendarIcon, UserIcon, FlagIcon, TagIcon, UserGroupIcon } from '../../constants';
 import Button from '../ui/Button';
 
 interface TriggerType {
@@ -37,6 +37,8 @@ const TriggerTypeSelector: React.FC<TriggerTypeSelectorProps> = ({ onSelect, onC
         return <TagIcon className="w-6 h-6" />;
       case 'CheckIcon':
         return <CheckIcon className="w-6 h-6" />;
+      case 'UserGroupIcon':
+        return <UserGroupIcon className="w-6 h-6" />;
       default:
         return <span className="text-xl">{iconName}</span>;
     }
@@ -48,6 +50,15 @@ const TriggerTypeSelector: React.FC<TriggerTypeSelectorProps> = ({ onSelect, onC
   };
 
   const triggerTypes: TriggerType[] = [
+    // Audience-based Triggers
+    {
+      id: 'selected_audience',
+      name: 'Selected Audience',
+      description: 'Use the audience filter applied in the audience tab as trigger criteria',
+      icon: 'UserGroupIcon',
+      category: 'data',
+      color: 'bg-crimson-100 border-crimson-300 text-crimson-800'
+    },
     // Trigger Conditions
     {
       id: 'task',

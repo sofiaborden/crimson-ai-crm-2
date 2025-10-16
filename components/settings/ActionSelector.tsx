@@ -90,6 +90,14 @@ const ActionSelector: React.FC<ActionSelectorProps> = ({ onSelect, onClose, trig
 
     // Data Management Actions
     {
+      id: 'apply-smart-tag',
+      name: 'Apply Smart Tag',
+      description: 'Apply a Smart Tag to matching contacts',
+      icon: 'TagIcon',
+      category: 'data',
+      color: 'bg-crimson-100 border-crimson-300 text-crimson-800'
+    },
+    {
       id: 'create-smart-segment',
       name: 'Create Smart Segment',
       description: 'Add or remove donor from a Smart Segment',

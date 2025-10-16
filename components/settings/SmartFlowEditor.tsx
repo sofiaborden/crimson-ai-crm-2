@@ -25,7 +25,7 @@ interface SmartFlow {
 
 interface FlowTrigger {
   id: string;
-  type: 'task' | 'segment' | 'flag' | 'keyword' | 'attribute' | 'note' | 'event' | 'dialr' | 'targetpath' | 'mailchimp';
+  type: 'task' | 'segment' | 'flag' | 'keyword' | 'attribute' | 'note' | 'event' | 'dialr' | 'targetpath' | 'mailchimp' | 'selected_audience' | 'apply_smart_tag';
   name: string;
   config: any;
   conditions?: FlowCondition[];
@@ -76,6 +76,8 @@ const SmartFlowEditor: React.FC<SmartFlowEditorProps> = ({ flow, onClose, onSave
   const [previewCount, setPreviewCount] = useState(0);
 
   const triggerTypes = [
+    { id: 'selected_audience', name: 'Selected Audience', icon: '👥', description: 'Use audience filter as trigger criteria' },
+    { id: 'apply_smart_tag', name: 'Apply Smart Tag', icon: '🏷️', description: 'Apply Smart Tag to matching contacts' },
     { id: 'task', name: 'Task', icon: '📋', description: 'Create tasks for team members' },
     { id: 'segment', name: 'Smart Segment', icon: '👥', description: 'Add to or create segments' },
     { id: 'flag', name: 'Flag', icon: '🏁', description: 'Apply flags for categorization' },
