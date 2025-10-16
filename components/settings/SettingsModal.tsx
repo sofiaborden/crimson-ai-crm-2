@@ -10,7 +10,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSection?: 'people-codes' | 'fundraising-codes';
-  initialSubSection?: 'smart-flow' | 'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes';
+  initialSubSection?: 'smart-flow' | 'smart-tags' | 'fund-codes' | 'source-codes';
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -20,7 +20,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   initialSubSection = 'smart-flow'
 }) => {
   const [activeSection, setActiveSection] = useState<'people-codes' | 'fundraising-codes'>(initialSection);
-  const [activeSubSection, setActiveSubSection] = useState<'smart-flow' | 'smart-tags' | 'flags' | 'keywords' | 'attributes' | 'fund-codes' | 'source-codes'>(initialSubSection);
+  const [activeSubSection, setActiveSubSection] = useState<'smart-flow' | 'smart-tags' | 'fund-codes' | 'source-codes'>(initialSubSection);
 
   if (!isOpen) return null;
 
@@ -31,10 +31,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       icon: UserGroupIcon,
       subsections: [
         { id: 'smart-flow', name: 'Smart Flow', icon: ArrowPathIcon, aiPowered: true },
-        { id: 'smart-tags', name: 'Smart Tags', icon: SparklesIcon, aiPowered: true },
-        { id: 'flags', name: 'Flags', icon: FlagIcon },
-        { id: 'keywords', name: 'Keywords', icon: FlagIcon },
-        { id: 'attributes', name: 'Attributes', icon: FlagIcon }
+        { id: 'smart-tags', name: 'Smart Tags', icon: SparklesIcon, aiPowered: true }
       ]
     },
     {
@@ -127,15 +124,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               )}
               {activeSection === 'people-codes' && activeSubSection === 'smart-tags' && (
                 <SmartTagsManager />
-              )}
-              {activeSection === 'people-codes' && activeSubSection === 'flags' && (
-                <PeopleCodesManager type="flags" />
-              )}
-              {activeSection === 'people-codes' && activeSubSection === 'keywords' && (
-                <PeopleCodesManager type="keywords" />
-              )}
-              {activeSection === 'people-codes' && activeSubSection === 'attributes' && (
-                <PeopleCodesManager type="attributes" />
               )}
               {activeSection === 'fundraising-codes' && activeSubSection === 'fund-codes' && (
                 <FundraisingCodesManager type="fund-codes" />
