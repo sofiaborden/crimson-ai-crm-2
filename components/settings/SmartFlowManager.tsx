@@ -23,7 +23,7 @@ interface SmartFlow {
 
 interface FlowTrigger {
   id: string;
-  type: 'task' | 'segment' | 'flag' | 'keyword' | 'attribute' | 'note' | 'event' | 'dialr' | 'targetpath' | 'mailchimp' | 'gift' | 'pledge' | 'action';
+  type: 'task' | 'segment' | 'flag' | 'keyword' | 'attribute' | 'note' | 'event' | 'dialr' | 'targetpath' | 'mailchimp' | 'gift' | 'pledge' | 'action' | 'selected_audience' | 'apply_smart_tag';
   name: string;
   config: any;
   conditions?: FlowCondition[];
@@ -483,6 +483,257 @@ const SmartFlowManager: React.FC = () => {
       createdBy: 'Maria Rodriguez',
       createdDate: '2024-01-18',
       lastRun: '2024-01-21 09:15'
+    },
+    // Auto-created flows from Smart Tags
+    {
+      id: 'flow-1',
+      name: 'Big Givers - Inclusion Flow',
+      description: 'Auto-created flow from Big Givers Smart Tag inclusion criteria',
+      type: 'dynamic',
+      syncPeriod: 'daily',
+      isActive: true,
+      targetCount: 1247,
+      completedCount: 1247,
+      audienceFilters: [
+        { type: 'smart_tag_filter', value: 'big-givers-inclusion', label: 'Big Givers Inclusion Criteria' }
+      ],
+      estimatedAudienceSize: '1247',
+      triggers: [
+        {
+          id: '1',
+          type: 'selected_audience',
+          name: 'Selected Audience',
+          config: {
+            audienceFilters: { totalGiving: { min: 500, period: '12months' } }
+          },
+          conditions: [
+            {
+              id: 'c1',
+              conditions: [
+                {
+                  id: 'r1',
+                  field: 'audience_match',
+                  operator: 'equals',
+                  value: 'true'
+                }
+              ],
+              actions: [
+                {
+                  id: 'a1',
+                  type: 'apply_smart_tag',
+                  config: {
+                    smartTagId: '1',
+                    smartTagName: 'Big Givers',
+                    useInclusionCriteria: true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      createdBy: 'System',
+      createdDate: '2024-01-15'
+    },
+    {
+      id: 'flow-3',
+      name: 'Prime Persuadables - Inclusion Flow',
+      description: 'Auto-created flow from Prime Persuadables Smart Tag inclusion criteria',
+      type: 'dynamic',
+      syncPeriod: 'daily',
+      isActive: true,
+      targetCount: 892,
+      completedCount: 892,
+      audienceFilters: [
+        { type: 'smart_tag_filter', value: 'prime-persuadables-inclusion', label: 'Prime Persuadables Inclusion Criteria' }
+      ],
+      estimatedAudienceSize: '892',
+      triggers: [
+        {
+          id: '1',
+          type: 'selected_audience',
+          name: 'Selected Audience',
+          config: {
+            audienceFilters: { state: 'FL', ageRange: [35, 44], politicalEngagement: 'moderate' }
+          },
+          conditions: [
+            {
+              id: 'c1',
+              conditions: [
+                {
+                  id: 'r1',
+                  field: 'audience_match',
+                  operator: 'equals',
+                  value: 'true'
+                }
+              ],
+              actions: [
+                {
+                  id: 'a1',
+                  type: 'apply_smart_tag',
+                  config: {
+                    smartTagId: '2',
+                    smartTagName: 'Prime Persuadables',
+                    useInclusionCriteria: true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      createdBy: 'System',
+      createdDate: '2024-01-15'
+    },
+    {
+      id: 'flow-4',
+      name: 'New & Rising Donors - Inclusion Flow',
+      description: 'Auto-created flow from New & Rising Donors Smart Tag inclusion criteria',
+      type: 'dynamic',
+      syncPeriod: 'daily',
+      isActive: true,
+      targetCount: 324,
+      completedCount: 324,
+      audienceFilters: [
+        { type: 'smart_tag_filter', value: 'new-rising-donors-inclusion', label: 'New & Rising Donors Inclusion Criteria' }
+      ],
+      estimatedAudienceSize: '324',
+      triggers: [
+        {
+          id: '1',
+          type: 'selected_audience',
+          name: 'Selected Audience',
+          config: {
+            audienceFilters: { firstGiftDate: { within: '6months' }, or: { upgradedGiving: true } }
+          },
+          conditions: [
+            {
+              id: 'c1',
+              conditions: [
+                {
+                  id: 'r1',
+                  field: 'audience_match',
+                  operator: 'equals',
+                  value: 'true'
+                }
+              ],
+              actions: [
+                {
+                  id: 'a1',
+                  type: 'apply_smart_tag',
+                  config: {
+                    smartTagId: '4',
+                    smartTagName: 'New & Rising Donors',
+                    useInclusionCriteria: true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      createdBy: 'System',
+      createdDate: '2024-01-15'
+    },
+    {
+      id: 'flow-6',
+      name: 'Lapsed / At-Risk - Inclusion Flow',
+      description: 'Auto-created flow from Lapsed / At-Risk Smart Tag inclusion criteria',
+      type: 'dynamic',
+      syncPeriod: 'daily',
+      isActive: false,
+      targetCount: 678,
+      completedCount: 0,
+      audienceFilters: [
+        { type: 'smart_tag_filter', value: 'lapsed-at-risk-inclusion', label: 'Lapsed / At-Risk Inclusion Criteria' }
+      ],
+      estimatedAudienceSize: '678',
+      triggers: [
+        {
+          id: '1',
+          type: 'selected_audience',
+          name: 'Selected Audience',
+          config: {
+            audienceFilters: { lastGiftDate: { before: '18months' } }
+          },
+          conditions: [
+            {
+              id: 'c1',
+              conditions: [
+                {
+                  id: 'r1',
+                  field: 'audience_match',
+                  operator: 'equals',
+                  value: 'true'
+                }
+              ],
+              actions: [
+                {
+                  id: 'a1',
+                  type: 'apply_smart_tag',
+                  config: {
+                    smartTagId: '5',
+                    smartTagName: 'Lapsed / At-Risk',
+                    useInclusionCriteria: true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      createdBy: 'System',
+      createdDate: '2024-01-15'
+    },
+    {
+      id: 'flow-8',
+      name: 'Not Yet Registered to Vote - Inclusion Flow',
+      description: 'Auto-created flow from Not Yet Registered to Vote Smart Tag inclusion criteria',
+      type: 'dynamic',
+      syncPeriod: 'daily',
+      isActive: true,
+      targetCount: 456,
+      completedCount: 456,
+      audienceFilters: [
+        { type: 'smart_tag_filter', value: 'not-yet-registered-inclusion', label: 'Not Yet Registered to Vote Inclusion Criteria' }
+      ],
+      estimatedAudienceSize: '456',
+      triggers: [
+        {
+          id: '1',
+          type: 'selected_audience',
+          name: 'Selected Audience',
+          config: {
+            audienceFilters: { voterRegistration: 'unregistered' }
+          },
+          conditions: [
+            {
+              id: 'c1',
+              conditions: [
+                {
+                  id: 'r1',
+                  field: 'audience_match',
+                  operator: 'equals',
+                  value: 'true'
+                }
+              ],
+              actions: [
+                {
+                  id: 'a1',
+                  type: 'apply_smart_tag',
+                  config: {
+                    smartTagId: '3',
+                    smartTagName: 'Not Yet Registered to Vote',
+                    useInclusionCriteria: true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      createdBy: 'System',
+      createdDate: '2024-01-15'
     }
   ]);
 

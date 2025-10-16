@@ -116,8 +116,16 @@ const SmartTagsManager: React.FC = () => {
       inclusionTrigger: { voterRegistration: 'unregistered' },
       count: 456,
       isActive: true,
-      isInclusionCriteria: false,
-      associatedFlows: [],
+      isInclusionCriteria: true,
+      associatedFlows: [
+        {
+          id: 'flow-8',
+          name: 'Not Yet Registered to Vote - Inclusion Flow',
+          type: 'dynamic',
+          isActive: true,
+          isAutoCreated: true
+        }
+      ],
       createdBy: 'System',
       createdDate: '2024-01-15'
     },

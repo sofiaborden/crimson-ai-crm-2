@@ -209,9 +209,13 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
       return;
     }
 
+    // Update associated flows based on current tag configuration
+    const updatedAssociatedFlows = updateAssociatedFlows(formData);
+
     const newTag: SmartTag = {
       ...formData,
       count: previewCount,
+      associatedFlows: updatedAssociatedFlows,
       createdBy: 'Current User',
       createdDate: new Date().toISOString()
     };
@@ -297,6 +301,39 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
     // This would typically call an API endpoint to update the flow
     setShowEditFlowModal(false);
     setEditingFlow(null);
+  };
+
+  // Auto-create Smart Flow from Smart Tag inclusion criteria
+  const createAutoFlow = (tag: any): any => {
+    if (tag.processingType !== 'dynamic' || !tag.inclusionTrigger || !tag.isInclusionCriteria) {
+      return null;
+    }
+
+    const autoFlow = {
+      id: `auto-flow-${tag.id}-${Date.now()}`,
+      name: `${tag.name} - Inclusion Flow`,
+      type: 'dynamic',
+      isActive: tag.isActive,
+      isAutoCreated: true
+    };
+
+    return autoFlow;
+  };
+
+  // Update associated flows when tag changes
+  const updateAssociatedFlows = (tagData: any): any[] => {
+    let flows = tagData.associatedFlows || [];
+
+    // Remove existing auto-created inclusion flow if it exists
+    flows = flows.filter((flow: any) => !(flow.isAutoCreated && flow.name.includes('Inclusion Flow')));
+
+    // Add new auto-created flow if conditions are met
+    const autoFlow = createAutoFlow(tagData);
+    if (autoFlow) {
+      flows.push(autoFlow);
+    }
+
+    return flows;
   };
 
   const handleExportCSV = () => {
