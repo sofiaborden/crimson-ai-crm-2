@@ -66,6 +66,17 @@ const TestSmartTagsPage: React.FC = () => {
                 <li>• Repositioned buttons for improved user experience</li>
               </ul>
             </div>
+            <div>
+              <h3 className="font-medium text-purple-800 mb-2">🔗 NEW: Smart Tags → Smart Flows Integration:</h3>
+              <ul className="space-y-1 text-purple-700">
+                <li>• <strong>Auto-Flow Creation:</strong> Dynamic Smart Tags with inclusion criteria automatically create Smart Flows</li>
+                <li>• <strong>Selected Audience Trigger:</strong> New trigger type uses audience filters as complete trigger criteria</li>
+                <li>• <strong>Apply Smart Tag Action:</strong> New action type applies Smart Tags with inclusion criteria option</li>
+                <li>• <strong>Seamless Integration:</strong> Auto-created flows appear in View All Flows modal with full functionality</li>
+                <li>• <strong>Bidirectional Editing:</strong> Edit flows from either Smart Tags or Smart Flows interfaces</li>
+                <li>• <strong>Synchronized Data:</strong> Flow updates reflect in both systems automatically</li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -91,6 +102,16 @@ const TestSmartTagsPage: React.FC = () => {
                 <p><strong>3. Add Filters:</strong> Use manual filters or CrimsonGPT natural language</p>
                 <p><strong>4. Run Now:</strong> Click "Run Now" button to see real-time matching count</p>
                 <p><strong>5. Visual Feedback:</strong> Watch for "Filters saved" confirmation and result counts</p>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">NEW: Smart Tags → Smart Flows Integration:</h3>
+              <div className="space-y-1">
+                <p><strong>1. Auto-Flow Creation:</strong> Create Dynamic Smart Tag with inclusion criteria</p>
+                <p><strong>2. View Associated Flows:</strong> Click "View All Flows" to see auto-created flow</p>
+                <p><strong>3. Flow Management:</strong> Use "View Records" and "Edit Flow" buttons</p>
+                <p><strong>4. Bidirectional Editing:</strong> Changes sync between Smart Tags and Smart Flows</p>
+                <p><strong>5. Test Integration:</strong> Check Smart Flows page to see auto-created flows</p>
               </div>
             </div>
           </div>
