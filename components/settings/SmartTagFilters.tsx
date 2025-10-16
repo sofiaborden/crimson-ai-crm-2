@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusIcon, XMarkIcon, CalendarIcon, SparklesIcon, ChatBubbleLeftRightIcon } from '../../constants';
+import { PlusIcon, XMarkIcon, CalendarIcon, SparklesIcon, ChatBubbleLeftRightIcon, PlayIcon, ArrowPathIcon, CheckCircleIcon } from '../../constants';
 import Button from '../ui/Button';
 
 interface SmartTagFilter {
@@ -14,11 +14,15 @@ interface SmartTagFilter {
 interface SmartTagFiltersProps {
   onFiltersChange: (filters: SmartTagFilter[]) => void;
   initialFilters?: SmartTagFilter[];
+  onRunNow?: (filters: SmartTagFilter[]) => Promise<number>; // Returns count of matching records
+  showRunNow?: boolean;
 }
 
 const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
   onFiltersChange,
-  initialFilters = []
+  initialFilters = [],
+  onRunNow,
+  showRunNow = true
 }) => {
   const [filters, setFilters] = useState<SmartTagFilter[]>(initialFilters);
   const [newFilter, setNewFilter] = useState({
@@ -31,6 +35,12 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
   // CrimsonGPT state
   const [crimsonGPTPrompt, setCrimsonGPTPrompt] = useState('');
   const [isProcessingPrompt, setIsProcessingPrompt] = useState(false);
+
+  // Run Now state
+  const [isRunning, setIsRunning] = useState(false);
+  const [lastRunCount, setLastRunCount] = useState<number | null>(null);
+  const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
+  const [filtersSaved, setFiltersSaved] = useState(false);
 
   const filterFields = [
     { value: 'smartTags', label: 'Smart Tags', type: 'select' },
@@ -102,6 +112,11 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
   useEffect(() => {
     console.log('Filters changed:', filters);
     onFiltersChange(filters);
+
+    // Show visual confirmation that filters are saved
+    setFiltersSaved(true);
+    const timer = setTimeout(() => setFiltersSaved(false), 2000);
+    return () => clearTimeout(timer);
   }, [filters]);
 
   // CrimsonGPT natural language processing
@@ -120,6 +135,10 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
 
       setIsProcessingPrompt(false);
       setCrimsonGPTPrompt('');
+
+      // Clear any previous run results when filters change
+      setLastRunCount(null);
+      setLastRunTime(null);
     }, 2000);
   };
 
@@ -279,14 +298,41 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
     console.log('Adding filter:', filter);
     setFilters([...filters, filter]);
     setNewFilter({ field: '', operator: '', value: '', value2: '' });
+
+    // Clear any previous run results when filters change
+    setLastRunCount(null);
+    setLastRunTime(null);
   };
 
   const removeFilter = (filterId: string) => {
     setFilters(filters.filter(f => f.id !== filterId));
+    // Clear any previous run results when filters change
+    setLastRunCount(null);
+    setLastRunTime(null);
   };
 
   const clearAllFilters = () => {
     setFilters([]);
+    // Clear any previous run results when filters change
+    setLastRunCount(null);
+    setLastRunTime(null);
+  };
+
+  // Run Now functionality
+  const handleRunNow = async () => {
+    if (!onRunNow || filters.length === 0) return;
+
+    setIsRunning(true);
+    try {
+      const count = await onRunNow(filters);
+      setLastRunCount(count);
+      setLastRunTime(new Date());
+    } catch (error) {
+      console.error('Error running filters:', error);
+      setLastRunCount(null);
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const isFilterValid = () => {
@@ -494,13 +540,60 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h4 className="font-medium text-gray-900">Filter Criteria</h4>
-        {filters.length > 0 && (
-          <Button size="sm" variant="secondary" onClick={clearAllFilters}>
-            Clear All
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          <h4 className="font-medium text-gray-900">Filter Criteria</h4>
+          {filtersSaved && (
+            <div className="flex items-center gap-1 text-green-600 text-sm">
+              <CheckCircleIcon className="w-4 h-4" />
+              <span>Filters saved</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {showRunNow && filters.length > 0 && onRunNow && (
+            <Button
+              size="sm"
+              onClick={handleRunNow}
+              disabled={isRunning}
+              className="bg-crimson-blue hover:bg-crimson-dark-blue text-white"
+            >
+              {isRunning ? (
+                <>
+                  <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />
+                  Running...
+                </>
+              ) : (
+                <>
+                  <PlayIcon className="w-4 h-4 mr-1" />
+                  Run Now
+                </>
+              )}
+            </Button>
+          )}
+          {filters.length > 0 && (
+            <Button size="sm" variant="secondary" onClick={clearAllFilters}>
+              Clear All
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Run Results */}
+      {lastRunCount !== null && lastRunTime && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircleIcon className="w-5 h-5 text-green-600" />
+              <span className="text-green-800 font-medium">
+                Found {lastRunCount.toLocaleString()} matching records
+              </span>
+            </div>
+            <span className="text-green-600 text-sm">
+              {lastRunTime.toLocaleTimeString()}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* CrimsonGPT Natural Language Filter */}
       <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-lg p-6 shadow-lg">

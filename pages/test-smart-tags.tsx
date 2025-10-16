@@ -22,7 +22,7 @@ const TestSmartTagsPage: React.FC = () => {
           <h2 className="text-lg font-semibold text-blue-900 mb-3">
             🎯 Implementation Features
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
               <h3 className="font-medium text-blue-800 mb-2">✅ SmartTagsManager Enhancements:</h3>
               <ul className="space-y-1 text-blue-700">
@@ -44,6 +44,17 @@ const TestSmartTagsPage: React.FC = () => {
                 <li>• Professional styling with proper spacing</li>
               </ul>
             </div>
+            <div>
+              <h3 className="font-medium text-blue-800 mb-2">🆕 NEW: Enhanced Set Inclusion Criteria:</h3>
+              <ul className="space-y-1 text-blue-700">
+                <li>• "Run Now" button for immediate filter execution</li>
+                <li>• Real-time count of matching records</li>
+                <li>• Visual confirmation when filters are saved</li>
+                <li>• Loading states and result feedback</li>
+                <li>• Enhanced CrimsonGPT natural language processing</li>
+                <li>• Improved filter persistence and validation</li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -51,13 +62,26 @@ const TestSmartTagsPage: React.FC = () => {
           <h2 className="text-lg font-semibold text-crimson-dark-blue mb-3">
             🚀 Test Instructions
           </h2>
-          <div className="space-y-2 text-sm text-crimson-dark-blue">
-            <p><strong>1. Fixed Dropdowns:</strong> Click emoji/color dropdowns - they now stay within modal bounds</p>
-            <p><strong>2. Clean Layout:</strong> No more overlapping or weird positioning issues</p>
-            <p><strong>3. Smart Suggestions:</strong> Create new tag and change category to see auto-suggestions</p>
-            <p><strong>4. Proper Sizing:</strong> Compact grids with appropriate button sizes</p>
-            <p><strong>5. Click Outside:</strong> Click outside dropdowns to close them</p>
-            <p><strong>6. Professional Look:</strong> Clean borders and proper spacing throughout</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-crimson-dark-blue">
+            <div>
+              <h3 className="font-medium mb-2">Basic Functionality:</h3>
+              <div className="space-y-1">
+                <p><strong>1. Fixed Dropdowns:</strong> Click emoji/color dropdowns - they now stay within modal bounds</p>
+                <p><strong>2. Clean Layout:</strong> No more overlapping or weird positioning issues</p>
+                <p><strong>3. Smart Suggestions:</strong> Create new tag and change category to see auto-suggestions</p>
+                <p><strong>4. Click Outside:</strong> Click outside dropdowns to close them</p>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">NEW: Enhanced Set Inclusion Criteria:</h3>
+              <div className="space-y-1">
+                <p><strong>1. Create/Edit Tag:</strong> Click any tag name or "Create Smart Tag" button</p>
+                <p><strong>2. Set Filters:</strong> Click "Set Inclusion Criteria" to open filter modal</p>
+                <p><strong>3. Add Filters:</strong> Use manual filters or CrimsonGPT natural language</p>
+                <p><strong>4. Run Now:</strong> Click "Run Now" button to see real-time matching count</p>
+                <p><strong>5. Visual Feedback:</strong> Watch for "Filters saved" confirmation and result counts</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

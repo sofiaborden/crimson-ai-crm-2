@@ -256,6 +256,21 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
     setPreviewTimeout(newTimeout);
   }, [previewTimeout]);
 
+  // Run Now functionality for filters
+  const handleRunNow = useCallback(async (filters: any[]): Promise<number> => {
+    // Simulate API call to execute filters and get count
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Mock calculation based on filter complexity
+        const baseCount = 1000;
+        const filterMultiplier = Math.max(0.1, 1 - (filters.length * 0.15));
+        const randomVariation = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
+        const count = Math.floor(baseCount * filterMultiplier * randomVariation);
+        resolve(count);
+      }, 1500); // Simulate network delay
+    });
+  }, []);
+
   const handleExportCSV = () => {
     // Create CSV content
     const headers = ['Name', 'Email', 'Phone', 'Location', 'Total Giving', 'Last Gift', 'Gift Count'];
@@ -743,6 +758,8 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                       <SmartTagFilters
                         onFiltersChange={handleFiltersChange}
                         initialFilters={formData.filterDefinition}
+                        onRunNow={handleRunNow}
+                        showRunNow={true}
                       />
                     </div>
                   )}
@@ -829,6 +846,8 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
               <SmartTagFilters
                 onFiltersChange={(filters) => setFormData(prev => ({ ...prev, inclusionTrigger: filters }))}
                 initialFilters={formData.inclusionTrigger || []}
+                onRunNow={handleRunNow}
+                showRunNow={true}
               />
               <div className="flex justify-end gap-3 mt-6">
                 <Button variant="secondary" onClick={() => setShowInclusionTrigger(false)}>
