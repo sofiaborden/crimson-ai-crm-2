@@ -55,6 +55,17 @@ const TestSmartTagsPage: React.FC = () => {
                 <li>• Improved filter persistence and validation</li>
               </ul>
             </div>
+            <div>
+              <h3 className="font-medium text-green-800 mb-2">🚀 NEW: Phase 1 & 2 Layout Improvements:</h3>
+              <ul className="space-y-1 text-green-700">
+                <li>• <strong>Phase 1:</strong> Moved flow explanations to left panel, consolidated previews</li>
+                <li>• <strong>Phase 2:</strong> Enhanced View All Flows modal with record counts</li>
+                <li>• View Records functionality with export options (CSV, Excel, PDF)</li>
+                <li>• Edit Flow functionality for direct flow configuration</li>
+                <li>• Better visual grouping and Crimson brand consistency</li>
+                <li>• Repositioned buttons for improved user experience</li>
+              </ul>
+            </div>
           </div>
         </div>
 
