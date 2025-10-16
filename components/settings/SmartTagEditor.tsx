@@ -67,6 +67,10 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showFlowsModal, setShowFlowsModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showFlowRecordsModal, setShowFlowRecordsModal] = useState(false);
+  const [selectedFlow, setSelectedFlow] = useState<any>(null);
+  const [showEditFlowModal, setShowEditFlowModal] = useState(false);
+  const [editingFlow, setEditingFlow] = useState<any>(null);
   const emojiDropdownRef = useRef<HTMLDivElement>(null);
   const colorDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -270,6 +274,30 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
       }, 1500); // Simulate network delay
     });
   }, []);
+
+  const handleViewFlowRecords = (flow: any) => {
+    setSelectedFlow(flow);
+    setShowFlowRecordsModal(true);
+  };
+
+  const handleExportFlowRecords = (flow: any, format: 'csv' | 'excel' | 'pdf') => {
+    console.log(`Exporting ${format.toUpperCase()} for flow: ${flow.name}`);
+    // TODO: Implement actual export functionality
+    // This would typically call an API endpoint to generate and download the file
+  };
+
+  const handleEditFlow = (flow: any) => {
+    setEditingFlow(flow);
+    setShowEditFlowModal(true);
+  };
+
+  const handleSaveFlowChanges = (updatedFlow: any) => {
+    console.log('Saving flow changes:', updatedFlow);
+    // TODO: Implement actual flow update functionality
+    // This would typically call an API endpoint to update the flow
+    setShowEditFlowModal(false);
+    setEditingFlow(null);
+  };
 
   const handleExportCSV = () => {
     // Create CSV content
@@ -938,15 +966,32 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                           size="md"
                           showActions={false}
                         />
-                        <div className="text-sm">
+                        <div className="flex items-center gap-3">
                           {flow.isAutoCreated && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               Auto-created
                             </span>
                           )}
+                          {/* Record Count for this flow */}
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <UsersIcon className="w-4 h-4" />
+                            <span className="font-medium text-crimson-blue">
+                              {flowCounts[flow.id]?.toLocaleString() || '0'}
+                            </span>
+                            <span>records</span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleViewFlowRecords(flow)}
+                          className="text-xs"
+                        >
+                          <UsersIcon className="w-4 h-4 mr-1" />
+                          View Records
+                        </Button>
                         <Button
                           size="sm"
                           variant="secondary"
@@ -957,15 +1002,12 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                           className="text-xs"
                         >
                           <EyeIcon className="w-4 h-4 mr-1" />
-                          View
+                          View Flow
                         </Button>
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => {
-                            console.log(`Editing flow: ${flow.name}`);
-                            // TODO: Implement flow edit functionality
-                          }}
+                          onClick={() => handleEditFlow(flow)}
                           className="text-xs"
                         >
                           Edit
@@ -1093,6 +1135,265 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                 </div>
                 <div className="text-sm text-gray-500">
                   This is a preview of the first {mockPreviewData.length} records. Export to see all records.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Flow Records Modal */}
+      {showFlowRecordsModal && selectedFlow && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <UsersIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Flow Records: {selectedFlow.name}</h2>
+                    <p className="text-crimson-accent-blue text-sm">
+                      {flowCounts[selectedFlow.id]?.toLocaleString() || '0'} records in this flow
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Export Dropdown */}
+                  <div className="relative">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30"
+                    >
+                      <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                      Export
+                    </Button>
+                  </div>
+                  <button
+                    onClick={() => setShowFlowRecordsModal(false)}
+                    className="text-white hover:text-crimson-accent-blue transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-10"
+                  >
+                    <XMarkIcon className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Records that match the criteria for flow: <span className="font-medium text-gray-900">{selectedFlow.name}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleExportFlowRecords(selectedFlow, 'csv')}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
+                    CSV
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleExportFlowRecords(selectedFlow, 'excel')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
+                    Excel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleExportFlowRecords(selectedFlow, 'pdf')}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
+
+              {/* Records Table */}
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Phone
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Location
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Total Giving
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Last Gift
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Gift Count
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {mockPreviewData.map((record, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-gray-900">{record.name}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.email}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.phone}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.location}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-green-600">
+                            ${record.totalGiving.toLocaleString()}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.lastGift}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.giftCount}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Info */}
+              <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
+                <div className="text-sm text-gray-600">
+                  Showing 1 to {mockPreviewData.length} of {flowCounts[selectedFlow.id]?.toLocaleString() || '0'} records
+                </div>
+                <div className="text-sm text-gray-500">
+                  This is a preview of the first {mockPreviewData.length} records. Export to see all records.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Flow Modal */}
+      {showEditFlowModal && editingFlow && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <ArrowPathIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Edit Flow: {editingFlow.name}</h2>
+                    <p className="text-crimson-accent-blue text-sm">
+                      Modify flow configuration and settings
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowEditFlowModal(false)}
+                  className="text-white hover:text-crimson-accent-blue transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-10"
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
+              <div className="space-y-6">
+                {/* Flow Basic Info */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Flow Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Flow Name</label>
+                      <input
+                        type="text"
+                        defaultValue={editingFlow.name}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Flow Type</label>
+                      <select
+                        defaultValue={editingFlow.type}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-transparent"
+                      >
+                        <option value="inclusion">Inclusion Flow</option>
+                        <option value="removal">Removal Flow</option>
+                        <option value="mixed">Mixed Flow</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Flow Status */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Flow Status</h3>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        defaultChecked={editingFlow.isActive}
+                        className="rounded border-gray-300 text-crimson-blue focus:ring-crimson-blue"
+                      />
+                      <span className="text-sm text-gray-700">Active</span>
+                    </label>
+                    {editingFlow.isAutoCreated && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Auto-created
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Flow Configuration Preview */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Configuration Preview</h3>
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <UsersIcon className="w-4 h-4" />
+                      <span>Affects {flowCounts[editingFlow.id]?.toLocaleString() || '0'} records</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      This flow is based on the Smart Tag criteria: "{formData.name}"
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowEditFlowModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => handleSaveFlowChanges(editingFlow)}
+                    className="bg-crimson-blue hover:bg-crimson-dark-blue"
+                  >
+                    Save Changes
+                  </Button>
                 </div>
               </div>
             </div>
