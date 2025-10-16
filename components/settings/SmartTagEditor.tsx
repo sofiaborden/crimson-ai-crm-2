@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { XMarkIcon, SparklesIcon, FlagIcon, FunnelIcon, EyeIcon, PlusIcon, ChevronDownIcon, ArrowPathIcon, UsersIcon, ArrowDownTrayIcon, DocumentTextIcon } from '../../constants';
+import { XMarkIcon, SparklesIcon, FlagIcon, FunnelIcon, EyeIcon, PlusIcon, ChevronDownIcon, ArrowPathIcon, UsersIcon, ArrowDownTrayIcon, DocumentTextIcon, PencilIcon } from '../../constants';
 import Button from '../ui/Button';
 import FlowBadge from '../ui/FlowBadge';
 import SmartTagFilters from './SmartTagFilters';
 import ActionSelector from './ActionSelector';
 import TriggerConfigModal from './TriggerConfigModal';
+import SmartFlowEditor from './SmartFlowEditor';
 
 interface AssociatedFlow {
   id: string;
@@ -299,6 +300,11 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
     console.log('Saving flow changes:', updatedFlow);
     // TODO: Implement actual flow update functionality
     // This would typically call an API endpoint to update the flow
+    setShowEditFlowModal(false);
+    setEditingFlow(null);
+  };
+
+  const handleCloseFlowEditor = () => {
     setShowEditFlowModal(false);
     setEditingFlow(null);
   };
@@ -1032,22 +1038,11 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => {
-                            console.log(`Viewing flow: ${flow.name}`);
-                            // TODO: Implement flow view functionality
-                          }}
-                          className="text-xs"
-                        >
-                          <EyeIcon className="w-4 h-4 mr-1" />
-                          View Flow
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
                           onClick={() => handleEditFlow(flow)}
                           className="text-xs"
                         >
-                          Edit
+                          <PencilIcon className="w-4 h-4 mr-1" />
+                          Edit Flow
                         </Button>
                       </div>
                     </div>
@@ -1327,115 +1322,13 @@ const SmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, onSave })
         </div>
       )}
 
-      {/* Edit Flow Modal */}
+      {/* Edit Flow Modal - Using Actual SmartFlowEditor */}
       {showEditFlowModal && editingFlow && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-                    <ArrowPathIcon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold">Edit Flow: {editingFlow.name}</h2>
-                    <p className="text-crimson-accent-blue text-sm">
-                      Modify flow configuration and settings
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowEditFlowModal(false)}
-                  className="text-white hover:text-crimson-accent-blue transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-10"
-                >
-                  <XMarkIcon className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
-              <div className="space-y-6">
-                {/* Flow Basic Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Flow Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Flow Name</label>
-                      <input
-                        type="text"
-                        defaultValue={editingFlow.name}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Flow Type</label>
-                      <select
-                        defaultValue={editingFlow.type}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-transparent"
-                      >
-                        <option value="inclusion">Inclusion Flow</option>
-                        <option value="removal">Removal Flow</option>
-                        <option value="mixed">Mixed Flow</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Flow Status */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Flow Status</h3>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        defaultChecked={editingFlow.isActive}
-                        className="rounded border-gray-300 text-crimson-blue focus:ring-crimson-blue"
-                      />
-                      <span className="text-sm text-gray-700">Active</span>
-                    </label>
-                    {editingFlow.isAutoCreated && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Auto-created
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Flow Configuration Preview */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Configuration Preview</h3>
-                  <div className="text-sm text-gray-600 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <UsersIcon className="w-4 h-4" />
-                      <span>Affects {flowCounts[editingFlow.id]?.toLocaleString() || '0'} records</span>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      This flow is based on the Smart Tag criteria: "{formData.name}"
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowEditFlowModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => handleSaveFlowChanges(editingFlow)}
-                    className="bg-crimson-blue hover:bg-crimson-dark-blue"
-                  >
-                    Save Changes
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SmartFlowEditor
+          flow={editingFlow}
+          onClose={handleCloseFlowEditor}
+          onSave={handleSaveFlowChanges}
+        />
       )}
     </div>
   );

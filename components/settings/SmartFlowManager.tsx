@@ -506,6 +506,7 @@ const SmartFlowManager: React.FC = () => {
           config: {
             audienceFilters: { totalGiving: { min: 500, period: '12months' } }
           },
+          position: { x: 100, y: 100 },
           conditions: [
             {
               id: 'c1',
@@ -556,6 +557,7 @@ const SmartFlowManager: React.FC = () => {
           config: {
             audienceFilters: { state: 'FL', ageRange: [35, 44], politicalEngagement: 'moderate' }
           },
+          position: { x: 100, y: 100 },
           conditions: [
             {
               id: 'c1',
@@ -606,6 +608,7 @@ const SmartFlowManager: React.FC = () => {
           config: {
             audienceFilters: { firstGiftDate: { within: '6months' }, or: { upgradedGiving: true } }
           },
+          position: { x: 100, y: 100 },
           conditions: [
             {
               id: 'c1',
@@ -656,6 +659,7 @@ const SmartFlowManager: React.FC = () => {
           config: {
             audienceFilters: { lastGiftDate: { before: '18months' } }
           },
+          position: { x: 100, y: 100 },
           conditions: [
             {
               id: 'c1',
@@ -706,6 +710,7 @@ const SmartFlowManager: React.FC = () => {
           config: {
             audienceFilters: { voterRegistration: 'unregistered' }
           },
+          position: { x: 100, y: 100 },
           conditions: [
             {
               id: 'c1',
