@@ -13,7 +13,7 @@ interface SmartFlow {
   isActive: boolean;
   targetCount: number;
   completedCount: number;
-  potentialAmount: number;
+  potentialAmount?: number;
   triggers: FlowTrigger[];
   audienceFilters?: Array<{type: string, value: string, label: string}>;
   estimatedAudienceSize?: string;
@@ -761,6 +761,7 @@ const SmartFlowManager: React.FC = () => {
       type: 'dynamic',
       syncPeriod: 'daily',
       isActive: false,
+      potentialAmount: 25000,
       triggers: [
         { id: '1', type: 'task', name: 'Follow-up Task', config: {} },
         { id: '2', type: 'flag', name: 'AI Generated Flag', config: {} }
@@ -1043,7 +1044,7 @@ const SmartFlowManager: React.FC = () => {
                   </div>
                   <div>
                     <div className="text-lg font-semibold text-gray-900">
-                      ${flow.potentialAmount.toLocaleString()}
+                      ${(flow.potentialAmount || 0).toLocaleString()}
                     </div>
                     <div className="text-xs text-gray-500">Potential Amount</div>
                   </div>
