@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XMarkIcon, CheckIcon, ClipboardDocumentListIcon, CurrencyDollarIcon, BoltIcon, CalendarIcon, UserIcon, FlagIcon, TagIcon, UserGroupIcon } from '../../constants';
+import { XMarkIcon, CheckIcon, ClipboardDocumentListIcon, CurrencyDollarIcon, BoltIcon, CalendarIcon, UserIcon, FlagIcon, TagIcon, UserGroupIcon, ArrowPathIcon } from '../../constants';
 import Button from '../ui/Button';
 
 interface TriggerType {
@@ -39,6 +39,8 @@ const TriggerTypeSelector: React.FC<TriggerTypeSelectorProps> = ({ onSelect, onC
         return <CheckIcon className="w-6 h-6" />;
       case 'UserGroupIcon':
         return <UserGroupIcon className="w-6 h-6" />;
+      case 'ArrowPathIcon':
+        return <ArrowPathIcon className="w-6 h-6" />;
       default:
         return <span className="text-xl">{iconName}</span>;
     }
@@ -84,14 +86,7 @@ const TriggerTypeSelector: React.FC<TriggerTypeSelectorProps> = ({ onSelect, onC
       category: 'actions',
       color: 'bg-gray-100 border-gray-300 text-gray-800'
     },
-    {
-      id: 'gift',
-      name: 'Gift',
-      description: 'Trigger when a donation is made, by amount, type, or fund',
-      icon: 'CurrencyDollarIcon',
-      category: 'actions',
-      color: 'bg-green-100 border-green-300 text-green-800'
-    },
+
     {
       id: 'pledge',
       name: 'Pledge',
@@ -111,28 +106,12 @@ const TriggerTypeSelector: React.FC<TriggerTypeSelectorProps> = ({ onSelect, onC
 
     // Data Management
     {
-      id: 'flag',
-      name: 'Flag',
-      description: 'Trigger when a donor receives or loses a flag',
-      icon: 'FlagIcon',
-      category: 'data',
-      color: 'bg-green-100 border-green-300 text-green-800'
-    },
-    {
-      id: 'keyword',
-      name: 'Keyword',
-      description: 'Trigger when a keyword is added or removed from a donor',
-      icon: 'TagIcon',
-      category: 'data',
-      color: 'bg-blue-100 border-blue-300 text-blue-800'
-    },
-    {
-      id: 'attribute',
-      name: 'Attribute',
-      description: 'Trigger when a custom attribute is modified or updated',
-      icon: 'UserIcon',
-      category: 'data',
-      color: 'bg-indigo-100 border-indigo-300 text-indigo-800'
+      id: 'moves',
+      name: 'Moves',
+      description: 'Trigger based on moves management activities or status changes',
+      icon: 'ArrowPathIcon',
+      category: 'actions',
+      color: 'bg-purple-100 border-purple-300 text-purple-800'
     }
   ];
 
