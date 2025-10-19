@@ -105,31 +105,6 @@ const ActionSelector: React.FC<ActionSelectorProps> = ({ onSelect, onClose, trig
       category: 'data',
       color: 'bg-purple-100 border-purple-300 text-purple-800'
     },
-    {
-      id: 'add-flag',
-      name: 'Add Flag',
-      description: 'Add a flag label to a donor profile',
-      icon: 'FlagIcon',
-      category: 'data',
-      color: 'bg-green-100 border-green-300 text-green-800'
-    },
-    {
-      id: 'add-keyword',
-      name: 'Add Keyword',
-      description: 'Tag a donor with a keyword for filtering',
-      icon: 'TagIcon',
-      category: 'data',
-      color: 'bg-yellow-100 border-yellow-300 text-yellow-800'
-    },
-    {
-      id: 'add-attribute',
-      name: 'Add Attribute',
-      description: 'Modify or update a custom attribute',
-      icon: 'ChartBarIcon',
-      category: 'data',
-      color: 'bg-indigo-100 border-indigo-300 text-indigo-800'
-    },
-
     // Communications & Integrations
     {
       id: 'send-to-dialr',
@@ -138,14 +113,6 @@ const ActionSelector: React.FC<ActionSelectorProps> = ({ onSelect, onClose, trig
       icon: 'PhoneIcon',
       category: 'communications',
       color: 'bg-orange-100 border-orange-300 text-orange-800'
-    },
-    {
-      id: 'send-to-targetpath',
-      name: 'Send to TargetPath',
-      description: 'Send donor to TargetPath for direct mail',
-      icon: '📮',
-      category: 'communications',
-      color: 'bg-teal-100 border-teal-300 text-teal-800'
     },
     {
       id: 'send-to-mailchimp',
@@ -178,7 +145,7 @@ const ActionSelector: React.FC<ActionSelectorProps> = ({ onSelect, onClose, trig
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
           <div className="flex items-center justify-between">
@@ -221,43 +188,56 @@ const ActionSelector: React.FC<ActionSelectorProps> = ({ onSelect, onClose, trig
         </div>
 
         {/* Action Grid */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-6 overflow-y-auto flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredActions.map((action) => (
-              <button
+              <div
                 key={action.id}
                 onClick={() => onSelect(action.id)}
-                className="text-left p-4 border border-gray-200 rounded-lg hover:border-crimson-blue hover:bg-crimson-blue hover:bg-opacity-5 transition-all duration-200 group"
+                className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-crimson-blue hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${action.color} group-hover:scale-110 transition-transform`}>
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${action.color} group-hover:scale-110 transition-transform`}>
                     {renderIcon(action.icon)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-gray-900 group-hover:text-crimson-blue transition-colors">
                       {action.name}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                       {action.description}
                     </p>
                   </div>
                 </div>
-              </button>
+
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
+                    {action.category.replace('_', ' ')}
+                  </span>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <CheckIcon className="w-4 h-4 text-crimson-blue" />
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
+
+          {filteredActions.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-4">🔍</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No actions found</h3>
+              <p className="text-gray-600">Try selecting a different category to see more options.</p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 bg-gray-50 p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Select an action to configure what happens when your trigger condition is met
-            </p>
-            <Button
-              onClick={onClose}
-              variant="outline"
-              className="text-gray-600 border-gray-300 hover:bg-gray-100"
-            >
+        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="text-sm text-gray-600">
+              {filteredActions.length} action{filteredActions.length !== 1 ? 's' : ''} available
+            </div>
+            <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>
           </div>

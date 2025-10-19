@@ -148,7 +148,7 @@ const TriggerTypeSelector: React.FC<TriggerTypeSelectorProps> = ({ onSelect, onC
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
           <div className="flex items-center justify-between">
@@ -191,7 +191,7 @@ const TriggerTypeSelector: React.FC<TriggerTypeSelectorProps> = ({ onSelect, onC
         </div>
 
         {/* Trigger Types Grid */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTriggers.map((trigger) => (
               <div
@@ -235,8 +235,8 @@ const TriggerTypeSelector: React.FC<TriggerTypeSelectorProps> = ({ onSelect, onC
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
-          <div className="flex items-center justify-between">
+        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="text-sm text-gray-600">
               {filteredTriggers.length} trigger type{filteredTriggers.length !== 1 ? 's' : ''} available
             </div>
