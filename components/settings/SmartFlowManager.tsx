@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowPathIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon, PlayIcon, PauseIcon, ClockIcon, DocumentDuplicateIcon, InformationCircleIcon, UserGroupIcon, CheckCircleIcon, ChartBarIcon } from '../../constants';
+import { ArrowPathIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon, PlayIcon, PauseIcon, ClockIcon, DocumentDuplicateIcon, InformationCircleIcon, UserGroupIcon, CheckCircleIcon, ChartBarIcon, CurrencyDollarIcon } from '../../constants';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import SmartFlowEditor from './SmartFlowEditor';
@@ -13,6 +13,7 @@ interface SmartFlow {
   isActive: boolean;
   targetCount: number;
   completedCount: number;
+  potentialAmount: number;
   triggers: FlowTrigger[];
   audienceFilters?: Array<{type: string, value: string, label: string}>;
   estimatedAudienceSize?: string;
@@ -55,6 +56,7 @@ const SmartFlowManager: React.FC = () => {
       isActive: true,
       targetCount: 156,
       completedCount: 89,
+      potentialAmount: 45250,
       audienceFilters: [
         { type: 'segment', value: 'new-donors', label: 'New Donors (Last 6 months)' },
         { type: 'smart_tag', value: 'new-rising-donors', label: 'New & Rising Donors' }
@@ -125,6 +127,7 @@ const SmartFlowManager: React.FC = () => {
       isActive: true,
       targetCount: 342,
       completedCount: 127,
+      potentialAmount: 78900,
       triggers: [
         {
           id: '1',
@@ -149,6 +152,7 @@ const SmartFlowManager: React.FC = () => {
       isActive: false,
       targetCount: 45,
       completedCount: 12,
+      potentialAmount: 125000,
       triggers: [
         { id: '1', type: 'attribute', name: 'Wealth Rating', config: { value: 'A+' } },
         { id: '2', type: 'task', name: 'Research & Qualification', config: { assignTo: 'development-team' } },
@@ -167,6 +171,7 @@ const SmartFlowManager: React.FC = () => {
       isActive: true,
       targetCount: 89,
       completedCount: 67,
+      potentialAmount: 234500,
       audienceFilters: [
         { type: 'segment', value: 'major-donors', label: 'Major Donors ($1000+)' },
         { type: 'smart_tag', value: 'big-givers', label: 'Big Givers' }
@@ -1001,26 +1006,24 @@ const SmartFlowManager: React.FC = () => {
 
               {/* Metrics Row */}
               <div className="grid grid-cols-4 gap-6 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <UserGroupIcon className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold text-gray-900">{flow.targetCount}</div>
-                    <div className="text-xs text-gray-500">Targeted</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
+                {/* Combined Completed/Targeted Metric with Tooltip */}
+                <div className="flex items-center gap-3 group relative">
                   <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                     <CheckCircleIcon className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <div className="text-lg font-semibold text-gray-900">{flow.completedCount}</div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      {flow.completedCount}/{flow.targetCount}
+                    </div>
                     <div className="text-xs text-gray-500">Completed</div>
+                  </div>
+                  {/* Tooltip */}
+                  <div className="absolute top-full left-0 mt-2 w-64 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                    {flow.completedCount} records have completed the automation out of {flow.targetCount} targeted
                   </div>
                 </div>
 
+                {/* Conversion Rate (renamed from Success Rate) */}
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                     <ChartBarIcon className="w-4 h-4 text-purple-600" />
@@ -1029,7 +1032,20 @@ const SmartFlowManager: React.FC = () => {
                     <div className="text-lg font-semibold text-gray-900">
                       {Math.round((flow.completedCount / flow.targetCount) * 100)}%
                     </div>
-                    <div className="text-xs text-gray-500">Success Rate</div>
+                    <div className="text-xs text-gray-500">Conversion Rate</div>
+                  </div>
+                </div>
+
+                {/* New Potential Amount Metric */}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <CurrencyDollarIcon className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold text-gray-900">
+                      ${flow.potentialAmount.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500">Potential Amount</div>
                   </div>
                 </div>
 

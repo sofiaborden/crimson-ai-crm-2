@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XMarkIcon, PlusIcon, CheckIcon, ClipboardDocumentListIcon, CalendarIcon, DocumentTextIcon, BoltIcon, UserGroupIcon, FlagIcon, TagIcon, ChartBarIcon, PhoneIcon, EnvelopeIcon, MailIcon } from '../../constants';
+import { XMarkIcon, PlusIcon, CheckIcon, ClipboardDocumentListIcon, CalendarIcon, DocumentTextIcon, BoltIcon, UserGroupIcon, FlagIcon, TagIcon, ChartBarIcon, PhoneIcon, EnvelopeIcon, MailIcon, ArrowPathIcon } from '../../constants';
 import Button from '../ui/Button';
 
 interface ActionType {
@@ -46,6 +46,8 @@ const ActionSelector: React.FC<ActionSelectorProps> = ({ onSelect, onClose, trig
         return <MailIcon className="w-6 h-6" />;
       case 'CheckIcon':
         return <CheckIcon className="w-6 h-6" />;
+      case 'ArrowPathIcon':
+        return <ArrowPathIcon className="w-6 h-6" />;
       default:
         return <span className="text-xl">{iconName}</span>;
     }
@@ -85,8 +87,22 @@ const ActionSelector: React.FC<ActionSelectorProps> = ({ onSelect, onClose, trig
       category: 'tasks',
       color: 'bg-yellow-100 border-yellow-300 text-yellow-800'
     },
-
-
+    {
+      id: 'add-move',
+      name: 'Add Move',
+      description: 'Create a new move record for donor cultivation tracking',
+      icon: 'ArrowPathIcon',
+      category: 'tasks',
+      color: 'bg-indigo-100 border-indigo-300 text-indigo-800'
+    },
+    {
+      id: 'update-move',
+      name: 'Update Move',
+      description: 'Update the status or details of an existing move record',
+      icon: 'ArrowPathIcon',
+      category: 'tasks',
+      color: 'bg-teal-100 border-teal-300 text-teal-800'
+    },
 
     // Data Management Actions
     {
