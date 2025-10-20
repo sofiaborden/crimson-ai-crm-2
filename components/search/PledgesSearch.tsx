@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, MicrophoneIcon, SparklesIcon, FunnelIcon, BookmarkIcon, XMarkIcon, UserIcon, PhoneIcon, EnvelopeIcon, PlusIcon, CalendarIcon, CurrencyDollarIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon } from '../../constants';
+import { MagnifyingGlassIcon, MicrophoneIcon, SparklesIcon, FunnelIcon, BookmarkIcon, XMarkIcon, UserIcon, PhoneIcon, EnvelopeIcon, PlusIcon, CalendarIcon, CurrencyDollarIcon, ClockIcon, CheckCircleIcon, ExclamationTriangleIcon, ChatBubbleLeftRightIcon, ArrowPathIcon } from '../../constants';
 import SearchFilters from './SearchFilters';
 
 interface SearchFilter {
@@ -40,6 +40,8 @@ const PledgesSearch: React.FC<PledgesSearchProps> = ({ initialFilters = [], sear
   const [showFilters, setShowFilters] = useState(true);
   const [selectedResults, setSelectedResults] = useState<string[]>([]);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [crimsonGPTPrompt, setCrimsonGPTPrompt] = useState('');
+  const [isProcessingPrompt, setIsProcessingPrompt] = useState(false);
 
   // Mock pledge data for demonstration
   const mockResults: PledgeResult[] = [
@@ -140,6 +142,50 @@ const PledgesSearch: React.FC<PledgesSearchProps> = ({ initialFilters = [], sear
     }
   };
 
+  const handleCrimsonGPTPrompt = async () => {
+    if (!crimsonGPTPrompt.trim()) return;
+
+    setIsProcessingPrompt(true);
+
+    // Simulate AI processing
+    setTimeout(() => {
+      // Parse the prompt and set as search query
+      setSearchQuery(crimsonGPTPrompt);
+
+      // Parse prompt and add appropriate filters (simplified logic)
+      const prompt = crimsonGPTPrompt.toLowerCase();
+      if (prompt.includes('overdue')) {
+        addFilter('Status', 'equals', 'Overdue');
+      }
+      if (prompt.includes('outstanding')) {
+        addFilter('Status', 'equals', 'Outstanding');
+      }
+      if (prompt.includes('paid')) {
+        addFilter('Status', 'equals', 'Paid');
+      }
+
+      // Extract dollar amounts
+      const amountMatch = prompt.match(/\$(\d+)/);
+      if (amountMatch) {
+        addFilter('Pledge Amount', '>=', amountMatch[1]);
+      }
+
+      // Extract time periods
+      if (prompt.includes('30 days') || prompt.includes('month')) {
+        addFilter('Due Date', 'within', '30 days');
+      }
+      if (prompt.includes('week')) {
+        addFilter('Due Date', 'within', '7 days');
+      }
+
+      setIsProcessingPrompt(false);
+      setCrimsonGPTPrompt('');
+
+      // Trigger search
+      handleSearch();
+    }, 2000);
+  };
+
   const getResultsSummary = () => {
     const total = results.length;
     const totalOutstanding = results.reduce((sum, r) => sum + r.amountOutstanding, 0);
@@ -233,23 +279,66 @@ const PledgesSearch: React.FC<PledgesSearchProps> = ({ initialFilters = [], sear
           </button>
         </div>
 
-        {/* AI Suggestions */}
-        {aiSuggestions.length > 0 && (
-          <div className="mt-3">
-            <p className="text-xs text-gray-600 mb-2">💡 Try asking CrimsonGPT:</p>
-            <div className="flex flex-wrap gap-2">
-              {aiSuggestions.slice(0, 2).map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAiSuggestion(suggestion)}
-                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-100 transition-colors"
-                >
-                  {suggestion}
-                </button>
-              ))}
+        {/* CrimsonGPT Prompt Interface */}
+        <div className="mt-4">
+          <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-lg p-4 shadow-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <ChatBubbleLeftRightIcon className="w-4 h-4 text-white" />
+              </div>
+              <h4 className="font-semibold text-white text-sm">CrimsonGPT Pledge Search</h4>
+              <CurrencyDollarIcon className="w-4 h-4 text-crimson-accent-blue" />
             </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={crimsonGPTPrompt}
+                onChange={(e) => setCrimsonGPTPrompt(e.target.value)}
+                placeholder="Describe what you're looking for: 'Show me all overdue pledges over $1000 from this year'"
+                className="flex-1 px-3 py-2 rounded-lg border-0 bg-white bg-opacity-90 text-gray-900 placeholder-gray-600 focus:ring-2 focus:ring-white focus:bg-white transition-all text-sm"
+                onKeyPress={(e) => e.key === 'Enter' && handleCrimsonGPTPrompt()}
+              />
+              <button
+                onClick={handleCrimsonGPTPrompt}
+                disabled={!crimsonGPTPrompt.trim() || isProcessingPrompt}
+                className="bg-white bg-opacity-20 hover:bg-white hover:bg-opacity-30 text-white border border-white border-opacity-30 px-4 py-2 rounded-lg transition-all text-sm font-medium"
+              >
+                {isProcessingPrompt ? (
+                  <>
+                    <ArrowPathIcon className="w-3 h-3 mr-1 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <ArrowPathIcon className="w-3 h-3 mr-1" />
+                    Search
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-white text-opacity-90 mt-2 leading-relaxed">
+              CrimsonGPT will parse your request and apply the right filters automatically.
+            </p>
           </div>
-        )}
+
+          {/* Quick Suggestions */}
+          {aiSuggestions.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs text-gray-600 mb-2">💡 Try these examples:</p>
+              <div className="flex flex-wrap gap-2">
+                {aiSuggestions.slice(0, 2).map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAiSuggestion(suggestion)}
+                    className="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-100 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Advanced Filters */}
