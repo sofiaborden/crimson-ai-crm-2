@@ -2,25 +2,39 @@
 
 ## Overview
 
-Smart Bio is an AI-powered donor biography generation system that uses Perplexity AI to create factual, citation-backed donor profiles for political fundraising CRMs. The system generates 2-3 sentence professional biographies with wealth insights, verified citations, and comprehensive source management.
+Smart Bio is an AI-powered donor biography generation system that uses Perplexity AI to create factual, citation-backed donor profiles for political fundraising CRMs. The system generates **2-5 sentence professional biographies** with wealth insights, verified citations, and comprehensive source management.
 
 ---
 
 ## 1. Perplexity API Integration
 
-### API Configuration
-**Endpoint:** `https://api.perplexity.ai/chat/completions`
-**Model:** `sonar-pro` (advanced search model)
-**Authentication:** Bearer token via environment variables
+### Backend API Route
+The Smart Bio feature uses a backend API route (`/api/generate-bio`) that proxies requests to Perplexity AI to avoid CORS issues and handle API key security.
 
-### API Parameters
+**Frontend API Endpoint:** `https://crimson-ai-crm-2.onrender.com/api/generate-bio`
+**Backend Perplexity Endpoint:** `https://api.perplexity.ai/chat/completions`
+**Model:** `sonar-pro` (advanced search model)
+**Authentication:** Bearer token via backend environment variables
+
+### API Parameters (Backend Configuration)
 ```javascript
 {
   model: 'sonar-pro',
-  temperature: 0.1,           // Low temperature for factual accuracy
-  max_tokens: 800,
+  temperature: 0.2,                      // Low temperature for factual accuracy
+  max_tokens: 1000,                      // Enhanced from 500 to 1000 for richer content
   top_p: 0.9,
-  return_citations: true,     // Critical for source tracking
+  return_citations: true,               // Critical for source tracking
+  search_recency_filter: "month",       // Focus on recent results
+  search_depth: "deep",                 // More thorough search
+  search_domain_filter: [               // Trusted domains only
+    "linkedin.com", "bloomberg.com", "forbes.com",
+    "crunchbase.com", "sec.gov", "theorg.com",
+    "about.me", "reuters.com", "wsj.com"
+  ],
+  response_format: {
+    type: "json_schema",                // Structured JSON response
+    json_schema: { /* schema definition */ }
+  },
   messages: [...]
 }
 ```
@@ -29,63 +43,74 @@ Smart Bio is an AI-powered donor biography generation system that uses Perplexit
 
 #### System Message:
 ```
-"You are a research assistant that writes short, factual, citation-backed donor bios for U.S. political fundraising CRMs. You must only state facts you can cite with reputable URLs. If uncertain, omit. Output JSON exactly in the requested schema. Do not include commentary."
+"You are a research assistant that creates comprehensive factual bios about people for political fundraising outreach. You must return a JSON object with a detailed bio and separate sources array. Focus on profession, title, company affiliations, years of service, notable projects, educational background, recognitions, and achievements. Use ONLY verifiable public data from reputable sources."
 ```
 
 #### User Prompt Template:
 ```
-Task: Produce a concise factual bio for a U.S. donor and a one-line giving summary if confidently found in FEC or equivalent sources.
+Generate a comprehensive, fact-based professional bio for ${name} using ONLY verifiable public data from reputable sources (LinkedIn, company websites, news outlets, professional profiles, university records). Do NOT include any URLs, citation markers, or sources in the main bio text.
 
-Donor: {donor.name}
-Location: {donor.location || 'Not specified'}
-Total Lifetime Giving: ${donor.totalLifetimeGiving || 'Unknown'}
+Person Details:
+- Name: ${name}
+- Occupation: ${occupation || 'Not specified'}
+- Employer: ${employer || 'Not specified'}
+- Location: ${location || 'Not specified'}
+- Industry: ${industry || 'Not specified'}
 
-Rules:
-- Bio = 2–3 sentences, neutral tone, no opinions.
-- Include current role/employer (if citable), industry/field, and one notable public fact (e.g., board role, published piece, award) only if citable.
-- Add 0–2 brief recent-news bullets **only if** clearly about this person and reputable (major news, employer press, .gov, .edu).
-- Giving summary one-liner from FEC or OpenSecrets (federal) if confident; otherwise leave empty.
-- No speculation. If multiple people match, return disambiguation state.
-- Use only reputable sources: FEC, major news outlets, employer/official sites, .gov/.edu. Exclude low-credibility sites.
-- Output JSON strictly in this schema:
+Return a JSON object containing:
+- 'bio': A 2-5 sentence comprehensive professional bio (no URLs in text)
+- 'sources': An array of objects with 'title' and 'url' for each public source used
 
+Example format:
 {
-  "bio_sentences": ["sentence1", "sentence2", "sentence3"],
-  "giving_summary": "string or empty",
-  "citations": [{"title": "string", "url": "string"}],
-  "confidence": "high",
-  "matching_notes": "brief string",
-  "candidates": []
+  "bio": "John Smith serves as Chief Technology Officer at TechCorp, where he has led digital transformation initiatives since 2018. He previously held senior engineering roles at StartupXYZ and graduated from Stanford University with a degree in Computer Science. Smith was recognized in TechWeek's 40 Under 40 list for his contributions to enterprise software development.",
+  "sources": [
+    {"title": "TechCorp Leadership Page", "url": "https://techcorp.com/leadership/john-smith"},
+    {"title": "Stanford Alumni Directory", "url": "https://alumni.stanford.edu/directory/john-smith"},
+    {"title": "TechWeek 40 Under 40 List", "url": "https://techweek.com/40-under-40-2023"}
+  ]
 }
 ```
 
 ### Response Processing
-The system processes structured JSON responses with fallback handling:
+The backend processes structured JSON responses and returns processed data to the frontend:
 
 ```typescript
-interface BioResponse {
-  bio: string;
-  givingSummary: string;
-  confidence: 'High' | 'Medium' | 'Low';
-  sources: string[];
+// Backend response processing (server.js)
+if (parsedContent.bio && parsedContent.sources) {
+  // Split the bio into sentences for headlines
+  headlines = parsedContent.bio
+    .split(/[.!?]+/)
+    .map(sentence => sentence.trim())
+    .filter(sentence => sentence.length > 10)
+    .slice(0, 3)
+    .map(sentence => sentence.endsWith('.') ? sentence : sentence + '.');
+
+  // Extract citations from sources array
+  citations = parsedContent.sources || [];
 }
 
-const processStructuredResponse = (content: string, donor: any): BioResponse => {
-  // Extract JSON from response
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  const parsed = JSON.parse(jsonMatch[0]);
-  
-  // Process bio sentences (limit to 3, join with spaces)
-  const bio = Array.isArray(parsed.bio_sentences)
-    ? parsed.bio_sentences.filter(s => s.trim()).slice(0, 3).join(' ')
-    : `${donor.name} is a political donor with available public records.`;
-  
-  // Extract source URLs from citations
-  const sources = Array.isArray(parsed.citations)
-    ? parsed.citations.map(c => c.url).filter(Boolean)
-    : ['Public Records'];
-    
-  return { bio, givingSummary, confidence, sources };
+// Frontend data structure (DonorProfileLayoutTest3.tsx)
+interface SmartBioData {
+  perplexityHeadlines: string[];        // 2-5 sentence bio split into array
+  wealthSummary: string;               // Generated from i360 data
+  sources: Array<{ name: string; url: string }>;
+  perplexityCitations: Array<{ title: string; url: string }>;
+  confidence: 'High' | 'Medium' | 'Low';
+  lastGenerated: string;
+}
+
+// Response processing in frontend
+const bioData: SmartBioData = {
+  perplexityHeadlines: headlines,      // Bio sentences as array
+  wealthSummary: wealth,               // Local wealth calculation
+  sources: [
+    { name: 'Perplexity', url: 'https://www.perplexity.ai' },
+    ...(wealth ? [{ name: 'i360 Internal Data', url: '#' }] : [])
+  ],
+  perplexityCitations: citations,      // Direct from API response
+  confidence: 'High',
+  lastGenerated: new Date().toISOString()
 };
 ```
 
@@ -116,8 +141,7 @@ interface SmartBioData {
 3. **Source Compilation**: Multiple source types combined:
    - Perplexity AI research results
    - i360 Internal Data (when available)
-   - FEC/OpenSecrets data
-   - Public records
+   - Public records and professional profiles
 
 ### Citation Display System
 **Sources Modal Component:**
@@ -288,17 +312,53 @@ To implement source-to-text correlation, the system would need:
 ### Complete Smart Bio Generation Process
 1. **User Initiates**: Click "Generate AI-researched donor bio" button
 2. **Cost Confirmation**: Modal shows estimated cost (~$0.02 per bio)
-3. **API Call**: Perplexity API called with structured prompt
-4. **Response Processing**: JSON response parsed and validated
-5. **Data Compilation**: Bio text, sources, and citations compiled
-6. **State Update**: SmartBioData object stored in component state
-7. **UI Display**: Bio content rendered with sources button
+3. **Parallel Data Generation**: Two processes run simultaneously:
+   - **Perplexity API Call**: Backend route called with donor information
+   - **Wealth Summary Generation**: Local i360 data processed for wealth insights
+4. **Response Processing**:
+   - Backend processes Perplexity JSON response and returns headlines + citations
+   - Wealth summary generated from mock wealth codes and mapping
+5. **Data Compilation**:
+   - Bio headlines (2-5 sentences) from Perplexity
+   - Wealth summary from i360 data
+   - Sources array combining Perplexity and i360 sources
+   - Citations array from Perplexity response
+6. **State Update**: Complete SmartBioData object stored in component state
+7. **UI Display**: Bio content rendered with wealth info and sources button
+
+### Wealth Summary Integration
+```typescript
+// Wealth summary generation (local, synchronous)
+const generateWealthSummary = (donor: Donor): string => {
+  const wealthCode = getMockWealthCode(donor.name);
+  if (!wealthCode || !WEALTH_MAPPING[wealthCode]) return '';
+
+  const wealthData = WEALTH_MAPPING[wealthCode];
+  return `Estimated wealth: ${wealthData.range} (${wealthData.tier})`;
+};
+
+// Sources compilation includes both data types
+const sources = [
+  { name: 'Perplexity', url: 'https://www.perplexity.ai' },
+  ...(wealth ? [{ name: 'i360 Internal Data', url: '#' }] : [])
+];
+```
 
 ### Error Handling
-- **API Failures**: Graceful fallback to basic donor information
+- **API Failures**: Graceful fallback to employment-based headlines
 - **Invalid Responses**: Fallback processing for malformed JSON
 - **Missing Data**: Default values for confidence and sources
 - **Network Issues**: User-friendly error messages
+- **Fallback Headlines**: Generated from donor employment information when API fails
+
+```typescript
+// Fallback headline generation
+const fallbackHeadlines = [
+  `${donor.name} serves as ${donor.employment.occupation} at ${donor.employment.employer}.`,
+  `Professional with experience in ${donor.employment.industry || 'their field'}.`,
+  `Based in ${donor.primaryAddress?.city || 'their location'} with established career background.`
+];
+```
 
 ### Performance Considerations
 - **Caching**: Generated bios stored in component state
@@ -308,4 +368,25 @@ To implement source-to-text correlation, the system would need:
 
 ---
 
-*This documentation reflects the current Smart Bio implementation as of January 2024. The source hiding feature affects source display only, not bio text content.*
+## 6. Current Implementation Features
+
+### ✅ Implemented Features
+- **2-5 sentence professional biographies** generated via Perplexity AI
+- **Backend API proxy** for secure API key handling and CORS resolution
+- **Wealth summary integration** from i360 internal data
+- **Source citation system** with clickable links and modal display
+- **Source hiding/filtering** with session and permanent options
+- **Edit/reset functionality** for bio content modification
+- **Export options** (Copy, PDF, Email, Report Issue)
+- **Error handling** with employment-based fallbacks
+- **Cost transparency** with confirmation modals
+
+### ❌ Not Implemented
+- **FEC data integration** (removed from current implementation)
+- **Source-to-text correlation** (sources and bio text are independent)
+- **Automatic bio filtering** based on hidden sources
+- **Real-time bio updates** when sources are hidden
+
+---
+
+*This documentation reflects the current Smart Bio implementation in DonorProfileLayoutTest3.tsx as of January 2025. The feature focuses on professional biography generation with wealth insights, excluding FEC integration.*
