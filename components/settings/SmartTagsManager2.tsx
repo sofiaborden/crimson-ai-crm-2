@@ -45,7 +45,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
     id: tag?.id || Date.now().toString(),
     name: tag?.name || '',
     emoji: tag?.emoji || '🏷️',
-    color: tag?.color || 'blue',
+    color: tag?.color || '#3B82F6',
     description: tag?.description || '',
     category: tag?.category || 'smart-tags',
     processingType: tag?.processingType || 'dynamic',
@@ -72,6 +72,14 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
   const [editingInclusionTrigger, setEditingInclusionTrigger] = useState<any>(null);
   const [editingRemovalTrigger, setEditingRemovalTrigger] = useState<any>(null);
 
+  // Visual selector state
+  const [showEmojiDropdown, setShowEmojiDropdown] = useState(false);
+  const [showColorDropdown, setShowColorDropdown] = useState(false);
+
+  // Refs for dropdowns
+  const emojiDropdownRef = useRef<HTMLDivElement>(null);
+  const colorDropdownRef = useRef<HTMLDivElement>(null);
+
   const categories = [
     { id: 'smart-tags', name: 'Smart Tags', color: 'blue' },
     { id: 'flags', name: 'Flags', color: 'red' },
@@ -84,9 +92,49 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
     { id: 'board', name: 'Board', color: 'gray' }
   ];
 
+  const emojiOptions = ['💰', '🎯', '🚧', '⚡', '🕒', '🔥', '⭐', '🎪', '🎨', '🏆', '🎁', '🌟', '💎', '🚀', '🎊', '🎉', '🏷️', '📊', '👔', '🏥', '🏫', '🏢', '🎓', '🏛️', '🔍', '📌', '🤝'];
+  const colorOptions = [
+    '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+    '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
+  ];
+
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab as any);
   };
+
+  // Helper function to get color name
+  const getColorName = (color: string) => {
+    const colorMap: Record<string, string> = {
+      '#3B82F6': 'Blue',
+      '#10B981': 'Green',
+      '#F59E0B': 'Yellow',
+      '#EF4444': 'Red',
+      '#8B5CF6': 'Purple',
+      '#06B6D4': 'Cyan',
+      '#84CC16': 'Lime',
+      '#F97316': 'Orange',
+      '#EC4899': 'Pink',
+      '#6366F1': 'Indigo'
+    };
+    return colorMap[color] || 'Custom';
+  };
+
+  // Click outside handlers
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiDropdownRef.current && !emojiDropdownRef.current.contains(event.target as Node)) {
+        setShowEmojiDropdown(false);
+      }
+      if (colorDropdownRef.current && !colorDropdownRef.current.contains(event.target as Node)) {
+        setShowColorDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleClose = () => {
     if (hasUnsavedChanges) {
@@ -328,34 +376,89 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                   </div>
 
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Emoji</label>
-                      <input
-                        type="text"
-                        value={formData.emoji}
-                        onChange={(e) => handleFormChange('emoji', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
-                        placeholder="🏷️"
-                      />
-                    </div>
+                    {/* Emoji and Color - Visual Dropdowns */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Emoji Dropdown */}
+                      <div className="relative" ref={emojiDropdownRef}>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Emoji</label>
+                        <button
+                          type="button"
+                          onClick={() => setShowEmojiDropdown(!showEmojiDropdown)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-lg">{formData.emoji}</span>
+                            <span className="text-gray-700">
+                              {formData.emoji}
+                            </span>
+                          </span>
+                          <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${showEmojiDropdown ? 'rotate-180' : ''}`} />
+                        </button>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Label Color</label>
-                      <select
-                        value={formData.color}
-                        onChange={(e) => handleFormChange('color', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
-                      >
-                        <option value="#3B82F6">Blue</option>
-                        <option value="#10B981">Green</option>
-                        <option value="#EF4444">Red</option>
-                        <option value="#8B5CF6">Purple</option>
-                        <option value="#F59E0B">Orange</option>
-                        <option value="#06B6D4">Cyan</option>
-                        <option value="#84CC16">Lime</option>
-                        <option value="#EC4899">Pink</option>
-                        <option value="#6B7280">Gray</option>
-                      </select>
+                        {showEmojiDropdown && (
+                          <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[1000] p-3 max-w-xs">
+                            <div className="grid grid-cols-6 gap-1.5 max-h-32 overflow-y-auto">
+                              {emojiOptions.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => {
+                                    handleFormChange('emoji', emoji);
+                                    setShowEmojiDropdown(false);
+                                  }}
+                                  className={`w-7 h-7 rounded border flex items-center justify-center text-sm hover:bg-gray-50 transition-colors ${
+                                    formData.emoji === emoji ? 'border-crimson-blue bg-crimson-blue bg-opacity-10' : 'border-gray-200'
+                                  }`}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Color Dropdown */}
+                      <div className="relative" ref={colorDropdownRef}>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                        <button
+                          type="button"
+                          onClick={() => setShowColorDropdown(!showColorDropdown)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <div
+                              className="w-4 h-4 rounded border border-gray-300"
+                              style={{ backgroundColor: formData.color }}
+                            ></div>
+                            <span className="text-gray-700">
+                              {getColorName(formData.color)}
+                            </span>
+                          </span>
+                          <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${showColorDropdown ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {showColorDropdown && (
+                          <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-[1000] p-3 max-w-xs">
+                            <div className="grid grid-cols-5 gap-1.5">
+                              {colorOptions.map((color) => (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  onClick={() => {
+                                    handleFormChange('color', color);
+                                    setShowColorDropdown(false);
+                                  }}
+                                  className={`w-7 h-7 rounded border-2 transition-all ${
+                                    formData.color === color ? 'border-gray-800 scale-105' : 'border-gray-200'
+                                  }`}
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Tag Preview */}
