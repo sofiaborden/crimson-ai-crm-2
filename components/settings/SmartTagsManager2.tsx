@@ -47,7 +47,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
     description: tag?.description || '',
     category: tag?.category || 'smart-tags',
     processingType: tag?.processingType || 'dynamic',
-    filterDefinition: tag?.filterDefinition || null,
+    filterDefinition: tag?.filterDefinition || [],
     inclusionTrigger: tag?.inclusionTrigger || null,
     removalTrigger: tag?.removalTrigger || null,
     count: tag?.count || 0,
@@ -128,6 +128,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
   };
 
   const handleFormChange = (field: string, value: any) => {
+    console.log('Form change:', field, value);
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
   };
@@ -351,9 +352,19 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                   </p>
                 </div>
 
+                {/* Debug info */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 text-xs">
+                    <strong>Debug:</strong> filterDefinition = {JSON.stringify(formData.filterDefinition)}
+                  </div>
+                )}
+
                 <div className="bg-white border border-gray-200 rounded-lg p-4">
                   <SmartTagFilters
-                    onFiltersChange={(filters) => handleFormChange('filterDefinition', filters)}
+                    onFiltersChange={(filters) => {
+                      console.log('SmartTagFilters onFiltersChange called with:', filters);
+                      handleFormChange('filterDefinition', filters);
+                    }}
                     initialFilters={formData.filterDefinition || []}
                     showRunNow={true}
                   />
