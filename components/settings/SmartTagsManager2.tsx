@@ -290,9 +290,9 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
 
                 <div className="bg-white border border-gray-200 rounded-lg p-4">
                   <SmartTagFilters
-                    filters={formData.filterDefinition || []}
-                    onChange={(filters) => handleFormChange('filterDefinition', filters)}
-                    showPreview={true}
+                    onFiltersChange={(filters) => handleFormChange('filterDefinition', filters)}
+                    initialFilters={formData.filterDefinition || []}
+                    showRunNow={true}
                   />
                 </div>
 
