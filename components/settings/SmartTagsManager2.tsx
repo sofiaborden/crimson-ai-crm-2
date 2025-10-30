@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { SparklesIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon, EllipsisVerticalIcon, ChevronDownIcon, XMarkIcon, HeartIcon, FunnelIcon, PlayIcon, PauseIcon, CheckIcon, UserGroupIcon, ClockIcon, ExclamationTriangleIcon, ArrowPathIcon } from '../../constants';
+import { SparklesIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon, EllipsisVerticalIcon, ChevronDownIcon, XMarkIcon, HeartIcon, FunnelIcon, PlayIcon, PauseIcon, CheckIcon, UserGroupIcon, ClockIcon, ExclamationTriangleIcon, ArrowPathIcon, UsersIcon, DocumentTextIcon, ArrowDownTrayIcon } from '../../constants';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import SmartTagFilters from './SmartTagFilters';
@@ -76,6 +76,14 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
   const [showEmojiDropdown, setShowEmojiDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
 
+  // Preview state
+  const [previewCount, setPreviewCount] = useState(0);
+  const [inclusionCount, setInclusionCount] = useState(0);
+  const [removalCount, setRemovalCount] = useState(0);
+  const [flowCounts, setFlowCounts] = useState<Record<string, number>>({});
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
   // Refs for dropdowns
   const emojiDropdownRef = useRef<HTMLDivElement>(null);
   const colorDropdownRef = useRef<HTMLDivElement>(null);
@@ -96,6 +104,50 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
   const colorOptions = [
     '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
     '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1'
+  ];
+
+  // Mock data for preview modal
+  const mockPreviewData = [
+    {
+      id: '1',
+      name: 'John Smith',
+      email: 'john.smith@example.com',
+      phone: '(555) 123-4567',
+      location: 'Arlington, VA',
+      totalGiving: 1500,
+      lastGift: '2024-08-15',
+      giftCount: 5
+    },
+    {
+      id: '2',
+      name: 'Sarah Johnson',
+      email: 'sarah.j@example.com',
+      phone: '(555) 234-5678',
+      location: 'Alexandria, VA',
+      totalGiving: 750,
+      lastGift: '2024-07-01',
+      giftCount: 3
+    },
+    {
+      id: '3',
+      name: 'Michael Chen',
+      email: 'mchen@example.com',
+      phone: '(703) 555-9876',
+      location: 'Fairfax, VA',
+      totalGiving: 1200,
+      lastGift: '2024-05-20',
+      giftCount: 8
+    },
+    {
+      id: '4',
+      name: 'Emily Davis',
+      email: 'emily.davis@example.com',
+      phone: '(571) 555-0123',
+      location: 'McLean, VA',
+      totalGiving: 2200,
+      lastGift: '2024-09-10',
+      giftCount: 12
+    }
   ];
 
   const handleTabChange = (newTab: string) => {
@@ -204,6 +256,32 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
   const handleEditRemovalTrigger = () => {
     setEditingRemovalTrigger(formData.removalTrigger);
     setShowRemovalTriggerConfig(true);
+  };
+
+  const handlePreview = async () => {
+    setIsLoadingPreview(true);
+    // Simulate API call to get count
+    setTimeout(() => {
+      const totalCount = Math.floor(Math.random() * 1000) + 100;
+      const inclusionCountValue = Math.floor(Math.random() * 800) + 50;
+      const removalCountValue = Math.floor(Math.random() * 200) + 10;
+
+      setPreviewCount(totalCount);
+      setInclusionCount(inclusionCountValue);
+      setRemovalCount(removalCountValue);
+
+      // Generate flow counts for associated flows
+      const newFlowCounts: Record<string, number> = {};
+      if (formData.inclusionTrigger) {
+        newFlowCounts['inclusion'] = Math.floor(Math.random() * 300) + 20;
+      }
+      if (formData.removalTrigger) {
+        newFlowCounts['removal'] = Math.floor(Math.random() * 150) + 10;
+      }
+      setFlowCounts(newFlowCounts);
+
+      setIsLoadingPreview(false);
+    }, 1000);
   };
 
   // Helper function to check if a tab is complete
@@ -757,64 +835,197 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
 
             {/* Summary Tab */}
             {activeTab === 'summary' && (
-              <div className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckIcon className="w-5 h-5 text-blue-600" />
-                    <h3 className="font-medium text-blue-900">Configuration Summary</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column - Configuration Summary */}
+                <div className="space-y-6">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckIcon className="w-5 h-5 text-blue-600" />
+                      <h3 className="font-medium text-blue-900">Summary</h3>
+                    </div>
+                    <p className="text-sm text-blue-700">
+                      Review your Smart Tag configuration before saving.
+                    </p>
                   </div>
-                  <p className="text-sm text-blue-700">
-                    Review all settings before saving your Smart Tag.
-                  </p>
+
+                  {/* Tag Preview */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Preview</h4>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
+                        style={{
+                          backgroundColor: formData.color + '20',
+                          border: '2px solid ' + formData.color + '30'
+                        }}
+                      >
+                        {formData.emoji}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{formData.name || 'Tag Name'}</div>
+                        <div className="text-sm text-gray-600">{formData.description || 'Description'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Configuration Details */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Configuration Details</h4>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Category:</span>
+                        <span className="font-medium">{categories.find(c => c.id === formData.category)?.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Filter Criteria:</span>
+                        <span className="font-medium">{formData.filterDefinition?.length || 0} filters</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Processing Type:</span>
+                        <span className="font-medium">
+                          {(formData.inclusionTrigger || formData.removalTrigger) ? 'Dynamic (Auto-updating)' : 'Static (Manual)'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Associated Workflows */}
+                  {(formData.inclusionTrigger || formData.removalTrigger) && (
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                        <ArrowPathIcon className="w-4 h-4 text-crimson-blue" />
+                        Associated Workflows
+                      </h4>
+                      <div className="space-y-3">
+                        {formData.inclusionTrigger && (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <PlayIcon className="w-4 h-4 text-green-600" />
+                              <span className="font-medium text-green-900">Inclusion Workflow</span>
+                            </div>
+                            <div className="text-sm text-green-700">
+                              <div><strong>Type:</strong> {formData.inclusionTrigger.type || 'Custom workflow'}</div>
+                              <div><strong>Name:</strong> {formData.inclusionTrigger.name || 'Workflow configured'}</div>
+                            </div>
+                            {!isLoadingPreview && flowCounts['inclusion'] && (
+                              <div className="text-sm text-green-600 flex items-center gap-2 mt-2">
+                                <UsersIcon className="w-4 h-4" />
+                                <span className="font-medium">{flowCounts['inclusion'].toLocaleString()}</span>
+                                <span>records affected</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {formData.removalTrigger && (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <PauseIcon className="w-4 h-4 text-red-600" />
+                              <span className="font-medium text-red-900">Removal Workflow</span>
+                            </div>
+                            <div className="text-sm text-red-700">
+                              <div><strong>Type:</strong> {formData.removalTrigger.type || 'Custom workflow'}</div>
+                              <div><strong>Name:</strong> {formData.removalTrigger.name || 'Workflow configured'}</div>
+                            </div>
+                            {!isLoadingPreview && flowCounts['removal'] && (
+                              <div className="text-sm text-red-600 flex items-center gap-2 mt-2">
+                                <UsersIcon className="w-4 h-4" />
+                                <span className="font-medium">{flowCounts['removal'].toLocaleString()}</span>
+                                <span>records affected</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-medium text-gray-900 mb-3">Basic Information</h4>
-                      <div className="space-y-2 text-sm">
-                        <div><strong>Name:</strong> {formData.name || 'Untitled Tag'}</div>
-                        <div><strong>Category:</strong> {categories.find(c => c.id === formData.category)?.name}</div>
-                        <div><strong>Processing:</strong> {formData.processingType === 'dynamic' ? 'Dynamic (Auto-updating)' : 'Static (Manual)'}</div>
-                        <div><strong>Status:</strong> {formData.isActive ? 'Active' : 'Inactive'}</div>
-                      </div>
+                {/* Right Column - Preview Count Section */}
+                <div className="space-y-6">
+                  {/* Record Count Preview */}
+                  <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-lg p-6 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-white flex items-center gap-2">
+                        <UsersIcon className="w-5 h-5" />
+                        Record Count Preview
+                      </h3>
+                      <Button
+                        size="sm"
+                        onClick={handlePreview}
+                        disabled={isLoadingPreview}
+                        className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30"
+                      >
+                        {isLoadingPreview ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Refresh
+                          </div>
+                        ) : (
+                          'Preview'
+                        )}
+                      </Button>
                     </div>
 
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-medium text-gray-900 mb-3">Description</h4>
-                      <p className="text-sm text-gray-600">
-                        {formData.description || 'No description provided'}
-                      </p>
-                    </div>
+                    <button
+                      onClick={() => setShowPreviewModal(true)}
+                      disabled={isLoadingPreview || previewCount === 0}
+                      className="w-full text-center py-4 hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors disabled:cursor-not-allowed"
+                    >
+                      <div className="text-3xl font-bold text-white mb-2">
+                        {isLoadingPreview ? '...' : previewCount.toLocaleString()}
+                      </div>
+                      <div className="text-crimson-accent-blue text-sm">
+                        {previewCount === 1 ? 'record matches' : 'records match'} this Smart Tag
+                      </div>
+                      {!isLoadingPreview && previewCount > 0 && (
+                        <div className="text-xs text-white mt-2 flex items-center justify-center gap-1 opacity-80">
+                          <EyeIcon className="w-3 h-3" />
+                          Click to view and export records
+                        </div>
+                      )}
+                    </button>
                   </div>
 
-                  <div className="space-y-4">
+                  {/* Breakdown Counts */}
+                  {!isLoadingPreview && previewCount > 0 && (
                     <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-medium text-gray-900 mb-3">Automation</h4>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <strong>Inclusion Criteria:</strong> {formData.filterDefinition && formData.filterDefinition.length > 0 ? 'Configured' : 'Not set'}
-                        </div>
-                        <div>
-                          <strong>Inclusion Workflow:</strong> {formData.inclusionTrigger ? 'Configured' : 'Not set'}
-                        </div>
-                        <div>
-                          <strong>Removal Workflow:</strong> {formData.removalTrigger ? 'Configured' : 'Not set'}
-                        </div>
-                      </div>
-                    </div>
+                      <h4 className="font-medium text-gray-900 mb-3">Count Breakdown</h4>
+                      <div className="space-y-3">
+                        {formData.filterDefinition && formData.filterDefinition.length > 0 && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 flex items-center gap-2">
+                              <FunnelIcon className="w-4 h-4" />
+                              Filter Criteria
+                            </span>
+                            <span className="font-medium text-blue-600">{inclusionCount.toLocaleString()}</span>
+                          </div>
+                        )}
 
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-medium text-gray-900 mb-3">Expected Impact</h4>
-                      <div className="text-sm text-gray-600">
-                        <div>Expected people count: <strong>{Math.floor(Math.random() * 500) + 50}</strong></div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          Based on current filter criteria and database size
-                        </div>
+                        {formData.inclusionTrigger && flowCounts['inclusion'] && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 flex items-center gap-2">
+                              <PlayIcon className="w-4 h-4" />
+                              Inclusion Workflow
+                            </span>
+                            <span className="font-medium text-green-600">{flowCounts['inclusion'].toLocaleString()}</span>
+                          </div>
+                        )}
+
+                        {formData.removalTrigger && flowCounts['removal'] && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 flex items-center gap-2">
+                              <PauseIcon className="w-4 h-4" />
+                              Removal Workflow
+                            </span>
+                            <span className="font-medium text-red-600">-{flowCounts['removal'].toLocaleString()}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
+              </div>
 
                 {/* Navigation and Save Buttons */}
                 <div className="flex justify-between pt-4 border-t border-gray-200">
@@ -1486,6 +1697,117 @@ const SmartTagsManager2: React.FC = () => {
             setEditingTag(null);
           }}
         />
+      )}
+
+      {/* Preview Records Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <UsersIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Preview Records</h2>
+                    <p className="text-crimson-accent-blue text-sm">
+                      {previewCount.toLocaleString()} records match "{formData.name || 'Smart Tag'}" criteria
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      // Handle CSV export
+                      console.log('Exporting CSV...');
+                    }}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30"
+                  >
+                    <DocumentTextIcon className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      // Handle Excel export
+                      console.log('Exporting Excel...');
+                    }}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30"
+                  >
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                    Export Excel
+                  </Button>
+                  <button
+                    onClick={() => setShowPreviewModal(false)}
+                    className="text-white hover:text-crimson-accent-blue transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-10"
+                  >
+                    <XMarkIcon className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Location
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Total Giving
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Last Gift
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Gift Count
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {mockPreviewData.map((record, index) => (
+                      <tr key={record.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900">{record.name}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.email}</div>
+                          <div className="text-sm text-gray-500">{record.phone}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.location}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-green-600">
+                            ${record.totalGiving.toLocaleString()}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.lastGift}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.giftCount}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
