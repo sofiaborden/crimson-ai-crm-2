@@ -1132,6 +1132,117 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
           </div>
         </div>
       )}
+
+      {/* Preview Records Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <UsersIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Preview Records</h2>
+                    <p className="text-crimson-accent-blue text-sm">
+                      {previewCount.toLocaleString()} records match "{formData.name || 'Smart Tag'}" criteria
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      // Handle CSV export
+                      console.log('Exporting CSV...');
+                    }}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30"
+                  >
+                    <DocumentTextIcon className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      // Handle Excel export
+                      console.log('Exporting Excel...');
+                    }}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30"
+                  >
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                    Export Excel
+                  </Button>
+                  <button
+                    onClick={() => setShowPreviewModal(false)}
+                    className="text-white hover:text-crimson-accent-blue transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-10"
+                  >
+                    <XMarkIcon className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Location
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Total Giving
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Last Gift
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Gift Count
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {mockPreviewData.map((record, index) => (
+                      <tr key={record.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900">{record.name}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.email}</div>
+                          <div className="text-sm text-gray-500">{record.phone}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.location}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-green-600">
+                            ${record.totalGiving.toLocaleString()}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.lastGift}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{record.giftCount}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
@@ -1698,117 +1809,6 @@ const SmartTagsManager2: React.FC = () => {
             setEditingTag(null);
           }}
         />
-      )}
-
-      {/* Preview Records Modal */}
-      {showPreviewModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue text-white p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-                    <UsersIcon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold">Preview Records</h2>
-                    <p className="text-crimson-accent-blue text-sm">
-                      {previewCount.toLocaleString()} records match "{formData.name || 'Smart Tag'}" criteria
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      // Handle CSV export
-                      console.log('Exporting CSV...');
-                    }}
-                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30"
-                  >
-                    <DocumentTextIcon className="w-4 h-4 mr-2" />
-                    Export CSV
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      // Handle Excel export
-                      console.log('Exporting Excel...');
-                    }}
-                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30"
-                  >
-                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                    Export Excel
-                  </Button>
-                  <button
-                    onClick={() => setShowPreviewModal(false)}
-                    className="text-white hover:text-crimson-accent-blue transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-10"
-                  >
-                    <XMarkIcon className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Contact
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Location
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Total Giving
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Last Gift
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Gift Count
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {mockPreviewData.map((record, index) => (
-                      <tr key={record.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-gray-900">{record.name}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm text-gray-900">{record.email}</div>
-                          <div className="text-sm text-gray-500">{record.phone}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm text-gray-900">{record.location}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-green-600">
-                            ${record.totalGiving.toLocaleString()}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm text-gray-900">{record.lastGift}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm text-gray-900">{record.giftCount}</div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
