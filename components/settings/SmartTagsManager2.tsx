@@ -835,7 +835,8 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
 
             {/* Summary Tab */}
             {activeTab === 'summary' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column - Configuration Summary */}
                 <div className="space-y-6">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -1027,8 +1028,8 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                 </div>
               </div>
 
-              {/* Navigation and Save Buttons */}
-              <div className="flex justify-between pt-4 border-t border-gray-200">
+                {/* Navigation and Save Buttons */}
+                <div className="flex justify-between pt-4 border-t border-gray-200">
                 <Button
                   variant="outline"
                   onClick={() => handleTabChange('remove-when')}
@@ -1051,6 +1052,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     Save Smart Tag
                   </Button>
                 </div>
+              </div>
               </div>
             )}
           </div>
