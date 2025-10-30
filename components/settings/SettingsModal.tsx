@@ -3,6 +3,7 @@ import { XMarkIcon, SettingsIcon, UserGroupIcon, CurrencyDollarIcon, SparklesIco
 import Button from '../ui/Button';
 import SmartFlowManager from './SmartFlowManager';
 import SmartTagsManager from './SmartTagsManager';
+import SmartTagsManager2 from './SmartTagsManager2';
 import PeopleCodesManager from './PeopleCodesManager';
 import FundraisingCodesManager from './FundraisingCodesManager';
 
@@ -10,7 +11,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSection?: 'people-codes' | 'fundraising-codes';
-  initialSubSection?: 'smart-flow' | 'smart-tags' | 'fund-codes' | 'source-codes';
+  initialSubSection?: 'smart-flow' | 'smart-tags' | 'smart-tags-2' | 'fund-codes' | 'source-codes';
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -20,7 +21,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   initialSubSection = 'smart-flow'
 }) => {
   const [activeSection, setActiveSection] = useState<'people-codes' | 'fundraising-codes'>(initialSection);
-  const [activeSubSection, setActiveSubSection] = useState<'smart-flow' | 'smart-tags' | 'fund-codes' | 'source-codes'>(initialSubSection);
+  const [activeSubSection, setActiveSubSection] = useState<'smart-flow' | 'smart-tags' | 'smart-tags-2' | 'fund-codes' | 'source-codes'>(initialSubSection);
 
   if (!isOpen) return null;
 
@@ -31,7 +32,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       icon: UserGroupIcon,
       subsections: [
         { id: 'smart-flow', name: 'Smart Flow', icon: ArrowPathIcon, aiPowered: true },
-        { id: 'smart-tags', name: 'Smart Tags', icon: SparklesIcon, aiPowered: true }
+        { id: 'smart-tags', name: 'Smart Tags', icon: SparklesIcon, aiPowered: true },
+        { id: 'smart-tags-2', name: 'Smart Tags 2', icon: SparklesIcon, aiPowered: true, testMode: true }
       ]
     },
     {
@@ -104,9 +106,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         >
                           <subsection.icon className="w-4 h-4" />
                           <span>{subsection.name}</span>
-                          {subsection.aiPowered && (
-                            <SparklesIcon className="w-3 h-3 text-crimson-accent-blue ml-auto" />
-                          )}
+                          <div className="ml-auto flex items-center gap-1">
+                            {(subsection as any).testMode && (
+                              <span className="px-1.5 py-0.5 bg-orange-100 text-orange-600 text-xs font-medium rounded">
+                                TEST
+                              </span>
+                            )}
+                            {subsection.aiPowered && (
+                              <SparklesIcon className="w-3 h-3 text-crimson-accent-blue" />
+                            )}
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -124,6 +133,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               )}
               {activeSection === 'people-codes' && activeSubSection === 'smart-tags' && (
                 <SmartTagsManager />
+              )}
+              {activeSection === 'people-codes' && activeSubSection === 'smart-tags-2' && (
+                <SmartTagsManager2 />
               )}
               {activeSection === 'fundraising-codes' && activeSubSection === 'fund-codes' && (
                 <FundraisingCodesManager type="fund-codes" />
