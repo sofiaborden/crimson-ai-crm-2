@@ -1027,30 +1027,29 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                 </div>
               </div>
 
-                {/* Navigation and Save Buttons */}
-                <div className="flex justify-between pt-4 border-t border-gray-200">
+              {/* Navigation and Save Buttons */}
+              <div className="flex justify-between pt-4 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={() => handleTabChange('remove-when')}
+                >
+                  <PauseIcon className="w-4 h-4 mr-2" />
+                  Back to Remove When
+                </Button>
+                <div className="flex gap-3">
                   <Button
                     variant="outline"
-                    onClick={() => handleTabChange('remove-when')}
+                    onClick={handleClose}
                   >
-                    <PauseIcon className="w-4 h-4 mr-2" />
-                    Back to Remove When
+                    Cancel
                   </Button>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={handleClose}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSave}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckIcon className="w-4 h-4 mr-2" />
-                      Save Smart Tag
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleSave}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckIcon className="w-4 h-4 mr-2" />
+                    Save Smart Tag
+                  </Button>
                 </div>
               </div>
             )}
