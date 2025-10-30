@@ -60,8 +60,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
 
   const [activeTab, setActiveTab] = useState<'overview' | 'add-people' | 'add-when' | 'remove-when' | 'summary'>('overview');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
-  const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [showExitWarning, setShowExitWarning] = useState(false);
 
   const categories = [
     { id: 'smart-tags', name: 'Smart Tags', color: 'blue' },
@@ -76,26 +75,56 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
   ];
 
   const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab as any);
+  };
+
+  const handleClose = () => {
     if (hasUnsavedChanges) {
-      setShowUnsavedWarning(true);
-      setPendingTab(newTab);
+      setShowExitWarning(true);
     } else {
-      setActiveTab(newTab as any);
+      onClose();
     }
   };
 
-  const confirmTabChange = () => {
-    if (pendingTab) {
-      setActiveTab(pendingTab as any);
-      setShowUnsavedWarning(false);
-      setPendingTab(null);
-      setHasUnsavedChanges(false);
+  const confirmExit = () => {
+    setShowExitWarning(false);
+    onClose();
+  };
+
+  const cancelExit = () => {
+    setShowExitWarning(false);
+  };
+
+  // Helper function to check if a tab is complete
+  const isTabComplete = (tab: string): boolean => {
+    switch (tab) {
+      case 'overview':
+        return !!(formData.name && formData.emoji && formData.description);
+      case 'add-people':
+        return !!(formData.filterDefinition && formData.filterDefinition.length > 0);
+      case 'add-when':
+        return true; // Always complete for now (placeholder)
+      case 'remove-when':
+        return true; // Always complete for now (placeholder)
+      case 'summary':
+        return true; // Always complete
+      default:
+        return false;
     }
   };
 
-  const cancelTabChange = () => {
-    setShowUnsavedWarning(false);
-    setPendingTab(null);
+  // Helper function to get tab status
+  const getTabStatus = (tab: string): 'empty' | 'in-progress' | 'complete' => {
+    if (isTabComplete(tab)) return 'complete';
+
+    switch (tab) {
+      case 'overview':
+        return (formData.name || formData.emoji || formData.description) ? 'in-progress' : 'empty';
+      case 'add-people':
+        return (formData.filterDefinition && formData.filterDefinition.length > 0) ? 'complete' : 'empty';
+      default:
+        return 'empty';
+    }
   };
 
   const handleFormChange = (field: string, value: any) => {
@@ -132,7 +161,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                 </div>
               </div>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="text-white hover:text-crimson-accent-blue transition-colors p-1 rounded-lg hover:bg-white hover:bg-opacity-10"
               >
                 <XMarkIcon className="w-6 h-6" />
@@ -140,7 +169,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
             </div>
           </div>
 
-          {/* Tab Navigation */}
+          {/* Tab Navigation with Progress Indicators */}
           <div className="border-b border-gray-200 bg-gray-50">
             <div className="flex">
               {[
@@ -149,23 +178,45 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                 { id: 'add-when', name: 'Add When', icon: <PlayIcon className="w-4 h-4" /> },
                 { id: 'remove-when', name: 'Remove When', icon: <PauseIcon className="w-4 h-4" /> },
                 { id: 'summary', name: 'Summary', icon: <CheckIcon className="w-4 h-4" /> }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-b-2 border-crimson-blue text-crimson-blue bg-white'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.name}
-                  {hasUnsavedChanges && activeTab === tab.id && (
-                    <div className="w-2 h-2 bg-orange-500 rounded-full ml-1"></div>
-                  )}
-                </button>
-              ))}
+              ].map((tab, index) => {
+                const status = getTabStatus(tab.id);
+                const isActive = activeTab === tab.id;
+
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors relative ${
+                      isActive
+                        ? 'border-b-2 border-crimson-blue text-crimson-blue bg-white'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    {tab.icon}
+                    {tab.name}
+
+                    {/* Progress Indicator */}
+                    <div className="ml-2">
+                      {status === 'complete' ? (
+                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                          <CheckIcon className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      ) : status === 'in-progress' ? (
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      ) : (
+                        <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                      )}
+                    </div>
+
+                    {/* Step Arrow (except for last tab) */}
+                    {index < 4 && (
+                      <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        →
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -272,6 +323,18 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     </div>
                   </div>
                 </div>
+
+                {/* Continue Button */}
+                <div className="flex justify-end pt-4 border-t border-gray-200">
+                  <Button
+                    onClick={() => handleTabChange('add-people')}
+                    disabled={!isTabComplete('overview')}
+                    className="bg-crimson-blue hover:bg-crimson-dark-blue disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Continue to Add People
+                    <UserGroupIcon className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -307,6 +370,24 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     </p>
                   </div>
                 )}
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleTabChange('overview')}
+                  >
+                    <SparklesIcon className="w-4 h-4 mr-2" />
+                    Back to Overview
+                  </Button>
+                  <Button
+                    onClick={() => handleTabChange('add-when')}
+                    className="bg-crimson-blue hover:bg-crimson-dark-blue"
+                  >
+                    Continue to Add When
+                    <PlayIcon className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -361,6 +442,24 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     </div>
                   )}
                 </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleTabChange('add-people')}
+                  >
+                    <UserGroupIcon className="w-4 h-4 mr-2" />
+                    Back to Add People
+                  </Button>
+                  <Button
+                    onClick={() => handleTabChange('remove-when')}
+                    className="bg-crimson-blue hover:bg-crimson-dark-blue"
+                  >
+                    Continue to Remove When
+                    <PauseIcon className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -414,6 +513,24 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                       </Button>
                     </div>
                   )}
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleTabChange('add-when')}
+                  >
+                    <PlayIcon className="w-4 h-4 mr-2" />
+                    Back to Add When
+                  </Button>
+                  <Button
+                    onClick={() => handleTabChange('summary')}
+                    className="bg-crimson-blue hover:bg-crimson-dark-blue"
+                  >
+                    Review in Summary
+                    <CheckIcon className="w-4 h-4 ml-2" />
+                  </Button>
                 </div>
               </div>
             )}
@@ -478,42 +595,41 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     </div>
                   </div>
                 </div>
+
+                {/* Navigation and Save Buttons */}
+                <div className="flex justify-between pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleTabChange('remove-when')}
+                  >
+                    <PauseIcon className="w-4 h-4 mr-2" />
+                    Back to Remove When
+                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleClose}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckIcon className="w-4 h-4 mr-2" />
+                      Save Smart Tag
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Footer Actions */}
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {hasUnsavedChanges && (
-                  <div className="flex items-center gap-2 text-orange-600 text-sm">
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                    <span>You have unsaved changes</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  className="bg-crimson-blue hover:bg-crimson-dark-blue"
-                >
-                  {tag ? 'Update Tag' : 'Create Tag'}
-                </Button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Unsaved Changes Warning Modal */}
-      {showUnsavedWarning && (
+      {/* Exit Warning Modal */}
+      {showExitWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             <div className="p-6">
@@ -522,18 +638,18 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                 <h3 className="text-lg font-semibold text-gray-900">Unsaved Changes</h3>
               </div>
               <p className="text-gray-600 mb-6">
-                You have unsaved changes. Are you sure you want to switch tabs? Your changes will be lost.
+                You have unsaved changes. Are you sure you want to close this editor? Your changes will be lost.
               </p>
               <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
-                  onClick={cancelTabChange}
+                  onClick={cancelExit}
                 >
-                  Stay Here
+                  Continue Editing
                 </Button>
                 <Button
-                  onClick={confirmTabChange}
-                  className="bg-orange-600 hover:bg-orange-700"
+                  onClick={confirmExit}
+                  className="bg-red-600 hover:bg-red-700"
                 >
                   Discard Changes
                 </Button>
