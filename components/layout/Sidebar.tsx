@@ -60,6 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
     { id: 'layout-test-core-tier-2', label: '🧪 Test Core Tier 2', icon: <SparklesIcon className="w-5 h-5" /> },
     { id: 'layout-test-core-tier-2-out-of-credits', label: '🧪 Test Core Tier 2 - Out of Credits', icon: <SparklesIcon className="w-5 h-5" /> },
     { id: 'test-selective-rollout', label: '🧪 Selective Rollout', icon: <SparklesIcon className="w-5 h-5" /> },
+    { id: 'smart-tags-2', label: '🧪 Smart Tags 2', icon: <SparklesIcon className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <SettingsIcon className="w-5 h-5" /> },
     { id: 'system', label: 'System', icon: <SystemIcon className="w-5 h-5" /> },
   ];

@@ -20,6 +20,7 @@ import LayoutTestCoreTier2OutOfCreditsPage from './pages/layout-test-core-tier-2
 import TestSelectiveRollout from './pages/test-selective-rollout';
 import TestSmartBioAllProfiles from './pages/test-smart-bio-all-profiles';
 import TestSmartTagsFlowIntegrationPage from './pages/test-smart-tags-flow-integration';
+import SmartTagsManager2 from './components/settings/SmartTagsManager2';
 import { View, Donor } from './types';
 import { mockDonorProfiles } from './utils/mockDonorProfiles';
 import { useTest3Layout } from './utils/profileLayoutSelector';
@@ -78,6 +79,24 @@ const App: React.FC = () => {
         return <TestSmartBioAllProfiles />;
       case 'test-smart-tags-flow-integration':
         return <TestSmartTagsFlowIntegrationPage />;
+      case 'smart-tags-2':
+        return (
+          <div className="min-h-screen bg-gray-50">
+            <div className="max-w-7xl mx-auto py-8 px-4">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  🧪 Smart Tags 2 - Enhanced Testing
+                </h1>
+                <p className="text-gray-600">
+                  Testing enhanced Smart Tags functionality with new UI improvements
+                </p>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <SmartTagsManager2 />
+              </div>
+            </div>
+          </div>
+        );
       default:
         return (
             <div className="flex items-center justify-center h-full">
