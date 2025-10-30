@@ -3,6 +3,8 @@ import { SparklesIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftR
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import SmartTagFilters from './SmartTagFilters';
+import TriggerTypeSelector from './TriggerTypeSelector';
+import TriggerConfigModal from './TriggerConfigModal';
 
 interface SmartTag {
   id: string;
@@ -62,6 +64,14 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showExitWarning, setShowExitWarning] = useState(false);
 
+  // Workflow system state
+  const [showInclusionTriggerSelector, setShowInclusionTriggerSelector] = useState(false);
+  const [showRemovalTriggerSelector, setShowRemovalTriggerSelector] = useState(false);
+  const [showInclusionTriggerConfig, setShowInclusionTriggerConfig] = useState(false);
+  const [showRemovalTriggerConfig, setShowRemovalTriggerConfig] = useState(false);
+  const [editingInclusionTrigger, setEditingInclusionTrigger] = useState<any>(null);
+  const [editingRemovalTrigger, setEditingRemovalTrigger] = useState<any>(null);
+
   const categories = [
     { id: 'smart-tags', name: 'Smart Tags', color: 'blue' },
     { id: 'flags', name: 'Flags', color: 'red' },
@@ -95,6 +105,59 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
     setShowExitWarning(false);
   };
 
+  // Workflow system handlers
+  const handleInclusionTriggerSelect = (triggerType: string) => {
+    const newTrigger = {
+      id: Date.now().toString(),
+      type: triggerType,
+      name: `New ${triggerType.charAt(0).toUpperCase() + triggerType.slice(1)} Trigger`,
+      config: {},
+      conditions: [],
+      position: { x: 100, y: 100 }
+    };
+
+    setEditingInclusionTrigger(newTrigger);
+    setShowInclusionTriggerSelector(false);
+    setShowInclusionTriggerConfig(true);
+  };
+
+  const handleRemovalTriggerSelect = (triggerType: string) => {
+    const newTrigger = {
+      id: Date.now().toString(),
+      type: triggerType,
+      name: `New ${triggerType.charAt(0).toUpperCase() + triggerType.slice(1)} Trigger`,
+      config: {},
+      conditions: [],
+      position: { x: 100, y: 100 }
+    };
+
+    setEditingRemovalTrigger(newTrigger);
+    setShowRemovalTriggerSelector(false);
+    setShowRemovalTriggerConfig(true);
+  };
+
+  const handleInclusionTriggerSave = (trigger: any) => {
+    handleFormChange('inclusionTrigger', trigger);
+    setShowInclusionTriggerConfig(false);
+    setEditingInclusionTrigger(null);
+  };
+
+  const handleRemovalTriggerSave = (trigger: any) => {
+    handleFormChange('removalTrigger', trigger);
+    setShowRemovalTriggerConfig(false);
+    setEditingRemovalTrigger(null);
+  };
+
+  const handleEditInclusionTrigger = () => {
+    setEditingInclusionTrigger(formData.inclusionTrigger);
+    setShowInclusionTriggerConfig(true);
+  };
+
+  const handleEditRemovalTrigger = () => {
+    setEditingRemovalTrigger(formData.removalTrigger);
+    setShowRemovalTriggerConfig(true);
+  };
+
   // Helper function to check if a tab is complete
   const isTabComplete = (tab: string): boolean => {
     switch (tab) {
@@ -103,9 +166,9 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
       case 'add-people':
         return !!(formData.filterDefinition && formData.filterDefinition.length > 0);
       case 'add-when':
-        return true; // Always complete for now (placeholder)
+        return true; // Optional - can be complete without workflows
       case 'remove-when':
-        return true; // Always complete for now (placeholder)
+        return true; // Optional - can be complete without workflows
       case 'summary':
         return true; // Always complete
       default:
@@ -277,38 +340,51 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Processing Type</label>
-                      <div className="space-y-2">
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="processingType"
-                            value="dynamic"
-                            checked={formData.processingType === 'dynamic'}
-                            onChange={(e) => handleFormChange('processingType', e.target.value)}
-                            className="mr-2"
-                          />
-                          <div>
-                            <div className="font-medium">Dynamic</div>
-                            <div className="text-sm text-gray-600">Automatically updates as criteria change</div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Label Color</label>
+                      <select
+                        value={formData.color}
+                        onChange={(e) => handleFormChange('color', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-crimson-blue focus:border-crimson-blue"
+                      >
+                        <option value="#3B82F6">Blue</option>
+                        <option value="#10B981">Green</option>
+                        <option value="#EF4444">Red</option>
+                        <option value="#8B5CF6">Purple</option>
+                        <option value="#F59E0B">Orange</option>
+                        <option value="#06B6D4">Cyan</option>
+                        <option value="#84CC16">Lime</option>
+                        <option value="#EC4899">Pink</option>
+                        <option value="#6B7280">Gray</option>
+                      </select>
+                    </div>
+
+                    {/* Tag Preview */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                            style={{
+                              backgroundColor: `${formData.color}20`,
+                              border: `2px solid ${formData.color}30`
+                            }}
+                          >
+                            {formData.emoji || '🏷️'}
                           </div>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="processingType"
-                            value="static"
-                            checked={formData.processingType === 'static'}
-                            onChange={(e) => handleFormChange('processingType', e.target.value)}
-                            className="mr-2"
-                          />
                           <div>
-                            <div className="font-medium">Static</div>
-                            <div className="text-sm text-gray-600">Fixed list, manually managed</div>
+                            <div className="font-medium text-gray-900">
+                              {formData.name || 'Untitled Tag'}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {categories.find(c => c.id === formData.category)?.name}
+                            </div>
                           </div>
-                        </label>
+                        </div>
                       </div>
                     </div>
+
+
 
                     <div className="flex items-center">
                       <input
@@ -420,21 +496,36 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     <div className="bg-white border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-medium text-gray-900">Inclusion Workflow</h4>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleFormChange('inclusionTrigger', null)}
-                        >
-                          <TrashIcon className="w-4 h-4 mr-1" />
-                          Remove
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleEditInclusionTrigger}
+                          >
+                            <PencilIcon className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleFormChange('inclusionTrigger', null)}
+                          >
+                            <TrashIcon className="w-4 h-4 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                       <div className="text-sm text-gray-600">
-                        <strong>Trigger:</strong> {formData.inclusionTrigger.type || 'Custom workflow'}
+                        <strong>Trigger Type:</strong> {formData.inclusionTrigger.type || 'Custom workflow'}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
-                        <strong>Description:</strong> {formData.inclusionTrigger.description || 'Workflow configured'}
+                        <strong>Name:</strong> {formData.inclusionTrigger.name || 'Workflow configured'}
                       </div>
+                      {formData.inclusionTrigger.config && Object.keys(formData.inclusionTrigger.config).length > 0 && (
+                        <div className="text-sm text-gray-600 mt-1">
+                          <strong>Configuration:</strong> {JSON.stringify(formData.inclusionTrigger.config, null, 2).slice(0, 100)}...
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-8">
@@ -444,7 +535,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                         Create a workflow to automatically add people to this tag based on specific triggers.
                       </p>
                       <Button
-                        onClick={() => handleFormChange('inclusionTrigger', { type: 'custom', description: 'New inclusion workflow' })}
+                        onClick={() => setShowInclusionTriggerSelector(true)}
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <PlusIcon className="w-4 h-4 mr-2" />
@@ -492,21 +583,36 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     <div className="bg-white border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-medium text-gray-900">Removal Workflow</h4>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleFormChange('removalTrigger', null)}
-                        >
-                          <TrashIcon className="w-4 h-4 mr-1" />
-                          Remove
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleEditRemovalTrigger}
+                          >
+                            <PencilIcon className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleFormChange('removalTrigger', null)}
+                          >
+                            <TrashIcon className="w-4 h-4 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                       <div className="text-sm text-gray-600">
-                        <strong>Trigger:</strong> {formData.removalTrigger.type || 'Custom workflow'}
+                        <strong>Trigger Type:</strong> {formData.removalTrigger.type || 'Custom workflow'}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
-                        <strong>Description:</strong> {formData.removalTrigger.description || 'Workflow configured'}
+                        <strong>Name:</strong> {formData.removalTrigger.name || 'Workflow configured'}
                       </div>
+                      {formData.removalTrigger.config && Object.keys(formData.removalTrigger.config).length > 0 && (
+                        <div className="text-sm text-gray-600 mt-1">
+                          <strong>Configuration:</strong> {JSON.stringify(formData.removalTrigger.config, null, 2).slice(0, 100)}...
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-8">
@@ -516,7 +622,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                         Create a workflow to automatically remove people from this tag based on specific triggers.
                       </p>
                       <Button
-                        onClick={() => handleFormChange('removalTrigger', { type: 'custom', description: 'New removal workflow' })}
+                        onClick={() => setShowRemovalTriggerSelector(true)}
                         className="bg-red-600 hover:bg-red-700"
                       >
                         <PlusIcon className="w-4 h-4 mr-2" />
@@ -638,6 +744,48 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
 
         </div>
       </div>
+
+      {/* Inclusion Trigger Type Selector */}
+      {showInclusionTriggerSelector && (
+        <TriggerTypeSelector
+          onSelect={handleInclusionTriggerSelect}
+          onClose={() => setShowInclusionTriggerSelector(false)}
+        />
+      )}
+
+      {/* Removal Trigger Type Selector */}
+      {showRemovalTriggerSelector && (
+        <TriggerTypeSelector
+          onSelect={handleRemovalTriggerSelect}
+          onClose={() => setShowRemovalTriggerSelector(false)}
+        />
+      )}
+
+      {/* Inclusion Trigger Configuration Modal */}
+      {showInclusionTriggerConfig && editingInclusionTrigger && (
+        <TriggerConfigModal
+          trigger={editingInclusionTrigger}
+          onClose={() => {
+            setShowInclusionTriggerConfig(false);
+            setEditingInclusionTrigger(null);
+          }}
+          onSave={handleInclusionTriggerSave}
+          availableFlows={[]}
+        />
+      )}
+
+      {/* Removal Trigger Configuration Modal */}
+      {showRemovalTriggerConfig && editingRemovalTrigger && (
+        <TriggerConfigModal
+          trigger={editingRemovalTrigger}
+          onClose={() => {
+            setShowRemovalTriggerConfig(false);
+            setEditingRemovalTrigger(null);
+          }}
+          onSave={handleRemovalTriggerSave}
+          availableFlows={[]}
+        />
+      )}
 
       {/* Exit Warning Modal */}
       {showExitWarning && (
