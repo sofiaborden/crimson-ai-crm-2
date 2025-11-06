@@ -18,6 +18,8 @@ interface SearchModalProps {
   initialFilters?: SearchFilter[];
   searchContext?: string;
   onSegmentClick?: (segmentId: string, segmentName: string) => void;
+  filterSelectionMode?: boolean;
+  onFiltersSelected?: (filters: SearchFilter[]) => void;
 }
 
 const SearchModal: React.FC<SearchModalProps> = ({
@@ -26,7 +28,9 @@ const SearchModal: React.FC<SearchModalProps> = ({
   searchType,
   initialFilters = [],
   searchContext,
-  onSegmentClick
+  onSegmentClick,
+  filterSelectionMode = false,
+  onFiltersSelected
 }) => {
   if (!isOpen) return null;
 
@@ -39,6 +43,8 @@ const SearchModal: React.FC<SearchModalProps> = ({
             searchContext={searchContext}
             onClose={onClose}
             onSegmentClick={onSegmentClick}
+            filterSelectionMode={filterSelectionMode}
+            onFiltersSelected={onFiltersSelected}
           />
         );
       case 'pledges':

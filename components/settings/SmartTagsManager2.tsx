@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SparklesIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon, EllipsisVerticalIcon, ChevronDownIcon, XMarkIcon, HeartIcon, FunnelIcon, PlayIcon, PauseIcon, CheckIcon, UserGroupIcon, ClockIcon, ExclamationTriangleIcon, ArrowPathIcon, UsersIcon, DocumentTextIcon, ArrowDownTrayIcon, InformationCircleIcon } from '../../constants';
+import SearchModal from '../search/SearchModal';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import SmartTagFilters from './SmartTagFilters';
@@ -84,6 +85,10 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
+  // Search modal state for Add People tab
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [selectedQuickFilters, setSelectedQuickFilters] = useState<string[]>([]);
+
   // Refs for dropdowns
   const emojiDropdownRef = useRef<HTMLDivElement>(null);
   const colorDropdownRef = useRef<HTMLDivElement>(null);
@@ -98,6 +103,15 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
     { id: 'membership', name: 'Membership', color: 'indigo' },
     { id: 'volunteers', name: 'Volunteers', color: 'yellow' },
     { id: 'board', name: 'Board', color: 'gray' }
+  ];
+
+  // Quick filter options for Add People tab
+  const quickFilterOptions = [
+    { id: 'big-givers', name: 'Big Givers', emoji: '💰', color: '#10B981', description: 'Donors with lifetime giving > $500' },
+    { id: 'prime-persuadables', name: 'Prime Persuadables', emoji: '🎯', color: '#8B5CF6', description: 'High-potential Republican donors' },
+    { id: 'new-rising', name: 'New & Rising Donors', emoji: '⚡', color: '#3B82F6', description: 'Recent donors with growth potential' },
+    { id: 'lapsed-at-risk', name: 'Lapsed/At-Risk', emoji: '🕒', color: '#F59E0B', description: 'Previously active donors who may need re-engagement' },
+    { id: 'not-registered', name: 'Not Yet Registered', emoji: '🚧', color: '#EF4444', description: 'Supporters not registered to vote' }
   ];
 
   const emojiOptions = ['💰', '🎯', '🚧', '⚡', '🕒', '🔥', '⭐', '🎪', '🎨', '🏆', '🎁', '🌟', '💎', '🚀', '🎊', '🎉', '🏷️', '📊', '👔', '🏥', '🏫', '🏢', '🎓', '🏛️', '🔍', '📌', '🤝'];
@@ -326,6 +340,64 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
     onSave(formData);
     setHasUnsavedChanges(false);
     onClose();
+  };
+
+  // Quick filter handlers for Add People tab
+  const handleQuickFilterToggle = (filterId: string) => {
+    setSelectedQuickFilters(prev => {
+      const newFilters = prev.includes(filterId)
+        ? prev.filter(id => id !== filterId)
+        : [...prev, filterId];
+
+      // Convert quick filters to actual filter definitions
+      const quickFilterDefinitions = newFilters.map(id => {
+        const option = quickFilterOptions.find(opt => opt.id === id);
+        if (!option) return null;
+
+        return {
+          id: `quick-${id}`,
+          field: 'smartTags',
+          operator: 'contains',
+          value: option.name,
+          label: `Smart Tag contains ${option.name}`
+        };
+      }).filter(Boolean);
+
+      // Combine with existing custom filters
+      const existingCustomFilters = (formData.filterDefinition || []).filter(
+        (filter: any) => !filter.id.startsWith('quick-')
+      );
+
+      const allFilters = [...quickFilterDefinitions, ...existingCustomFilters];
+      handleFormChange('filterDefinition', allFilters);
+
+      return newFilters;
+    });
+  };
+
+  const handleSearchModalSave = (filters: any[]) => {
+    // Keep quick filters and add custom filters
+    const quickFilterDefinitions = selectedQuickFilters.map(id => {
+      const option = quickFilterOptions.find(opt => opt.id === id);
+      if (!option) return null;
+
+      return {
+        id: `quick-${id}`,
+        field: 'smartTags',
+        operator: 'contains',
+        value: option.name,
+        label: `Smart Tag contains ${option.name}`
+      };
+    }).filter(Boolean);
+
+    const customFilters = filters.map(filter => ({
+      ...filter,
+      id: filter.id.startsWith('custom-') ? filter.id : `custom-${filter.id}`
+    }));
+
+    const allFilters = [...quickFilterDefinitions, ...customFilters];
+    handleFormChange('filterDefinition', allFilters);
+    setShowSearchModal(false);
   };
 
   return (
@@ -604,28 +676,113 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                   </p>
                 </div>
 
-
-
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <SmartTagFilters
-                    onFiltersChange={(filters) => {
-                      console.log('SmartTagFilters onFiltersChange called with:', filters);
-                      handleFormChange('filterDefinition', filters);
-                    }}
-                    initialFilters={formData.filterDefinition || []}
-                    showRunNow={true}
-                  />
-                </div>
-
-                {formData.filterDefinition && formData.filterDefinition.length > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckIcon className="w-5 h-5 text-green-600" />
-                      <h4 className="font-medium text-green-900">Preview Results</h4>
+                {/* Quick Filters Section */}
+                {(!formData.filterDefinition || formData.filterDefinition.length === 0) && (
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Filters</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {quickFilterOptions.map((option) => {
+                          const isSelected = selectedQuickFilters.includes(option.id);
+                          return (
+                            <button
+                              key={option.id}
+                              onClick={() => handleQuickFilterToggle(option.id)}
+                              className={`group relative p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                                isSelected
+                                  ? 'border-blue-500 bg-blue-50'
+                                  : 'border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="text-2xl">{option.emoji}</div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h5 className="font-medium text-gray-900 truncate">{option.name}</h5>
+                                    {isSelected && (
+                                      <CheckIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">{option.description}</p>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <p className="text-sm text-green-700">
-                      Estimated {Math.floor(Math.random() * 500) + 50} people will match these criteria.
-                    </p>
+
+                    <div className="flex justify-center">
+                      <button
+                        onClick={() => setShowSearchModal(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                      >
+                        <PlusIcon className="w-4 h-4" />
+                        Add Custom Filters
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Filter Summary Section (when filters are applied) */}
+                {formData.filterDefinition && formData.filterDefinition.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-gray-900">Active Filters ({formData.filterDefinition.length})</h4>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowSearchModal(true)}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            Edit Filters
+                          </button>
+                          <button
+                            onClick={() => setShowSearchModal(true)}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            Add More
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {formData.filterDefinition.map((filter: any) => (
+                          <div
+                            key={filter.id}
+                            className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2"
+                          >
+                            <span className="text-sm text-blue-800">{filter.label}</span>
+                            <button
+                              onClick={() => {
+                                const newFilters = formData.filterDefinition.filter((f: any) => f.id !== filter.id);
+                                handleFormChange('filterDefinition', newFilters);
+
+                                // Update quick filters if this was a quick filter
+                                if (filter.id.startsWith('quick-')) {
+                                  const quickId = filter.id.replace('quick-', '');
+                                  setSelectedQuickFilters(prev => prev.filter(id => id !== quickId));
+                                }
+                              }}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <XMarkIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Preview Results */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckIcon className="w-5 h-5 text-green-600" />
+                        <h4 className="font-medium text-green-900">Preview Results</h4>
+                      </div>
+                      <p className="text-sm text-green-700">
+                        Estimated {Math.floor(Math.random() * 500) + 50} people will match these criteria.
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -1233,6 +1390,27 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
           </div>
         </div>
       )}
+
+      {/* Search Modal for Add People Tab */}
+      <SearchModal
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+        searchType="people"
+        initialFilters={formData.filterDefinition?.filter((f: any) => f.id.startsWith('custom-')).map((f: any) => ({
+          id: f.id.replace('custom-', ''),
+          field: f.field,
+          operator: f.operator,
+          value: f.value,
+          label: f.label
+        })) || []}
+        searchContext="Smart Tag Filter Selection"
+        filterSelectionMode={true}
+        onFiltersSelected={handleSearchModalSave}
+        onSegmentClick={() => {
+          // Handle segment creation if needed
+          setShowSearchModal(false);
+        }}
+      />
     </>
   );
 };
