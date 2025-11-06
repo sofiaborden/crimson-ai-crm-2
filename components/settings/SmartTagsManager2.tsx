@@ -50,7 +50,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
     description: tag?.description || '',
     category: tag?.category || 'smart-tags',
     processingType: tag?.processingType || 'dynamic',
-    filterDefinition: tag?.filterDefinition || [],
+    filterDefinition: Array.isArray(tag?.filterDefinition) ? tag.filterDefinition : [],
     inclusionTrigger: tag?.inclusionTrigger || null,
     removalTrigger: tag?.removalTrigger || null,
     count: tag?.count || 0,
@@ -364,9 +364,9 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
       }).filter(Boolean);
 
       // Combine with existing custom filters
-      const existingCustomFilters = (formData.filterDefinition || []).filter(
-        (filter: any) => !filter.id.startsWith('quick-')
-      );
+      const existingCustomFilters = Array.isArray(formData.filterDefinition)
+        ? formData.filterDefinition.filter((filter: any) => filter.id && !filter.id.startsWith('quick-'))
+        : [];
 
       const allFilters = [...quickFilterDefinitions, ...existingCustomFilters];
       handleFormChange('filterDefinition', allFilters);
@@ -677,7 +677,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                 </div>
 
                 {/* Quick Filters Section */}
-                {(!formData.filterDefinition || formData.filterDefinition.length === 0) && (
+                {(!Array.isArray(formData.filterDefinition) || formData.filterDefinition.length === 0) && (
                   <div className="space-y-4">
                     <div>
                       <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Filters</h4>
@@ -725,7 +725,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                 )}
 
                 {/* Filter Summary Section (when filters are applied) */}
-                {formData.filterDefinition && formData.filterDefinition.length > 0 && (
+                {Array.isArray(formData.filterDefinition) && formData.filterDefinition.length > 0 && (
                   <div className="space-y-4">
                     <div className="bg-white border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
@@ -755,11 +755,12 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                             <span className="text-sm text-blue-800">{filter.label}</span>
                             <button
                               onClick={() => {
-                                const newFilters = formData.filterDefinition.filter((f: any) => f.id !== filter.id);
+                                const currentFilters = Array.isArray(formData.filterDefinition) ? formData.filterDefinition : [];
+                                const newFilters = currentFilters.filter((f: any) => f.id !== filter.id);
                                 handleFormChange('filterDefinition', newFilters);
 
                                 // Update quick filters if this was a quick filter
-                                if (filter.id.startsWith('quick-')) {
+                                if (filter.id && filter.id.startsWith('quick-')) {
                                   const quickId = filter.id.replace('quick-', '');
                                   setSelectedQuickFilters(prev => prev.filter(id => id !== quickId));
                                 }
@@ -1396,13 +1397,18 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
         searchType="people"
-        initialFilters={formData.filterDefinition?.filter((f: any) => f.id.startsWith('custom-')).map((f: any) => ({
-          id: f.id.replace('custom-', ''),
-          field: f.field,
-          operator: f.operator,
-          value: f.value,
-          label: f.label
-        })) || []}
+        initialFilters={Array.isArray(formData.filterDefinition)
+          ? formData.filterDefinition
+              .filter((f: any) => f.id && f.id.startsWith('custom-'))
+              .map((f: any) => ({
+                id: f.id.replace('custom-', ''),
+                field: f.field,
+                operator: f.operator,
+                value: f.value,
+                label: f.label
+              }))
+          : []
+        }
         searchContext="Smart Tag Filter Selection"
         filterSelectionMode={true}
         onFiltersSelected={handleSearchModalSave}
