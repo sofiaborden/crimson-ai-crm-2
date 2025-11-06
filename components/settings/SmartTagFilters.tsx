@@ -596,63 +596,31 @@ const SmartTagFilters: React.FC<SmartTagFiltersProps> = ({
       )}
 
       {/* CrimsonGPT Natural Language Filter */}
-      <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-lg p-6 shadow-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-            <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
+      <div className="group relative bg-crimson-blue border border-crimson-dark-blue rounded-lg p-3">
+        <div className="flex items-center gap-2 mb-3">
+          <h4 className="font-medium text-white">CrimsonGPT</h4>
+          <SparklesIcon className="w-4 h-4 text-crimson-accent-blue" />
+          <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            CrimsonGPT will convert your description into smart filters and apply them automatically.
           </div>
-          <h4 className="font-semibold text-white text-lg">CrimsonGPT Natural Language Filter</h4>
-          <SparklesIcon className="w-5 h-5 text-crimson-accent-blue" />
         </div>
 
-        <div className="space-y-3">
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={crimsonGPTPrompt}
-              onChange={(e) => setCrimsonGPTPrompt(e.target.value)}
-              placeholder="Describe your ideal filters: 'Find all Big Givers in California who gave over $500 last year'"
-              className="flex-1 px-4 py-3 bg-white rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-crimson-accent-blue focus:border-transparent border-0"
-              onKeyPress={(e) => e.key === 'Enter' && handleCrimsonGPTPrompt()}
-            />
-            <button
-              onClick={handleCrimsonGPTPrompt}
-              disabled={!crimsonGPTPrompt.trim() || isProcessingPrompt}
-              className="px-6 py-3 bg-white text-crimson-blue rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
-            >
-              <SparklesIcon className="w-4 h-4" />
-              {isProcessingPrompt ? 'Processing...' : 'Create'}
-            </button>
-          </div>
-
-          <p className="text-white text-sm opacity-90">
-            CrimsonGPT will convert your description into smart filters and apply them automatically.
-          </p>
-
-          {/* Example queries */}
-          <div className="text-sm text-white opacity-80">
-            <p className="mb-2">Try examples like:</p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setCrimsonGPTPrompt('Show me Big Givers in Florida')}
-                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-white transition-colors"
-              >
-                "Big Givers in Florida"
-              </button>
-              <button
-                onClick={() => setCrimsonGPTPrompt('Prime Persuadables who gave over $200')}
-                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-white transition-colors"
-              >
-                "Prime Persuadables over $200"
-              </button>
-              <button
-                onClick={() => setCrimsonGPTPrompt('Lapsed donors in the last 30 days')}
-                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-white transition-colors"
-              >
-                "Lapsed donors last 30 days"
-              </button>
-            </div>
-          </div>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={crimsonGPTPrompt}
+            onChange={(e) => setCrimsonGPTPrompt(e.target.value)}
+            placeholder="Describe your ideal filters..."
+            className="flex-1 px-3 py-2 bg-white rounded-lg text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-crimson-accent-blue focus:border-transparent border-0 text-sm"
+            onKeyPress={(e) => e.key === 'Enter' && handleCrimsonGPTPrompt()}
+          />
+          <button
+            onClick={handleCrimsonGPTPrompt}
+            disabled={!crimsonGPTPrompt.trim() || isProcessingPrompt}
+            className="px-4 py-2 bg-white text-crimson-blue rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+          >
+            {isProcessingPrompt ? 'Processing...' : 'Create'}
+          </button>
         </div>
       </div>
 
