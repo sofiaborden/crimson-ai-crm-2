@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { SparklesIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon, EllipsisVerticalIcon, ChevronDownIcon, XMarkIcon, HeartIcon, FunnelIcon, PlayIcon, PauseIcon, CheckIcon, UserGroupIcon, ClockIcon, ExclamationTriangleIcon, ArrowPathIcon, UsersIcon, DocumentTextIcon, ArrowDownTrayIcon } from '../../constants';
+import { SparklesIcon, PlusIcon, PencilIcon, TrashIcon, EyeIcon, ChatBubbleLeftRightIcon, EllipsisVerticalIcon, ChevronDownIcon, XMarkIcon, HeartIcon, FunnelIcon, PlayIcon, PauseIcon, CheckIcon, UserGroupIcon, ClockIcon, ExclamationTriangleIcon, ArrowPathIcon, UsersIcon, DocumentTextIcon, ArrowDownTrayIcon, InformationCircleIcon } from '../../constants';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import SmartTagFilters from './SmartTagFilters';
@@ -466,9 +466,6 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                         >
                           <span className="flex items-center gap-2">
                             <span className="text-lg">{formData.emoji}</span>
-                            <span className="text-gray-700">
-                              {formData.emoji}
-                            </span>
                           </span>
                           <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ${showEmojiDropdown ? 'rotate-180' : ''}`} />
                         </button>
@@ -543,23 +540,21 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
                       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center">
                           <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full font-medium transition-all duration-200"
                             style={{
-                              backgroundColor: `${formData.color}20`,
-                              border: `2px solid ${formData.color}30`
+                              backgroundColor: `${formData.color}15`,
+                              border: `1px solid ${formData.color}40`,
+                              color: formData.color
                             }}
                           >
-                            {formData.emoji || '🏷️'}
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {formData.name || 'Untitled Tag'}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {categories.find(c => c.id === formData.category)?.name}
-                            </div>
+                            <span className="text-sm">{formData.emoji || '🏷️'}</span>
+                            <span className="font-medium truncate">{formData.name || 'Untitled Tag'}</span>
+                            <SparklesIcon
+                              className="w-3 h-3 opacity-70 flex-shrink-0"
+                              style={{ color: formData.color }}
+                            />
                           </div>
                         </div>
                       </div>
@@ -609,12 +604,7 @@ const EnhancedSmartTagEditor: React.FC<SmartTagEditorProps> = ({ tag, onClose, o
                   </p>
                 </div>
 
-                {/* Debug info */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 text-xs">
-                    <strong>Debug:</strong> filterDefinition = {JSON.stringify(formData.filterDefinition)}
-                  </div>
-                )}
+
 
                 <div className="bg-white border border-gray-200 rounded-lg p-4">
                   <SmartTagFilters
@@ -1598,44 +1588,46 @@ const SmartTagsManager2: React.FC = () => {
       </div>
 
       {/* CrimsonGPT Prompt Box */}
-      <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-lg p-6 shadow-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-            <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
+      <div className="bg-gradient-to-r from-crimson-blue to-crimson-dark-blue rounded-lg p-4 shadow-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="bg-white bg-opacity-20 p-1.5 rounded-lg">
+            <ChatBubbleLeftRightIcon className="w-4 h-4 text-white" />
           </div>
-          <h4 className="font-semibold text-white text-lg">CrimsonGPT Smart Tag Creator</h4>
-          <SparklesIcon className="w-5 h-5 text-crimson-accent-blue" />
+          <h4 className="font-medium text-white">CrimsonGPT</h4>
+          <div className="group relative">
+            <InformationCircleIcon className="w-4 h-4 text-white text-opacity-70 hover:text-opacity-100 cursor-help transition-opacity" />
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              CrimsonGPT will convert your description into smart filters and apply them automatically.
+            </div>
+          </div>
         </div>
         <div className="flex gap-3">
           <input
             type="text"
             value={crimsonGPTPrompt}
             onChange={(e) => setCrimsonGPTPrompt(e.target.value)}
-            placeholder="Describe your ideal tag: 'Find all donors under 35 who gave more than $100 last year and live in Miami'"
-            className="flex-1 px-4 py-3 bg-white bg-opacity-95 border-0 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:outline-none shadow-sm"
+            placeholder="Describe your ideal filters: 'Find all Big Givers in California who gave over $500 last year'"
+            className="flex-1 px-3 py-2 bg-white bg-opacity-95 border-0 rounded-lg text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:outline-none shadow-sm"
             onKeyDown={(e) => e.key === 'Enter' && handleCrimsonGPTPrompt()}
           />
           <Button
             onClick={handleCrimsonGPTPrompt}
             disabled={!crimsonGPTPrompt.trim() || isProcessingPrompt}
-            className="bg-white bg-opacity-20 hover:bg-white hover:bg-opacity-30 text-white border border-white border-opacity-30 hover:border-opacity-50 font-medium px-6 py-3 transition-all duration-200 backdrop-blur-sm"
+            className="bg-white bg-opacity-20 hover:bg-white hover:bg-opacity-30 text-white border border-white border-opacity-30 hover:border-opacity-50 font-medium px-4 py-2 transition-all duration-200 backdrop-blur-sm"
           >
             {isProcessingPrompt ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Processing...
+                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs">Processing...</span>
               </div>
             ) : (
               <>
-                <SparklesIcon className="w-4 h-4 mr-2" />
-                Create
+                <SparklesIcon className="w-3 h-3 mr-1" />
+                <span className="text-xs">Create</span>
               </>
             )}
           </Button>
         </div>
-        <p className="text-sm text-white text-opacity-90 mt-3 leading-relaxed">
-          CrimsonGPT will convert your description into smart filters and suggest a tag name and emoji.
-        </p>
       </div>
 
       {/* Smart Tags List */}
